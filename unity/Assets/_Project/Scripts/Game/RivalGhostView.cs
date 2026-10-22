@@ -8,11 +8,14 @@ namespace StackIt.Game
     {
         private const float Thickness = 0.06f;
         private readonly Transform[] _edges = new Transform[4];
-        private readonly MaterialPropertyBlock _props = new MaterialPropertyBlock();
+        private MaterialPropertyBlock _props; // Unity forbids creating it in a field initializer
 
         public string RivalName { get; private set; }
         public int RivalHeight { get; private set; }
         public bool Visible => gameObject.activeSelf;
+
+        // Runs inside AddComponent (the object is still active), so Create can use _props.
+        private void Awake() => _props = new MaterialPropertyBlock();
 
         public static RivalGhostView Create(Transform parent)
         {

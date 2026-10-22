@@ -17,12 +17,14 @@ namespace StackIt.Game
         private const float DebrisLifetime = 2.5f;
 
         private readonly List<Transform> _placed = new List<Transform>();
-        private readonly MaterialPropertyBlock _props = new MaterialPropertyBlock();
+        private MaterialPropertyBlock _props; // Unity forbids creating it in a field initializer
         private Transform _base;
         private Transform _moving;
         private string _skin = Palette.DefaultBlockSkin;
 
         public Vector3 TopCenter { get; private set; }
+
+        private void Awake() => _props = new MaterialPropertyBlock();
 
         public void SetSkin(string skin) => _skin = string.IsNullOrEmpty(skin) ? Palette.DefaultBlockSkin : skin;
 

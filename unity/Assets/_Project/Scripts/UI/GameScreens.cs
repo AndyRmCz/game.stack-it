@@ -51,9 +51,7 @@ namespace StackIt.UI
             center.offsetMax = new Vector2(-Theme.Gutter * 2, 0);
             UiKit.Column(center, 28, null, TextAnchor.MiddleCenter);
 
-            TextMeshProUGUI logo = UiKit.Display(center, "STACK IT", 190, Theme.Moon);
-            logo.outlineColor = new Color(1f, 0.24f, 0.6f, 0.9f);
-            logo.outlineWidth = 0.18f;
+            TextMeshProUGUI logo = UiKit.Display(center, "STACK IT", 190, Theme.Moon, new Color(1f, 0.24f, 0.6f, 0.9f), 0.18f);
             UiKit.Size(logo.rectTransform, height: 220);
             _best = UiKit.Label(center, "", 50, Theme.Lavender, TextAlignmentOptions.Center, true);
             _best.characterSpacing = 6;

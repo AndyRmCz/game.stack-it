@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csdevkit",
+    "visualstudiotoolsforunity.vstuc",
+    "ms-python.python",
+    "charliermarsh.ruff"
+  ]
+}

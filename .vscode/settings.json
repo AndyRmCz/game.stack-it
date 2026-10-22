@@ -1,0 +1,23 @@
+{
+  // Unity regenerates this solution (SDK-style, see Scripts/Editor/ProjectFileStyle.cs).
+  // Without it C# Dev Kit loads every .csproj it finds, including the Library package cache.
+  "dotnet.defaultSolution": "unity/unity.slnx",
+  "files.exclude": {
+    "unity/[Ll]ibrary": true,
+    "unity/[Tt]emp": true,
+    "unity/[Ll]ogs": true,
+    "unity/[Uu]ser[Ss]ettings": true,
+    "unity/[Oo]bj": true,
+    "**/*.meta": true
+  },
+  "files.watcherExclude": {
+    "unity/[Ll]ibrary/**": true,
+    "unity/[Tt]emp/**": true,
+    "unity/DotNetTests/CompileCheck/.packages/**": true
+  },
+  "search.exclude": {
+    "unity/[Ll]ibrary": true,
+    "unity/[Tt]emp": true,
+    "unity/DotNetTests/CompileCheck/.packages": true
+  }
+}

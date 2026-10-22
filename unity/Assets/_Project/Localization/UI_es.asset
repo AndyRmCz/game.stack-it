@@ -1,0 +1,566 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_es
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: es
+  m_SharedData: {fileID: 11400000, guid: ba9b8f98b492aec40b44efeeb26b16d7, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 7678713856
+    m_Localized: JUGAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8446271488
+    m_Localized: Regalo diario
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854400
+    m_Localized: "\xBFTienes un c\xF3digo de reto?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854401
+    m_Localized: Amigos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854402
+    m_Localized: Ranking
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854403
+    m_Localized: Tienda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854404
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854405
+    m_Localized: "R\xC9CORD {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854406
+    m_Localized: TOCA PARA SOLTAR. APILA ALTO.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854407
+    m_Localized: "{0} partida(s) se sincronizar\xE1n cuando tengas conexi\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854408
+    m_Localized: Toca en cualquier lugar para soltar el bloque
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854409
+    m_Localized: "SUPERA A @{0} \xB7 {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854410
+    m_Localized: PERFECTO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854411
+    m_Localized: "PERFECTO \xD7{0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854412
+    m_Localized: "\xA1SUPERASTE A @{0}!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854413
+    m_Localized: "@{0} est\xE1 justo encima"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854414
+    m_Localized: "\xBFSeguir jugando?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854415
+    m_Localized: "CONTINUAR \xB7 VER ANUNCIO"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854416
+    m_Localized: No
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854417
+    m_Localized: "NUEVO R\xC9CORD"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854418
+    m_Localized: RETA A UN AMIGO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854419
+    m_Localized: "Duplica monedas \xB7 ver anuncio"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854420
+    m_Localized: Otra vez
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854421
+    m_Localized: Inicio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854422
+    m_Localized: "R\xC9CORD {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854423
+    m_Localized: +{0} monedas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854424
+    m_Localized: "Verificando tu partida\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854425
+    m_Localized: "Partida sin conexi\xF3n: no punt\xFAa"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854426
+    m_Localized: "Guardada. Se verificar\xE1 cuando vuelvas a tener conexi\xF3n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854427
+    m_Localized: Esta partida no se pudo verificar y no cuenta.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854428
+    m_Localized: "\xA1Superaste los {1} de @{0}!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854429
+    m_Localized: "Los {1} de @{0} siguen en pie. \xBFRevancha?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854430
+    m_Localized: "PREPARANDO CLIP\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048704
+    m_Localized: RETO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048705
+    m_Localized: "@{0} apil\xF3"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048706
+    m_Localized: "Mismos bloques, misma velocidad, sin continuar. Supera la puntuaci\xF3n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048707
+    m_Localized: "Este reto ha caducado, pero a\xFAn puedes jugar la misma torre."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048708
+    m_Localized: ACEPTAR RETO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048709
+    m_Localized: Ahora no
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048710
+    m_Localized: "C\xF3digo de reto"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048711
+    m_Localized: "Escribe el c\xF3digo del enlace o clip de tu amigo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048712
+    m_Localized: p. ej. K7QX9PA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048713
+    m_Localized: ABRIR RETO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048714
+    m_Localized: "Ese c\xF3digo no parece correcto. Rev\xEDsalo e int\xE9ntalo de
+      nuevo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048715
+    m_Localized: Amigos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048716
+    m_Localized: "Tu c\xF3digo de amigo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048717
+    m_Localized: "Compartir mi c\xF3digo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048718
+    m_Localized: "C\xF3digo de amigo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048719
+    m_Localized: "A\xF1adir"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048720
+    m_Localized: "A\xFAn no tienes amigos. Env\xEDa un reto: quien lo acepte ser\xE1
+      tu amigo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048721
+    m_Localized: "\xBFQuitar a @{0} de tus amigos?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048722
+    m_Localized: Quitar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048723
+    m_Localized: '@{0} ya es tu amigo'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048724
+    m_Localized: "\xA1Agr\xE9game en Stack IT! Mi c\xF3digo de amigo: {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048725
+    m_Localized: Ranking de amigos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048726
+    m_Localized: "Hist\xF3rico"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048727
+    m_Localized: Esta semana
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048728
+    m_Localized: Se reinicia cada lunes a las 00:00 UTC
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048729
+    m_Localized: Reta a un amigo para llenar este ranking.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048730
+    m_Localized: "{0} (t\xFA)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048731
+    m_Localized: Tienda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048732
+    m_Localized: Bloques
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048733
+    m_Localized: Temas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048734
+    m_Localized: '{0} monedas'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048735
+    m_Localized: '{0} monedas'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048736
+    m_Localized: Equipar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048737
+    m_Localized: Equipado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048738
+    m_Localized: "\xBFComprar {0} por {1} monedas?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048739
+    m_Localized: "Ne\xF3n cl\xE1sico"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048740
+    m_Localized: Cristal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048741
+    m_Localized: Magma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048742
+    m_Localized: Aurora
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048743
+    m_Localized: Circuito
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048744
+    m_Localized: Prisma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048745
+    m_Localized: Oro
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048746
+    m_Localized: Synthwave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048747
+    m_Localized: Medianoche
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048748
+    m_Localized: Atardecer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048749
+    m_Localized: Vapor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048750
+    m_Localized: Matrix
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048751
+    m_Localized: Regalo diario
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048752
+    m_Localized: "Vuelve cada d\xEDa: el regalo crece hasta el d\xEDa 7. Si fallas
+      un d\xEDa empieza de nuevo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048753
+    m_Localized: RECLAMAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048754
+    m_Localized: Te esperan {0} monedas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048755
+    m_Localized: "Vuelve ma\xF1ana por el siguiente regalo"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048756
+    m_Localized: "D\xEDa {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243008
+    m_Localized: +{0} monedas
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243009
+    m_Localized: Ajustes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243010
+    m_Localized: Nombre visible
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243011
+    m_Localized: Tu nombre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243012
+    m_Localized: Guardar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243013
+    m_Localized: Nombre guardado
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243014
+    m_Localized: Sonido
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243015
+    m_Localized: "Vibraci\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243016
+    m_Localized: Idioma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243017
+    m_Localized: Cuenta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243018
+    m_Localized: Juegas como invitado. Tu progreso se guarda en este dispositivo.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243019
+    m_Localized: Guardar progreso con Google
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243020
+    m_Localized: Guardar progreso con Apple
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243021
+    m_Localized: "\u2713 Vinculado a Google"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243022
+    m_Localized: "\u2713 Vinculado a Apple"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243023
+    m_Localized: "Cuenta vinculada. Tu progreso est\xE1 a salvo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243024
+    m_Localized: "Esa cuenta ya tiene progreso. \xBFCambiar a ella? El progreso de
+      invitado de este dispositivo se quedar\xE1 atr\xE1s."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243025
+    m_Localized: Cambiar de cuenta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243026
+    m_Localized: Opciones de privacidad (anuncios)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243027
+    m_Localized: "Pol\xEDtica de privacidad"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243028
+    m_Localized: "T\xE9rminos de uso"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243029
+    m_Localized: Eliminar cuenta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243030
+    m_Localized: Esto elimina para siempre tu cuenta, puntuaciones, monedas y aspectos.
+      No se puede deshacer.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243031
+    m_Localized: Eliminar para siempre
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243032
+    m_Localized: Cancelar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243033
+    m_Localized: "Apil\xE9 {0} en Stack IT. \xBFMe superas? C\xF3digo {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243034
+    m_Localized: "\xBFMe superas?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243035
+    m_Localized: "Los retos necesitan conexi\xF3n. Int\xE9ntalo cuando tengas internet."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243036
+    m_Localized: "No hay anuncios disponibles ahora. Int\xE9ntalo en un momento."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243037
+    m_Localized: Tu cuenta ha sido eliminada.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243038
+    m_Localized: "Tu partida a\xFAn se est\xE1 verificando. Comp\xE1rtela en un momento."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243039
+    m_Localized: "Algo sali\xF3 mal. Int\xE9ntalo de nuevo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243040
+    m_Localized: "No tienes conexi\xF3n. Revisa tu internet."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243041
+    m_Localized: "A\xFAn no tienes suficientes monedas. Juega unas partidas o reclama
+      tu regalo diario."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243042
+    m_Localized: Ya tienes esto.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243043
+    m_Localized: "Reto no encontrado. Revisa el c\xF3digo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243044
+    m_Localized: Este reto ha caducado.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243045
+    m_Localized: "Es tu propio reto. \xA1Env\xEDalo a un amigo!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243046
+    m_Localized: "Ning\xFAn jugador tiene ese c\xF3digo de amigo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243047
+    m_Localized: "Ese es tu propio c\xF3digo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243048
+    m_Localized: Ya reclamaste el regalo de hoy.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243049
+    m_Localized: "Demasiados intentos. Espera un minuto e int\xE9ntalo de nuevo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243050
+    m_Localized: "Inicio de sesi\xF3n cancelado."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243051
+    m_Localized: "No se pudo iniciar sesi\xF3n. Int\xE9ntalo de nuevo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243052
+    m_Localized: "Esta opci\xF3n de inicio de sesi\xF3n no est\xE1 disponible en
+      este dispositivo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243053
+    m_Localized: "Esta cuenta ya est\xE1 vinculada."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243054
+    m_Localized: Solo las partidas verificadas se pueden compartir como reto.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243055
+    m_Localized: "Usa de 3 a 20 letras, n\xFAmeros, espacios, _ . o -."
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

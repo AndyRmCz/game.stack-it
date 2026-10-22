@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2543c722083542c6b605708023c4a0da, type: 3}
+  m_Name: AdsConfig
+  m_EditorClassIdentifier: StackIt.Runtime::StackIt.Bootstrap.AdsConfig
+  adsEnabled: 1
+  androidRewarded: ca-app-pub-3940256099942544/5224354917
+  androidInterstitial: ca-app-pub-3940256099942544/1033173712
+  androidBanner: ca-app-pub-3940256099942544/6300978111
+  iosRewarded: ca-app-pub-3940256099942544/1712485313
+  iosInterstitial: ca-app-pub-3940256099942544/4411468910
+  iosBanner: ca-app-pub-3940256099942544/2934735716
+  interstitialMinRuns: 3
+  interstitialMinSeconds: 90
+  debugForceEeaConsent: 0

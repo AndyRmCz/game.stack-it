@@ -134,13 +134,15 @@ namespace StackIt.UI
             return label;
         }
 
-        /// <summary>Display numerals: tight, bold, with a soft glow in the given color.</summary>
-        public static TextMeshProUGUI Display(Transform parent, string text, float size, Color color)
+        /// <summary>Display numerals: tight, bold, with a soft glow (defaults to the text color).</summary>
+        public static TextMeshProUGUI Display(Transform parent, string text, float size, Color color,
+            Color? glow = null, float glowWidth = 0.12f)
         {
             TextMeshProUGUI label = Label(parent, text, size, color, TextAlignmentOptions.Center, true);
             label.characterSpacing = -2f;
-            label.outlineWidth = 0.12f;
-            label.outlineColor = new Color(color.r, color.g, color.b, 0.35f);
+            var textGlow = label.gameObject.AddComponent<TextGlow>();
+            textGlow.Width = glowWidth;
+            textGlow.Color = glow ?? new Color(color.r, color.g, color.b, 0.35f);
             return label;
         }
 

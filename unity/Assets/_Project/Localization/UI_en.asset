@@ -1,0 +1,563 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: ba9b8f98b492aec40b44efeeb26b16d7, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 7678713856
+    m_Localized: PLAY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8446271488
+    m_Localized: Daily gift
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854400
+    m_Localized: Got a challenge code?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854401
+    m_Localized: Friends
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854402
+    m_Localized: Ranks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854403
+    m_Localized: Shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854404
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854405
+    m_Localized: BEST {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854406
+    m_Localized: TAP TO DROP. STACK HIGH.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854407
+    m_Localized: '{0} run(s) will sync when you''re online'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854408
+    m_Localized: Tap anywhere to drop the block
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854409
+    m_Localized: "BEAT @{0} \xB7 {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854410
+    m_Localized: PERFECT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854411
+    m_Localized: "PERFECT \xD7{0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854412
+    m_Localized: YOU PASSED @{0}!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854413
+    m_Localized: '@{0} is right above you'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854414
+    m_Localized: Keep going?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854415
+    m_Localized: "CONTINUE \xB7 WATCH AD"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854416
+    m_Localized: No thanks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854417
+    m_Localized: NEW RECORD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854418
+    m_Localized: CHALLENGE A FRIEND
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854419
+    m_Localized: "Double coins \xB7 watch ad"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854420
+    m_Localized: Play again
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854421
+    m_Localized: Home
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854422
+    m_Localized: BEST {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854423
+    m_Localized: +{0} coins
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854424
+    m_Localized: "Verifying your run\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854425
+    m_Localized: 'Offline run: not ranked'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854426
+    m_Localized: Saved. It will be verified when you're back online.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854427
+    m_Localized: This run could not be verified and does not count.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854428
+    m_Localized: You beat @{0}'s {1}!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854429
+    m_Localized: '@{0}''s {1} still stands. Rematch?'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8458854430
+    m_Localized: "PREPARING CLIP\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048704
+    m_Localized: CHALLENGE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048705
+    m_Localized: '@{0} stacked'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048706
+    m_Localized: Same blocks, same speed, no continues. Beat the score.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048707
+    m_Localized: This challenge has expired, but you can still play the same tower.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048708
+    m_Localized: ACCEPT CHALLENGE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048709
+    m_Localized: Not now
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048710
+    m_Localized: Challenge code
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048711
+    m_Localized: Type the code from your friend's link or clip.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048712
+    m_Localized: e.g. K7QX9PA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048713
+    m_Localized: OPEN CHALLENGE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048714
+    m_Localized: That code doesn't look right. Check it and try again.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048715
+    m_Localized: Friends
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048716
+    m_Localized: Your friend code
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048717
+    m_Localized: Share my code
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048718
+    m_Localized: Friend code
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048719
+    m_Localized: Add
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048720
+    m_Localized: 'No friends yet. Send a challenge: whoever accepts becomes your
+      friend.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048721
+    m_Localized: Remove @{0} from your friends?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048722
+    m_Localized: Remove
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048723
+    m_Localized: '@{0} is now your friend'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048724
+    m_Localized: 'Add me on Stack IT! My friend code: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048725
+    m_Localized: Friends ranking
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048726
+    m_Localized: All time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048727
+    m_Localized: This week
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048728
+    m_Localized: Resets every Monday at 00:00 UTC
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048729
+    m_Localized: Challenge a friend to fill this board.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048730
+    m_Localized: '{0} (you)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048731
+    m_Localized: Shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048732
+    m_Localized: Blocks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048733
+    m_Localized: Themes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048734
+    m_Localized: '{0} coins'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048735
+    m_Localized: '{0} coins'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048736
+    m_Localized: Equip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048737
+    m_Localized: Equipped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048738
+    m_Localized: Buy {0} for {1} coins?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048739
+    m_Localized: Classic Neon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048740
+    m_Localized: Glass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048741
+    m_Localized: Magma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048742
+    m_Localized: Aurora
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048743
+    m_Localized: Circuit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048744
+    m_Localized: Prism
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048745
+    m_Localized: Gold
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048746
+    m_Localized: Synthwave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048747
+    m_Localized: Midnight
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048748
+    m_Localized: Sunset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048749
+    m_Localized: Vapor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048750
+    m_Localized: Matrix
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048751
+    m_Localized: Daily gift
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048752
+    m_Localized: 'Come back every day: the gift grows until day 7. Miss a day and
+      it starts over.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048753
+    m_Localized: CLAIM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048754
+    m_Localized: '{0} coins are waiting'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048755
+    m_Localized: Come back tomorrow for the next gift
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8463048756
+    m_Localized: Day {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243008
+    m_Localized: +{0} coins
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243009
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243010
+    m_Localized: Display name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243011
+    m_Localized: Your name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243012
+    m_Localized: Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243013
+    m_Localized: Name saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243014
+    m_Localized: Sound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243015
+    m_Localized: Vibration
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243016
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243017
+    m_Localized: Account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243018
+    m_Localized: You're playing as a guest. Your progress is saved on this device.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243019
+    m_Localized: Keep progress with Google
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243020
+    m_Localized: Keep progress with Apple
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243021
+    m_Localized: "\u2713 Linked to Google"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243022
+    m_Localized: "\u2713 Linked to Apple"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243023
+    m_Localized: Account linked. Your progress is safe.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243024
+    m_Localized: That account already has progress. Switch to it? Guest progress
+      on this device will be left behind.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243025
+    m_Localized: Switch account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243026
+    m_Localized: Privacy choices (ads)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243027
+    m_Localized: Privacy policy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243028
+    m_Localized: Terms of use
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243029
+    m_Localized: Delete account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243030
+    m_Localized: This permanently deletes your account, scores, coins and skins.
+      It cannot be undone.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243031
+    m_Localized: Delete forever
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243032
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243033
+    m_Localized: I stacked {0} in Stack IT. Can you beat me? Code {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243034
+    m_Localized: Can you beat me?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243035
+    m_Localized: Challenges need a connection. Try again when you're online.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243036
+    m_Localized: No ad available right now. Try again in a moment.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243037
+    m_Localized: Your account has been deleted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243038
+    m_Localized: Your run is still being verified. Share it in a moment.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243039
+    m_Localized: Something went wrong. Please try again.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243040
+    m_Localized: You're offline. Check your connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243041
+    m_Localized: Not enough coins yet. Play a few runs or claim your daily gift.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243042
+    m_Localized: You already own this.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243043
+    m_Localized: Challenge not found. Check the code.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243044
+    m_Localized: This challenge has expired.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243045
+    m_Localized: That's your own challenge. Send it to a friend!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243046
+    m_Localized: No player has that friend code.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243047
+    m_Localized: That's your own code.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243048
+    m_Localized: You already claimed today's gift.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243049
+    m_Localized: Too many attempts. Wait a minute and try again.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243050
+    m_Localized: Sign-in cancelled.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243051
+    m_Localized: Sign-in failed. Please try again.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243052
+    m_Localized: This sign-in option isn't available on this device.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243053
+    m_Localized: This account is already linked.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243054
+    m_Localized: Only verified runs can be shared as challenges.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8467243055
+    m_Localized: "Use 3\u201320 letters, digits, spaces, _ . or -."
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
