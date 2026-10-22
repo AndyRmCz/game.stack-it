@@ -1,0 +1,51 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "shared/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "shared/**"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: stackit
+          POSTGRES_PASSWORD: stackit
+          POSTGRES_DB: stackit_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U stackit -d stackit_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://stackit:stackit@localhost:5432/stackit_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest
+      # The test run leaves the test DB at head: fail if models and migrations drifted apart.
+      - run: uv run alembic check
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}

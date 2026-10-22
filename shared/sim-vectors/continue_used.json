@@ -1,0 +1,437 @@
+{
+ "name": "continue_used",
+ "description": "Miss, rewarded continue, then another miss",
+ "sim_version": 1,
+ "seed": 7,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 50,
+   "type": "tap"
+  },
+  {
+   "t": 98,
+   "type": "tap"
+  },
+  {
+   "t": 146,
+   "type": "tap"
+  },
+  {
+   "t": 195,
+   "type": "tap"
+  },
+  {
+   "t": 239,
+   "type": "tap"
+  },
+  {
+   "t": 282,
+   "type": "tap"
+  },
+  {
+   "t": 326,
+   "type": "tap"
+  },
+  {
+   "t": 370,
+   "type": "tap"
+  },
+  {
+   "t": 411,
+   "type": "tap"
+  },
+  {
+   "t": 452,
+   "type": "tap"
+  },
+  {
+   "t": 518,
+   "type": "tap"
+  },
+  {
+   "t": 563,
+   "type": "continue"
+  },
+  {
+   "t": 601,
+   "type": "tap"
+  },
+  {
+   "t": 640,
+   "type": "tap"
+  },
+  {
+   "t": 677,
+   "type": "tap"
+  },
+  {
+   "t": 718,
+   "type": "tap"
+  },
+  {
+   "t": 759,
+   "type": "tap"
+  },
+  {
+   "t": 795,
+   "type": "tap"
+  },
+  {
+   "t": 834,
+   "type": "tap"
+  },
+  {
+   "t": 871,
+   "type": "tap"
+  },
+  {
+   "t": 909,
+   "type": "tap"
+  },
+  {
+   "t": 952,
+   "type": "tap"
+  },
+  {
+   "t": 1013,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": null,
+  "steps": [
+   {
+    "kind": "place",
+    "n": 1,
+    "t": 50,
+    "axis": "x",
+    "offset": -450,
+    "x0": -15000,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 2
+   },
+   {
+    "kind": "place",
+    "n": 2,
+    "t": 98,
+    "axis": "z",
+    "offset": 3912,
+    "x0": -15000,
+    "x1": 15000,
+    "z0": -11088,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 3
+   },
+   {
+    "kind": "place",
+    "n": 3,
+    "t": 146,
+    "axis": "x",
+    "offset": -1416,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -11088,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 4
+   },
+   {
+    "kind": "place",
+    "n": 4,
+    "t": 195,
+    "axis": "z",
+    "offset": 1403,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 5
+   },
+   {
+    "kind": "place",
+    "n": 5,
+    "t": 239,
+    "axis": "x",
+    "offset": -692,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 7
+   },
+   {
+    "kind": "place",
+    "n": 6,
+    "t": 282,
+    "axis": "z",
+    "offset": -64,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 10
+   },
+   {
+    "kind": "place",
+    "n": 7,
+    "t": 326,
+    "axis": "x",
+    "offset": -648,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 14
+   },
+   {
+    "kind": "place",
+    "n": 8,
+    "t": 370,
+    "axis": "z",
+    "offset": -1684,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 15
+   },
+   {
+    "kind": "place",
+    "n": 9,
+    "t": 411,
+    "axis": "x",
+    "offset": -387,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 17
+   },
+   {
+    "kind": "place",
+    "n": 10,
+    "t": 452,
+    "axis": "z",
+    "offset": -305,
+    "x0": -15000,
+    "x1": 13584,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 20
+   },
+   {
+    "kind": "miss",
+    "n": 11,
+    "t": 518,
+    "axis": "x",
+    "offset": 30438,
+    "score": 20
+   },
+   {
+    "kind": "continue",
+    "n": 11,
+    "t": 563,
+    "score": 20
+   },
+   {
+    "kind": "place",
+    "n": 11,
+    "t": 601,
+    "axis": "x",
+    "offset": -1528,
+    "x0": -15000,
+    "x1": 12056,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 21
+   },
+   {
+    "kind": "place",
+    "n": 12,
+    "t": 640,
+    "axis": "z",
+    "offset": 669,
+    "x0": -15000,
+    "x1": 12056,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 23
+   },
+   {
+    "kind": "place",
+    "n": 13,
+    "t": 677,
+    "axis": "x",
+    "offset": -1784,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -9685,
+    "z1": 13316,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 24
+   },
+   {
+    "kind": "place",
+    "n": 14,
+    "t": 718,
+    "axis": "z",
+    "offset": 3339,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -6346,
+    "z1": 13316,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 25
+   },
+   {
+    "kind": "place",
+    "n": 15,
+    "t": 759,
+    "axis": "x",
+    "offset": -1002,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -6346,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 27
+   },
+   {
+    "kind": "place",
+    "n": 16,
+    "t": 795,
+    "axis": "z",
+    "offset": 2736,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -3610,
+    "z1": 13316,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 28
+   },
+   {
+    "kind": "place",
+    "n": 17,
+    "t": 834,
+    "axis": "x",
+    "offset": 864,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -3610,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 30
+   },
+   {
+    "kind": "place",
+    "n": 18,
+    "t": 871,
+    "axis": "z",
+    "offset": 436,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -3610,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 33
+   },
+   {
+    "kind": "place",
+    "n": 19,
+    "t": 909,
+    "axis": "x",
+    "offset": -942,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -3610,
+    "z1": 13316,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 37
+   },
+   {
+    "kind": "place",
+    "n": 20,
+    "t": 952,
+    "axis": "z",
+    "offset": -3977,
+    "x0": -15000,
+    "x1": 10272,
+    "z0": -3610,
+    "z1": 9339,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 38
+   },
+   {
+    "kind": "miss",
+    "n": 21,
+    "t": 1013,
+    "axis": "x",
+    "offset": 27163,
+    "score": 38
+   }
+  ],
+  "final": {
+   "score": 38,
+   "placed": 20,
+   "perfects": 11,
+   "max_combo": 3,
+   "continues_used": 1,
+   "ended": true,
+   "tick": 1013
+  }
+ }
+}

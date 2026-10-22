@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Compile-only check of the Unity runtime scripts (Scripts/Game, Services, UI, Bootstrap)
+    against the installed editor's engine assemblies and its bundled uGUI/TextMeshPro sources.
+    Catches API and namespace mistakes without a Unity license. Needs a local Unity install:
+      dotnet build unity/DotNetTests/CompileCheck/Game -p:UnityEditorData="<Unity>/Editor/Data"
+    Files that touch URP, Localization, Input System or AdMob are excluded (their packages are
+    not compiled here); keep those files small.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <NoStdLib>true</NoStdLib>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS0618;CS0649;CS0414;CS0067;CS0169;CS0109;CS0108;CS0114;CS1998;CS0672;CS8632;CS0436</NoWarn>
+    <UnityEditorData Condition="'$(UnityEditorData)' == ''">C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data</UnityEditorData>
+    <UGUI>$(UnityEditorData)/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime</UGUI>
+    <DefineConstants>UNITY_2017_1_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_2023_3_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_6000_3_OR_NEWER;UNITY_6000_4_OR_NEWER;UNITY_6000_5_OR_NEWER;PACKAGE_PHYSICS;PACKAGE_ANIMATION</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(UnityEditorData)/NetStandard/ref/2.1.0/netstandard.dll" Private="false" />
+    <Reference Include="$(UnityEditorData)/Managed/UnityEngine/UnityEngine.*Module.dll" Private="false" />
+    <Reference Include="$(UnityEditorData)/Managed/UnityEngine/UnityEngine.dll" Private="false" />
+    <Reference Include="$(UnityEditorData)/Managed/UnityEngine/Unity.Scripting.dll" Private="false" />
+  </ItemGroup>
+</Project>

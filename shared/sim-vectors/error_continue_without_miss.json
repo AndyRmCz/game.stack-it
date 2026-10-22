@@ -1,0 +1,16 @@
+{
+ "name": "error_continue_without_miss",
+ "description": "Continue while still playing",
+ "sim_version": 1,
+ "seed": 5,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 60,
+   "type": "continue"
+  }
+ ],
+ "expected": {
+  "error": "continue_without_miss"
+ }
+}

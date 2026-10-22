@@ -1,0 +1,738 @@
+{
+ "name": "mixed_slices",
+ "description": "Random slices and perfects until a miss",
+ "sim_version": 1,
+ "seed": 3735928559,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 49,
+   "type": "tap"
+  },
+  {
+   "t": 94,
+   "type": "tap"
+  },
+  {
+   "t": 137,
+   "type": "tap"
+  },
+  {
+   "t": 180,
+   "type": "tap"
+  },
+  {
+   "t": 224,
+   "type": "tap"
+  },
+  {
+   "t": 264,
+   "type": "tap"
+  },
+  {
+   "t": 304,
+   "type": "tap"
+  },
+  {
+   "t": 345,
+   "type": "tap"
+  },
+  {
+   "t": 388,
+   "type": "tap"
+  },
+  {
+   "t": 434,
+   "type": "tap"
+  },
+  {
+   "t": 473,
+   "type": "tap"
+  },
+  {
+   "t": 516,
+   "type": "tap"
+  },
+  {
+   "t": 554,
+   "type": "tap"
+  },
+  {
+   "t": 597,
+   "type": "tap"
+  },
+  {
+   "t": 636,
+   "type": "tap"
+  },
+  {
+   "t": 675,
+   "type": "tap"
+  },
+  {
+   "t": 715,
+   "type": "tap"
+  },
+  {
+   "t": 753,
+   "type": "tap"
+  },
+  {
+   "t": 794,
+   "type": "tap"
+  },
+  {
+   "t": 832,
+   "type": "tap"
+  },
+  {
+   "t": 868,
+   "type": "tap"
+  },
+  {
+   "t": 908,
+   "type": "tap"
+  },
+  {
+   "t": 943,
+   "type": "tap"
+  },
+  {
+   "t": 981,
+   "type": "tap"
+  },
+  {
+   "t": 1012,
+   "type": "tap"
+  },
+  {
+   "t": 1048,
+   "type": "tap"
+  },
+  {
+   "t": 1082,
+   "type": "tap"
+  },
+  {
+   "t": 1117,
+   "type": "tap"
+  },
+  {
+   "t": 1152,
+   "type": "tap"
+  },
+  {
+   "t": 1188,
+   "type": "tap"
+  },
+  {
+   "t": 1223,
+   "type": "tap"
+  },
+  {
+   "t": 1258,
+   "type": "tap"
+  },
+  {
+   "t": 1290,
+   "type": "tap"
+  },
+  {
+   "t": 1323,
+   "type": "tap"
+  },
+  {
+   "t": 1355,
+   "type": "tap"
+  },
+  {
+   "t": 1386,
+   "type": "tap"
+  },
+  {
+   "t": 1416,
+   "type": "tap"
+  },
+  {
+   "t": 1449,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": null,
+  "steps": [
+   {
+    "kind": "place",
+    "n": 1,
+    "t": 49,
+    "axis": "x",
+    "offset": 3902,
+    "x0": -11098,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 1
+   },
+   {
+    "kind": "place",
+    "n": 2,
+    "t": 94,
+    "axis": "z",
+    "offset": 3195,
+    "x0": -11098,
+    "x1": 15000,
+    "z0": -11805,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 2
+   },
+   {
+    "kind": "place",
+    "n": 3,
+    "t": 137,
+    "axis": "x",
+    "offset": -2172,
+    "x0": -11098,
+    "x1": 12828,
+    "z0": -11805,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 3
+   },
+   {
+    "kind": "place",
+    "n": 4,
+    "t": 180,
+    "axis": "z",
+    "offset": -1139,
+    "x0": -11098,
+    "x1": 12828,
+    "z0": -11805,
+    "z1": 13861,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 4
+   },
+   {
+    "kind": "place",
+    "n": 5,
+    "t": 224,
+    "axis": "x",
+    "offset": 936,
+    "x0": -11098,
+    "x1": 12828,
+    "z0": -11805,
+    "z1": 13861,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 6
+   },
+   {
+    "kind": "place",
+    "n": 6,
+    "t": 264,
+    "axis": "z",
+    "offset": -4160,
+    "x0": -11098,
+    "x1": 12828,
+    "z0": -11805,
+    "z1": 9701,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 7
+   },
+   {
+    "kind": "place",
+    "n": 7,
+    "t": 304,
+    "axis": "x",
+    "offset": 3400,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -11805,
+    "z1": 9701,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 8
+   },
+   {
+    "kind": "place",
+    "n": 8,
+    "t": 345,
+    "axis": "z",
+    "offset": 2278,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -9527,
+    "z1": 9701,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 9
+   },
+   {
+    "kind": "place",
+    "n": 9,
+    "t": 388,
+    "axis": "x",
+    "offset": -193,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -9527,
+    "z1": 9701,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 11
+   },
+   {
+    "kind": "place",
+    "n": 10,
+    "t": 434,
+    "axis": "z",
+    "offset": -1414,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -9527,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 12
+   },
+   {
+    "kind": "place",
+    "n": 11,
+    "t": 473,
+    "axis": "x",
+    "offset": -279,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -9527,
+    "z1": 8287,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 14
+   },
+   {
+    "kind": "place",
+    "n": 12,
+    "t": 516,
+    "axis": "z",
+    "offset": 4321,
+    "x0": -7698,
+    "x1": 12828,
+    "z0": -5206,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 15
+   },
+   {
+    "kind": "place",
+    "n": 13,
+    "t": 554,
+    "axis": "x",
+    "offset": 3238,
+    "x0": -4460,
+    "x1": 12828,
+    "z0": -5206,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 16
+   },
+   {
+    "kind": "place",
+    "n": 14,
+    "t": 597,
+    "axis": "z",
+    "offset": 1913,
+    "x0": -4460,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 17
+   },
+   {
+    "kind": "place",
+    "n": 15,
+    "t": 636,
+    "axis": "x",
+    "offset": 1176,
+    "x0": -3284,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 18
+   },
+   {
+    "kind": "place",
+    "n": 16,
+    "t": 675,
+    "axis": "z",
+    "offset": 396,
+    "x0": -3284,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 8287,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 20
+   },
+   {
+    "kind": "place",
+    "n": 17,
+    "t": 715,
+    "axis": "x",
+    "offset": 2600,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 8287,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 21
+   },
+   {
+    "kind": "place",
+    "n": 18,
+    "t": 753,
+    "axis": "z",
+    "offset": -1338,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 22
+   },
+   {
+    "kind": "place",
+    "n": 19,
+    "t": 794,
+    "axis": "x",
+    "offset": -961,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 24
+   },
+   {
+    "kind": "place",
+    "n": 20,
+    "t": 832,
+    "axis": "z",
+    "offset": -714,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 27
+   },
+   {
+    "kind": "place",
+    "n": 21,
+    "t": 868,
+    "axis": "x",
+    "offset": 396,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -3293,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 31
+   },
+   {
+    "kind": "place",
+    "n": 22,
+    "t": 908,
+    "axis": "z",
+    "offset": 2680,
+    "x0": -684,
+    "x1": 12828,
+    "z0": -613,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 32
+   },
+   {
+    "kind": "place",
+    "n": 23,
+    "t": 943,
+    "axis": "x",
+    "offset": 2160,
+    "x0": 1476,
+    "x1": 12828,
+    "z0": -613,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 33
+   },
+   {
+    "kind": "place",
+    "n": 24,
+    "t": 981,
+    "axis": "z",
+    "offset": 676,
+    "x0": 1476,
+    "x1": 12828,
+    "z0": -613,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 35
+   },
+   {
+    "kind": "place",
+    "n": 25,
+    "t": 1012,
+    "axis": "x",
+    "offset": -4483,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": -613,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 36
+   },
+   {
+    "kind": "place",
+    "n": 26,
+    "t": 1048,
+    "axis": "z",
+    "offset": 2232,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 1619,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 37
+   },
+   {
+    "kind": "place",
+    "n": 27,
+    "t": 1082,
+    "axis": "x",
+    "offset": 84,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 1619,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 39
+   },
+   {
+    "kind": "place",
+    "n": 28,
+    "t": 1117,
+    "axis": "z",
+    "offset": 220,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 1619,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 42
+   },
+   {
+    "kind": "place",
+    "n": 29,
+    "t": 1152,
+    "axis": "x",
+    "offset": 430,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 1619,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 46
+   },
+   {
+    "kind": "place",
+    "n": 30,
+    "t": 1188,
+    "axis": "z",
+    "offset": 1908,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 3527,
+    "z1": 6949,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 47
+   },
+   {
+    "kind": "place",
+    "n": 31,
+    "t": 1223,
+    "axis": "x",
+    "offset": -605,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 3527,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 49
+   },
+   {
+    "kind": "place",
+    "n": 32,
+    "t": 1258,
+    "axis": "z",
+    "offset": 45,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 3527,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 52
+   },
+   {
+    "kind": "place",
+    "n": 33,
+    "t": 1290,
+    "axis": "x",
+    "offset": -728,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 3527,
+    "z1": 6949,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 56
+   },
+   {
+    "kind": "place",
+    "n": 34,
+    "t": 1323,
+    "axis": "z",
+    "offset": -606,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 2777,
+    "z1": 7699,
+    "perfect": true,
+    "combo": 4,
+    "gained": 5,
+    "score": 61
+   },
+   {
+    "kind": "place",
+    "n": 35,
+    "t": 1355,
+    "axis": "x",
+    "offset": -88,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 2777,
+    "z1": 7699,
+    "perfect": true,
+    "combo": 5,
+    "gained": 6,
+    "score": 67
+   },
+   {
+    "kind": "place",
+    "n": 36,
+    "t": 1386,
+    "axis": "z",
+    "offset": 2313,
+    "x0": 1476,
+    "x1": 8345,
+    "z0": 5090,
+    "z1": 7699,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 68
+   },
+   {
+    "kind": "place",
+    "n": 37,
+    "t": 1416,
+    "axis": "x",
+    "offset": 1920,
+    "x0": 3396,
+    "x1": 8345,
+    "z0": 5090,
+    "z1": 7699,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 69
+   },
+   {
+    "kind": "miss",
+    "n": 38,
+    "t": 1449,
+    "axis": "z",
+    "offset": 3972,
+    "score": 69
+   }
+  ],
+  "final": {
+   "score": 69,
+   "placed": 37,
+   "perfects": 16,
+   "max_combo": 5,
+   "continues_used": 0,
+   "ended": true,
+   "tick": 1449
+  }
+ }
+}

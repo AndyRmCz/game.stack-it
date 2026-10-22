@@ -1,0 +1,20 @@
+{
+ "name": "error_out_of_order",
+ "description": "Event ticks going backwards",
+ "sim_version": 1,
+ "seed": 5,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 90,
+   "type": "tap"
+  },
+  {
+   "t": 80,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": "events_out_of_order"
+ }
+}

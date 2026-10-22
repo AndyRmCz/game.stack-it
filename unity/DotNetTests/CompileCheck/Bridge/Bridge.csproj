@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><AssemblyName>Unity.InternalAPIEngineBridge.004</AssemblyName></PropertyGroup>
+  <ItemGroup><Compile Include="$(UGUI)/InternalBridge/**/*.cs" /></ItemGroup>
+</Project>

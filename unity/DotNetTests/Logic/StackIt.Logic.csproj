@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the engine-free Unity assemblies (Core, Client) as a .NET Standard 2.1 library with
+    C# 9, the same API surface and language level Unity 6 uses. Lets CI and machines without the
+    Unity editor build and test the simulation.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/_Project/Scripts/Core/**/*.cs" />
+    <Compile Include="../../Assets/_Project/Scripts/Client/**/*.cs" />
+  </ItemGroup>
+</Project>

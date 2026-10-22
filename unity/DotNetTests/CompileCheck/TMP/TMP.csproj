@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><AssemblyName>Unity.TextMeshPro</AssemblyName></PropertyGroup>
+  <ItemGroup><Compile Include="$(UGUI)/TMP/**/*.cs" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../UGUI/UGUI.csproj" />
+    <ProjectReference Include="../Bridge/Bridge.csproj" />
+  </ItemGroup>
+</Project>

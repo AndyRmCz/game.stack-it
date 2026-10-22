@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><AssemblyName>StackIt.Runtime</AssemblyName></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/_Project/Scripts/**/*.cs"
+             Exclude="../../../Assets/_Project/Scripts/Core/**;../../../Assets/_Project/Scripts/Client/**;../../../Assets/_Project/Scripts/Editor/**;../../../Assets/_Project/Scripts/Integrations/UrpPostFx.cs;../../../Assets/_Project/Scripts/Integrations/UnityLocalizer.cs" />
+    <!-- Same-signature stand-ins for the URP and Localization integrations (packages not compiled here). -->
+    <Compile Include="IntegrationStubs.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../UGUI/UGUI.csproj" />
+    <ProjectReference Include="../TMP/TMP.csproj" />
+    <ProjectReference Include="../InputSystem/InputSystem.csproj" />
+    <ProjectReference Include="../../Logic/StackIt.Logic.csproj" />
+    <!-- Unity's com.unity.nuget.newtonsoft-json 3.2.2 ships Json.NET 13.0.2. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+</Project>

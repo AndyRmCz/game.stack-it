@@ -1,0 +1,16 @@
+{
+ "name": "error_tap_too_early",
+ "description": "Tap before MIN_TAP_GAP_TICKS",
+ "sim_version": 1,
+ "seed": 5,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 5,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": "tap_too_early"
+ }
+}

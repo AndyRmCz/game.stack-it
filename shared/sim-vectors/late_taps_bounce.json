@@ -1,0 +1,187 @@
+{
+ "name": "late_taps_bounce",
+ "description": "Taps after the block bounced at the travel edges",
+ "sim_version": 1,
+ "seed": 2024,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 220,
+   "type": "tap"
+  },
+  {
+   "t": 449,
+   "type": "tap"
+  },
+  {
+   "t": 748,
+   "type": "tap"
+  },
+  {
+   "t": 1046,
+   "type": "tap"
+  },
+  {
+   "t": 1421,
+   "type": "tap"
+  },
+  {
+   "t": 1795,
+   "type": "tap"
+  },
+  {
+   "t": 2184,
+   "type": "tap"
+  },
+  {
+   "t": 2623,
+   "type": "tap"
+  },
+  {
+   "t": 2694,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": null,
+  "steps": [
+   {
+    "kind": "place",
+    "n": 1,
+    "t": 220,
+    "axis": "x",
+    "offset": 1040,
+    "x0": -13960,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 1
+   },
+   {
+    "kind": "place",
+    "n": 2,
+    "t": 449,
+    "axis": "z",
+    "offset": 565,
+    "x0": -13960,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 3
+   },
+   {
+    "kind": "place",
+    "n": 3,
+    "t": 748,
+    "axis": "x",
+    "offset": 153,
+    "x0": -13960,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 6
+   },
+   {
+    "kind": "place",
+    "n": 4,
+    "t": 1046,
+    "axis": "z",
+    "offset": 284,
+    "x0": -13960,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 10
+   },
+   {
+    "kind": "place",
+    "n": 5,
+    "t": 1421,
+    "axis": "x",
+    "offset": 2250,
+    "x0": -11710,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 11
+   },
+   {
+    "kind": "place",
+    "n": 6,
+    "t": 1795,
+    "axis": "z",
+    "offset": -42,
+    "x0": -11710,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 13
+   },
+   {
+    "kind": "place",
+    "n": 7,
+    "t": 2184,
+    "axis": "x",
+    "offset": 1505,
+    "x0": -10205,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 14
+   },
+   {
+    "kind": "place",
+    "n": 8,
+    "t": 2623,
+    "axis": "z",
+    "offset": -631,
+    "x0": -10205,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 16
+   },
+   {
+    "kind": "miss",
+    "n": 9,
+    "t": 2694,
+    "axis": "x",
+    "offset": 26639,
+    "score": 16
+   }
+  ],
+  "final": {
+   "score": 16,
+   "placed": 8,
+   "perfects": 5,
+   "max_combo": 3,
+   "continues_used": 0,
+   "ended": true,
+   "tick": 2694
+  }
+ }
+}

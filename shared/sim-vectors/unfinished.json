@@ -1,0 +1,118 @@
+{
+ "name": "unfinished",
+ "description": "Run without a final miss (not ended)",
+ "sim_version": 1,
+ "seed": 31337,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 43,
+   "type": "tap"
+  },
+  {
+   "t": 89,
+   "type": "tap"
+  },
+  {
+   "t": 135,
+   "type": "tap"
+  },
+  {
+   "t": 180,
+   "type": "tap"
+  },
+  {
+   "t": 227,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": null,
+  "steps": [
+   {
+    "kind": "place",
+    "n": 1,
+    "t": 43,
+    "axis": "x",
+    "offset": 1011,
+    "x0": -13989,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 1
+   },
+   {
+    "kind": "place",
+    "n": 2,
+    "t": 89,
+    "axis": "z",
+    "offset": -402,
+    "x0": -13989,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 3
+   },
+   {
+    "kind": "place",
+    "n": 3,
+    "t": 135,
+    "axis": "x",
+    "offset": -540,
+    "x0": -13989,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 6
+   },
+   {
+    "kind": "place",
+    "n": 4,
+    "t": 180,
+    "axis": "z",
+    "offset": 90,
+    "x0": -13989,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 10
+   },
+   {
+    "kind": "place",
+    "n": 5,
+    "t": 227,
+    "axis": "x",
+    "offset": -1859,
+    "x0": -13989,
+    "x1": 13141,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 11
+   }
+  ],
+  "final": {
+   "score": 11,
+   "placed": 5,
+   "perfects": 3,
+   "max_combo": 3,
+   "continues_used": 0,
+   "ended": false,
+   "tick": 227
+  }
+ }
+}

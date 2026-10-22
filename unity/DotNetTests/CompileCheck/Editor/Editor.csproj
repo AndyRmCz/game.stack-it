@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Editor scripts. StringsImporter.cs (Localization editor API) is not compiled here. -->
+  <PropertyGroup>
+    <AssemblyName>StackIt.Editor</AssemblyName>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/_Project/Scripts/Editor/**/*.cs" Exclude="../../../Assets/_Project/Scripts/Editor/StringsImporter.cs" />
+    <Compile Include="EditorStubs.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(UnityEditorData)/Managed/UnityEngine/UnityEditor.dll" Private="false" />
+    <Reference Include="$(UnityEditorData)/Managed/UnityEngine/UnityEditor.*Module.dll" Private="false" />
+    <ProjectReference Include="../Game/Game.csproj" />
+    <ProjectReference Include="../TMP/TMP.csproj" />
+    <ProjectReference Include="../../Logic/StackIt.Logic.csproj" />
+  </ItemGroup>
+</Project>

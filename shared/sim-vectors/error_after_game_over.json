@@ -1,0 +1,24 @@
+{
+ "name": "error_after_game_over",
+ "description": "Tap after a miss without continue",
+ "sim_version": 1,
+ "seed": 81,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 49,
+   "type": "tap"
+  },
+  {
+   "t": 121,
+   "type": "tap"
+  },
+  {
+   "t": 151,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": "event_after_game_over"
+ }
+}

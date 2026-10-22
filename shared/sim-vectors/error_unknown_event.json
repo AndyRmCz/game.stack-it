@@ -1,0 +1,16 @@
+{
+ "name": "error_unknown_event",
+ "description": "Unknown event type",
+ "sim_version": 1,
+ "seed": 5,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 60,
+   "type": "jump"
+  }
+ ],
+ "expected": {
+  "error": "unknown_event"
+ }
+}

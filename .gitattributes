@@ -1,0 +1,31 @@
+# Normalize text to LF in the repo (the team works on Windows and macOS).
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Unity YAML assets: merge with Unity's Smart Merge (see SETUP.md), never as plain text.
+*.unity    text merge=unityyamlmerge eol=lf
+*.prefab   text merge=unityyamlmerge eol=lf
+*.asset    text merge=unityyamlmerge eol=lf
+*.mat      text merge=unityyamlmerge eol=lf
+*.anim     text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.meta     text eol=lf
+
+# Binary assets.
+*.png  binary
+*.jpg  binary
+*.psd  binary
+*.wav  binary
+*.ogg  binary
+*.mp3  binary
+*.mp4  binary
+*.ttf  binary
+*.otf  binary
+*.fbx  binary
+*.aar  binary
+*.jar  binary
+*.a    binary

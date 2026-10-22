@@ -1,0 +1,148 @@
+key,en,es
+# Home
+home.play,PLAY,JUGAR
+home.daily,Daily gift,Regalo diario
+home.have_code,Got a challenge code?,¿Tienes un código de reto?
+home.friends,Friends,Amigos
+home.ranks,Ranks,Ranking
+home.shop,Shop,Tienda
+home.settings,Settings,Ajustes
+home.best,BEST {0},RÉCORD {0}
+home.tagline,TAP TO DROP. STACK HIGH.,TOCA PARA SOLTAR. APILA ALTO.
+home.pending,{0} run(s) will sync when you're online,{0} partida(s) se sincronizarán cuando tengas conexión
+# HUD
+hud.tap_hint,Tap anywhere to drop the block,Toca en cualquier lugar para soltar el bloque
+hud.rival,"BEAT @{0} · {1}","SUPERA A @{0} · {1}"
+hud.perfect,PERFECT,PERFECTO
+hud.perfect_combo,PERFECT ×{0},PERFECTO ×{0}
+hud.passed,YOU PASSED @{0}!,¡SUPERASTE A @{0}!
+hud.almost,@{0} is right above you,@{0} está justo encima
+# Game over
+over.keep_going,Keep going?,¿Seguir jugando?
+over.continue_ad,CONTINUE · WATCH AD,CONTINUAR · VER ANUNCIO
+over.no_thanks,No thanks,No, gracias
+over.new_record,NEW RECORD,NUEVO RÉCORD
+over.challenge,CHALLENGE A FRIEND,RETA A UN AMIGO
+over.double,Double coins · watch ad,Duplica monedas · ver anuncio
+over.replay,Play again,Otra vez
+over.home,Home,Inicio
+over.best,BEST {0},RÉCORD {0}
+over.coins,+{0} coins,+{0} monedas
+over.verifying,Verifying your run…,Verificando tu partida…
+over.unranked,Offline run: not ranked,Partida sin conexión: no puntúa
+over.queued,Saved. It will be verified when you're back online.,Guardada. Se verificará cuando vuelvas a tener conexión.
+over.not_verified,This run could not be verified and does not count.,Esta partida no se pudo verificar y no cuenta.
+over.duel_won,You beat @{0}'s {1}!,¡Superaste los {1} de @{0}!
+over.duel_lost,@{0}'s {1} still stands. Rematch?,Los {1} de @{0} siguen en pie. ¿Revancha?
+over.preparing_clip,PREPARING CLIP…,PREPARANDO CLIP…
+# Challenge intro
+intro.eyebrow,CHALLENGE,RETO
+intro.title,@{0} stacked,@{0} apiló
+intro.rules,"Same blocks, same speed, no continues. Beat the score.","Mismos bloques, misma velocidad, sin continuar. Supera la puntuación."
+intro.expired,"This challenge has expired, but you can still play the same tower.","Este reto ha caducado, pero aún puedes jugar la misma torre."
+intro.accept,ACCEPT CHALLENGE,ACEPTAR RETO
+intro.later,Not now,Ahora no
+# Code entry
+code.title,Challenge code,Código de reto
+code.body,Type the code from your friend's link or clip.,Escribe el código del enlace o clip de tu amigo.
+code.placeholder,e.g. K7QX9PA,p. ej. K7QX9PA
+code.submit,OPEN CHALLENGE,ABRIR RETO
+code.invalid,That code doesn't look right. Check it and try again.,Ese código no parece correcto. Revísalo e inténtalo de nuevo.
+# Friends
+friends.title,Friends,Amigos
+friends.your_code,Your friend code,Tu código de amigo
+friends.share_code,Share my code,Compartir mi código
+friends.code_placeholder,Friend code,Código de amigo
+friends.add,Add,Añadir
+friends.empty,No friends yet. Send a challenge: whoever accepts becomes your friend.,Aún no tienes amigos. Envía un reto: quien lo acepte será tu amigo.
+friends.remove_confirm,Remove @{0} from your friends?,¿Quitar a @{0} de tus amigos?
+friends.remove,Remove,Quitar
+friends.added,@{0} is now your friend,@{0} ya es tu amigo
+friends.share_text,Add me on Stack IT! My friend code: {0},¡Agrégame en Stack IT! Mi código de amigo: {0}
+# Leaderboards
+ranks.title,Friends ranking,Ranking de amigos
+ranks.all_time,All time,Histórico
+ranks.weekly,This week,Esta semana
+ranks.weekly_note,Resets every Monday at 00:00 UTC,Se reinicia cada lunes a las 00:00 UTC
+ranks.empty,Challenge a friend to fill this board.,Reta a un amigo para llenar este ranking.
+ranks.you,{0} (you),{0} (tú)
+# Shop
+shop.title,Shop,Tienda
+shop.blocks,Blocks,Bloques
+shop.themes,Themes,Temas
+shop.balance,{0} coins,{0} monedas
+shop.buy,{0} coins,{0} monedas
+shop.equip,Equip,Equipar
+shop.equipped,Equipped,Equipado
+shop.confirm,Buy {0} for {1} coins?,¿Comprar {0} por {1} monedas?
+skin.classic,Classic Neon,Neón clásico
+skin.glass,Glass,Cristal
+skin.magma,Magma,Magma
+skin.aurora,Aurora,Aurora
+skin.circuit,Circuit,Circuito
+skin.prism,Prism,Prisma
+skin.gold,Gold,Oro
+skin.synthwave,Synthwave,Synthwave
+skin.midnight,Midnight,Medianoche
+skin.sunset,Sunset,Atardecer
+skin.vapor,Vapor,Vapor
+skin.matrix,Matrix,Matrix
+# Daily reward
+daily.title,Daily gift,Regalo diario
+daily.rule,Come back every day: the gift grows until day 7. Miss a day and it starts over.,Vuelve cada día: el regalo crece hasta el día 7. Si fallas un día empieza de nuevo.
+daily.claim,CLAIM,RECLAMAR
+daily.ready,{0} coins are waiting,Te esperan {0} monedas
+daily.come_back,Come back tomorrow for the next gift,Vuelve mañana por el siguiente regalo
+daily.day,Day {0},Día {0}
+daily.claimed,+{0} coins,+{0} monedas
+# Settings
+settings.title,Settings,Ajustes
+settings.name,Display name,Nombre visible
+settings.name_placeholder,Your name,Tu nombre
+settings.save,Save,Guardar
+settings.saved,Name saved,Nombre guardado
+settings.sound,Sound,Sonido
+settings.haptics,Vibration,Vibración
+settings.language,Language,Idioma
+settings.account,Account,Cuenta
+settings.guest_note,You're playing as a guest. Your progress is saved on this device.,Juegas como invitado. Tu progreso se guarda en este dispositivo.
+settings.link_google,Keep progress with Google,Guardar progreso con Google
+settings.link_apple,Keep progress with Apple,Guardar progreso con Apple
+settings.linked_google,✓ Linked to Google,✓ Vinculado a Google
+settings.linked_apple,✓ Linked to Apple,✓ Vinculado a Apple
+settings.linked_toast,Account linked. Your progress is safe.,Cuenta vinculada. Tu progreso está a salvo.
+settings.switch_account,That account already has progress. Switch to it? Guest progress on this device will be left behind.,Esa cuenta ya tiene progreso. ¿Cambiar a ella? El progreso de invitado de este dispositivo se quedará atrás.
+settings.switch,Switch account,Cambiar de cuenta
+settings.privacy_choices,Privacy choices (ads),Opciones de privacidad (anuncios)
+settings.privacy,Privacy policy,Política de privacidad
+settings.terms,Terms of use,Términos de uso
+settings.delete,Delete account,Eliminar cuenta
+settings.delete_confirm,"This permanently deletes your account, scores, coins and skins. It cannot be undone.","Esto elimina para siempre tu cuenta, puntuaciones, monedas y aspectos. No se puede deshacer."
+settings.delete_yes,Delete forever,Eliminar para siempre
+common.cancel,Cancel,Cancelar
+# Sharing
+share.text,I stacked {0} in Stack IT. Can you beat me? Code {1},Apilé {0} en Stack IT. ¿Me superas? Código {1}
+share.headline,Can you beat me?,¿Me superas?
+# App flow
+flow.challenge_offline,Challenges need a connection. Try again when you're online.,Los retos necesitan conexión. Inténtalo cuando tengas internet.
+flow.no_ad,No ad available right now. Try again in a moment.,No hay anuncios disponibles ahora. Inténtalo en un momento.
+flow.account_deleted,Your account has been deleted.,Tu cuenta ha sido eliminada.
+flow.share_needs_verified,Your run is still being verified. Share it in a moment.,Tu partida aún se está verificando. Compártela en un momento.
+# Errors (keys are "error." + the server's error code)
+error.generic,Something went wrong. Please try again.,Algo salió mal. Inténtalo de nuevo.
+error.offline,You're offline. Check your connection.,No tienes conexión. Revisa tu internet.
+error.insufficient_funds,Not enough coins yet. Play a few runs or claim your daily gift.,Aún no tienes suficientes monedas. Juega unas partidas o reclama tu regalo diario.
+error.already_owned,You already own this.,Ya tienes esto.
+error.challenge_not_found,Challenge not found. Check the code.,Reto no encontrado. Revisa el código.
+error.challenge_expired,This challenge has expired.,Este reto ha caducado.
+error.own_challenge,That's your own challenge. Send it to a friend!,Es tu propio reto. ¡Envíalo a un amigo!
+error.friend_code_not_found,No player has that friend code.,Ningún jugador tiene ese código de amigo.
+error.cannot_friend_yourself,That's your own code.,Ese es tu propio código.
+error.already_claimed,You already claimed today's gift.,Ya reclamaste el regalo de hoy.
+error.rate_limited,Too many attempts. Wait a minute and try again.,Demasiados intentos. Espera un minuto e inténtalo de nuevo.
+error.sign_in_cancelled,Sign-in cancelled.,Inicio de sesión cancelado.
+error.sign_in_failed,Sign-in failed. Please try again.,No se pudo iniciar sesión. Inténtalo de nuevo.
+error.provider_unavailable,This sign-in option isn't available on this device.,Esta opción de inicio de sesión no está disponible en este dispositivo.
+error.provider_already_linked,This account is already linked.,Esta cuenta ya está vinculada.
+error.run_not_verified,Only verified runs can be shared as challenges.,Solo las partidas verificadas se pueden compartir como reto.
+error.invalid_display_name,"Use 3–20 letters, digits, spaces, _ . or -.","Usa de 3 a 20 letras, números, espacios, _ . o -."

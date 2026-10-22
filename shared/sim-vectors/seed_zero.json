@@ -1,0 +1,149 @@
+{
+ "name": "seed_zero",
+ "description": "Seed 0",
+ "sim_version": 1,
+ "seed": 0,
+ "continues_allowed": true,
+ "events": [
+  {
+   "t": 40,
+   "type": "tap"
+  },
+  {
+   "t": 88,
+   "type": "tap"
+  },
+  {
+   "t": 129,
+   "type": "tap"
+  },
+  {
+   "t": 176,
+   "type": "tap"
+  },
+  {
+   "t": 221,
+   "type": "tap"
+  },
+  {
+   "t": 263,
+   "type": "tap"
+  },
+  {
+   "t": 331,
+   "type": "tap"
+  }
+ ],
+ "expected": {
+  "error": null,
+  "steps": [
+   {
+    "kind": "place",
+    "n": 1,
+    "t": 40,
+    "axis": "x",
+    "offset": 3160,
+    "x0": -11840,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 15000,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 1
+   },
+   {
+    "kind": "place",
+    "n": 2,
+    "t": 88,
+    "axis": "z",
+    "offset": -2904,
+    "x0": -11840,
+    "x1": 15000,
+    "z0": -15000,
+    "z1": 12096,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 2
+   },
+   {
+    "kind": "place",
+    "n": 3,
+    "t": 129,
+    "axis": "x",
+    "offset": -4000,
+    "x0": -11840,
+    "x1": 11000,
+    "z0": -15000,
+    "z1": 12096,
+    "perfect": false,
+    "combo": 0,
+    "gained": 1,
+    "score": 3
+   },
+   {
+    "kind": "place",
+    "n": 4,
+    "t": 176,
+    "axis": "z",
+    "offset": 73,
+    "x0": -11840,
+    "x1": 11000,
+    "z0": -15000,
+    "z1": 12096,
+    "perfect": true,
+    "combo": 1,
+    "gained": 2,
+    "score": 5
+   },
+   {
+    "kind": "place",
+    "n": 5,
+    "t": 221,
+    "axis": "x",
+    "offset": -855,
+    "x0": -11840,
+    "x1": 11000,
+    "z0": -15000,
+    "z1": 12096,
+    "perfect": true,
+    "combo": 2,
+    "gained": 3,
+    "score": 8
+   },
+   {
+    "kind": "place",
+    "n": 6,
+    "t": 263,
+    "axis": "z",
+    "offset": -360,
+    "x0": -11840,
+    "x1": 11000,
+    "z0": -15000,
+    "z1": 12096,
+    "perfect": true,
+    "combo": 3,
+    "gained": 4,
+    "score": 12
+   },
+   {
+    "kind": "miss",
+    "n": 7,
+    "t": 331,
+    "axis": "x",
+    "offset": 24360,
+    "score": 12
+   }
+  ],
+  "final": {
+   "score": 12,
+   "placed": 6,
+   "perfects": 3,
+   "max_combo": 3,
+   "continues_used": 0,
+   "ended": true,
+   "tick": 331
+  }
+ }
+}
