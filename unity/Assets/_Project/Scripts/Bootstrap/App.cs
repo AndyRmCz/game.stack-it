@@ -95,6 +95,11 @@ namespace StackIt.Bootstrap
 
             BuildWorld();
             EventSystemFactory.Create();
+            UiKit.Pressed = () =>
+            {
+                _audio.Click();
+                _haptics.Play(HapticKind.Light);
+            };
             BuildUi();
             _router.Reset(_home);
 
@@ -158,15 +163,15 @@ namespace StackIt.Bootstrap
             DontDestroyOnLoad(_rig.gameObject);
             _sky = SkyBackdrop.Create(_rig.Camera);
 
+            // Soft warm key light from the upper left; the sky provides the ambient fill (SkyBackdrop),
+            // so the three visible faces of each block read as light, mid and shade.
             var light = new GameObject("Light").AddComponent<Light>();
             light.type = LightType.Directional;
-            light.intensity = 1.1f;
-            light.color = new Color(1f, 0.93f, 1f);
-            light.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
+            light.intensity = 0.95f;
+            light.color = new Color(1f, 0.97f, 0.92f);
+            light.transform.rotation = Quaternion.Euler(58f, -20f, 0f);
             light.shadows = LightShadows.None;
             DontDestroyOnLoad(light.gameObject);
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.42f, 0.32f, 0.6f);
 
             var postFx = new GameObject("PostFx").AddComponent<UrpPostFx>();
             DontDestroyOnLoad(postFx.gameObject);
@@ -184,6 +189,7 @@ namespace StackIt.Bootstrap
 
             ApplyCosmetics();
             _view.ResetStack(new StackSim(0).Top);
+            _rig.SetHome(true, snap: true);
         }
 
         private void BuildUi()
@@ -235,6 +241,7 @@ namespace StackIt.Bootstrap
             if (_game != null && _game.Phase == RunPhase.Playing) return; // never mid-run
             _view.SetSkin(_api?.Profile?.EquippedBlockSkin);
             _sky.SetTheme(_api?.Profile?.EquippedTheme);
+            _view.SetHorizon(_sky.Horizon);
         }
 
         // --- game flow (IGameFlow) ---------------------------------------------------------------
@@ -322,6 +329,7 @@ namespace StackIt.Bootstrap
         {
             _lastResult = null;
             ApplyCosmetics();
+            _rig.SetHome(false);
             _game.Begin(setup);
             _router.Reset(_hud);
             _recorder.BeginRun();
@@ -435,9 +443,11 @@ namespace StackIt.Bootstrap
         public async void GoHome()
         {
             await MaybeInterstitial();
+            // A clean cut to the base block while Home fades in (the tower is gone).
             _view.ResetStack(new StackSim(0).Top);
-            _rig.SetZoomOut(0f);
+            _rig.SetZoomOut(0f, snap: true);
             _rig.Follow(0f, snap: true);
+            _rig.SetHome(true, snap: true);
             _sky.SetHeight(0);
             _game.Ghost.Hide();
             _router.Reset(_home);

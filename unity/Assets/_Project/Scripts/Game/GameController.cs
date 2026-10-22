@@ -116,6 +116,7 @@ namespace StackIt.Game
             else _fx.Placed(top, size, color);
             _rig.Follow(top.y);
             _sky.SetHeight(step.N);
+            _view.SetHorizon(_sky.Horizon);
 
             RivalEvent rival = _rival.Update(step.N);
             if (rival == RivalEvent.Passed)

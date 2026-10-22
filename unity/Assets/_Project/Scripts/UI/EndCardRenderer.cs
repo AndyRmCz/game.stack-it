@@ -26,7 +26,7 @@ namespace StackIt.UI
             _camera = _root.AddComponent<Camera>();
             _camera.enabled = false;
             _camera.clearFlags = CameraClearFlags.SolidColor;
-            _camera.backgroundColor = Theme.Night;
+            _camera.backgroundColor = Theme.Enamel;
             _camera.cullingMask = 1 << Layer;
             _camera.orthographic = true;
 
@@ -42,18 +42,16 @@ namespace StackIt.UI
             scaler.referenceResolution = new Vector2(RecorderService.Width, RecorderService.Height);
             _group = canvasGo.AddComponent<CanvasGroup>();
 
-            Image sky = UiKit.Panel(canvasGo.transform, "Sky", Theme.Dusk);
-            UiKit.Stretch(sky.rectTransform, 0, RecorderService.Height * 0.55f, 0, 0);
             RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
             UiKit.Column(col, 18, null, TextAnchor.MiddleCenter);
-            UiKit.Label(col, "STACK IT", 44, Theme.Lavender, TextAlignmentOptions.Center, true).characterSpacing = 10;
-            TextMeshProUGUI score = UiKit.Display(col, card.Score.ToString(), 230, Theme.Amber);
+            UiKit.Caps(col, "STACK IT", Theme.InkSoft, 40);
+            TextMeshProUGUI score = UiKit.Display(col, card.Score.ToString(), 230, Theme.Ink);
             UiKit.Size(score.rectTransform, height: 250);
             _score = score.rectTransform;
-            UiKit.Label(col, card.Headline, 64, Theme.Moon, TextAlignmentOptions.Center, true);
+            UiKit.Label(col, card.Headline, 60, Theme.Ink, TextAlignmentOptions.Center, true);
             if (!string.IsNullOrEmpty(card.Code))
             {
-                TextMeshProUGUI code = UiKit.Display(col, card.Code, 72, Theme.Cyan);
+                TextMeshProUGUI code = UiKit.Display(col, card.Code, 72, Theme.Pool);
                 code.characterSpacing = 14;
             }
             SetLayer(_root.transform);

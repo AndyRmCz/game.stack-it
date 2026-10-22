@@ -69,7 +69,13 @@ namespace StackIt.UI
             Root.gameObject.SetActive(true);
             Root.SetAsLastSibling();
             _group.alpha = 0f;
-            Tween.Fade(_group, 1f, 0.18f);
+            Tween.Fade(_group, 1f, 0.22f);
+            // Content rises a little as it fades in: calm, and tells the eye where to look.
+            RectTransform safe = Safe;
+            Tween.Run(safe, 0.32f, t =>
+            {
+                if (safe != null) safe.anchoredPosition = new Vector2(0f, Mathf.Lerp(-36f, 0f, Tween.EaseOutCubic(t)));
+            });
             OnShow();
         }
 
@@ -89,23 +95,24 @@ namespace StackIt.UI
             bar.anchorMin = new Vector2(0, 1);
             bar.anchorMax = new Vector2(1, 1);
             bar.pivot = new Vector2(0.5f, 1);
-            bar.sizeDelta = new Vector2(0, 170);
+            bar.sizeDelta = new Vector2(0, 180);
             bar.anchoredPosition = Vector2.zero;
 
-            Button backButton = UiKit.Button(bar, "‹", ButtonStyle.Ghost, () => back(), 120);
+            Button backButton = UiKit.IconButton(bar, Icons.Back, ButtonStyle.Secondary, () => back(), 120);
             RectTransform b = (RectTransform)backButton.transform;
             b.anchorMin = b.anchorMax = new Vector2(0, 0.5f);
             b.pivot = new Vector2(0, 0.5f);
             b.sizeDelta = new Vector2(120, 120);
             b.anchoredPosition = new Vector2(Theme.Gutter, 0);
 
-            TextMeshProUGUI label = UiKit.Label(bar, title, 64, Theme.Moon, TextAlignmentOptions.Center, true);
+            TextMeshProUGUI label = UiKit.Display(bar, title, Theme.TitleSize, Theme.Ink);
             UiKit.Stretch(label.rectTransform, 200, 0, 200, 0);
+            UiKit.OneLine(label, 40);
             return bar;
         }
 
         /// <summary>Content area under a header.</summary>
-        protected RectTransform Body(float top = 190f)
+        protected RectTransform Body(float top = 200f)
         {
             return UiKit.Stretch(UiKit.Rect("Body", Safe), Theme.Gutter, top, Theme.Gutter, Theme.Gutter);
         }
@@ -152,33 +159,39 @@ namespace StackIt.UI
         public UiRouter(Transform overlayParent, IAdsService ads)
         {
             _ads = ads;
-            Image toastBg = UiKit.Panel(overlayParent, "Toast", new Color(0.05f, 0.02f, 0.12f, 0.95f), rounded: true);
-            RectTransform t = toastBg.rectTransform;
-            t.anchorMin = new Vector2(0.06f, 0.82f);
-            t.anchorMax = new Vector2(0.94f, 0.9f);
+            RectTransform t = UiKit.Card(overlayParent, "Toast", Theme.Ink, radius: 48f);
+            t.anchorMin = new Vector2(0.06f, 0.84f);
+            t.anchorMax = new Vector2(0.94f, 0.91f);
             t.offsetMin = t.offsetMax = Vector2.zero;
-            toastBg.raycastTarget = false;
-            _toast = UiKit.Label(t, "", 42, Theme.Moon);
-            UiKit.Stretch(_toast.rectTransform, 36, 8, 36, 8);
+            _toast = UiKit.Label(t, "", 40, Theme.Paper, TextAlignmentOptions.Center, bold: true);
+            UiKit.Stretch(_toast.rectTransform, 44, 8, 44, 8);
+            _toast.enableAutoSizing = true;
+            _toast.fontSizeMin = 28;
+            _toast.fontSizeMax = 40;
             _toastGroup = t.gameObject.AddComponent<CanvasGroup>();
             _toastGroup.alpha = 0f;
             _toastGroup.blocksRaycasts = false;
 
             Image scrim = UiKit.Panel(overlayParent, "Dialog", Theme.Scrim);
+            scrim.raycastTarget = true; // blocks the screen underneath
             _dialog = UiKit.Stretch(scrim.rectTransform);
-            Image card = UiKit.Panel(_dialog, "Card", Theme.Card, rounded: true);
-            RectTransform c = card.rectTransform;
-            c.anchorMin = new Vector2(0.08f, 0.35f);
-            c.anchorMax = new Vector2(0.92f, 0.65f);
-            c.offsetMin = c.offsetMax = Vector2.zero;
-            UiKit.Column(c, 36, new RectOffset(56, 56, 64, 56), TextAnchor.MiddleCenter);
-            _dialogText = UiKit.Label(c, "", 46, Theme.Moon);
+            RectTransform c = UiKit.Card(_dialog, "Card", radius: 56f);
+            c.anchorMin = new Vector2(0.07f, 0.5f);
+            c.anchorMax = new Vector2(0.93f, 0.5f);
+            c.pivot = new Vector2(0.5f, 0.5f);
+            c.sizeDelta = new Vector2(0f, 600f); // width from the anchors, height from the fitter
+            c.anchoredPosition = Vector2.zero;
+            UiKit.Column(c, 28, new RectOffset(64, 64, 72, 56), TextAnchor.MiddleCenter);
+            var fit = c.gameObject.AddComponent<ContentSizeFitter>();
+            fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            _dialogText = UiKit.Label(c, "", 48, Theme.Ink, TextAlignmentOptions.Center, bold: true);
+            UiKit.Spacer(c, 12);
             _dialogConfirm = UiKit.Button(c, "", ButtonStyle.Primary, () =>
             {
                 _dialog.gameObject.SetActive(false);
                 _onConfirm?.Invoke();
             });
-            UiKit.Button(c, "", ButtonStyle.Ghost, () => _dialog.gameObject.SetActive(false));
+            UiKit.Button(c, "", ButtonStyle.Ghost, () => _dialog.gameObject.SetActive(false), 120);
             _dialog.gameObject.SetActive(false);
         }
 
@@ -219,18 +232,29 @@ namespace StackIt.UI
         public void Toast(string text, float seconds = 2.4f)
         {
             _toast.text = text;
-            _toastGroup.alpha = 1f;
-            Tween.Run(_toastGroup, seconds, t => _toastGroup.alpha = t < 0.8f ? 1f : 1f - (t - 0.8f) / 0.2f);
+            _toastGroup.alpha = 0f;
+            var rt = (RectTransform)_toastGroup.transform;
+            Tween.Run(_toastGroup, seconds, t =>
+            {
+                float shown = seconds * t;
+                float inK = Tween.EaseOutCubic(Mathf.Clamp01(shown / 0.25f));
+                _toastGroup.alpha = t < 0.85f ? inK : 1f - (t - 0.85f) / 0.15f;
+                rt.anchoredPosition = new Vector2(0f, Mathf.Lerp(30f, 0f, inK));
+            });
         }
 
         public void Confirm(string text, string confirmLabel, Action onConfirm)
         {
             _dialogText.text = text;
             UiKit.SetText(_dialogConfirm, confirmLabel);
-            _dialog.GetComponentsInChildren<Button>()[1].GetComponentInChildren<TextMeshProUGUI>().text = L.T("common.cancel");
+            _dialog.GetComponentsInChildren<Button>(true)[1].GetComponentInChildren<TextMeshProUGUI>().text = L.T("common.cancel");
             _onConfirm = onConfirm;
             _dialog.gameObject.SetActive(true);
             _dialog.SetAsLastSibling();
+            var group = _dialog.GetComponent<CanvasGroup>();
+            if (group == null) group = _dialog.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            Tween.Fade(group, 1f, 0.2f);
         }
     }
 }

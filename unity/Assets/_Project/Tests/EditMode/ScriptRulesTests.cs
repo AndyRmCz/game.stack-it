@@ -23,7 +23,7 @@ namespace StackIt.Tests
             RegexOptions.Multiline);
 
         // TMP properties that touch the font material, which TMP only loads in Awake. Screens build
-        // under an inactive root, so Awake has not run yet: only TextGlow (applied in Start) may set them.
+        // under an inactive root, so Awake has not run yet: only TextEffect (applied in Start) may set them.
         private static readonly Regex TmpMaterialSetter =
             new Regex(@"\.(outlineWidth|outlineColor|fontMaterial|fontSharedMaterial)\s*=[^=]");
 
@@ -58,10 +58,10 @@ namespace StackIt.Tests
         }
 
         [Test]
-        public void TmpMaterialPropertiesAreOnlySetByTextGlow()
+        public void TmpMaterialPropertiesAreOnlySetByTextEffect()
         {
             var offenders = new List<string>();
-            foreach (string file in RuntimeScripts().Where(f => Path.GetFileName(f) != "TextGlow.cs"))
+            foreach (string file in RuntimeScripts().Where(f => Path.GetFileName(f) != "TextEffect.cs"))
             foreach (Match m in TmpMaterialSetter.Matches(File.ReadAllText(file)))
             {
                 offenders.Add(Path.GetFileName(file) + ": " + m.Value.Trim());

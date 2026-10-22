@@ -1,32 +1,32 @@
 key,en,es
 # Home
-home.play,PLAY,JUGAR
+home.play,Play,Jugar
 home.daily,Daily gift,Regalo diario
 home.have_code,Got a challenge code?,¿Tienes un código de reto?
 home.friends,Friends,Amigos
 home.ranks,Ranks,Ranking
 home.shop,Shop,Tienda
 home.settings,Settings,Ajustes
-home.best,BEST {0},RÉCORD {0}
-home.tagline,TAP TO DROP. STACK HIGH.,TOCA PARA SOLTAR. APILA ALTO.
+home.best,Best {0},Récord {0}
+home.tagline,Tap to drop. Stack high.,Toca para soltar. Apila alto.
 home.pending,{0} run(s) will sync when you're online,{0} partida(s) se sincronizarán cuando tengas conexión
 # HUD
 hud.tap_hint,Tap anywhere to drop the block,Toca en cualquier lugar para soltar el bloque
-hud.rival,"BEAT @{0} · {1}","SUPERA A @{0} · {1}"
-hud.perfect,PERFECT,PERFECTO
-hud.perfect_combo,PERFECT ×{0},PERFECTO ×{0}
-hud.passed,YOU PASSED @{0}!,¡SUPERASTE A @{0}!
+hud.rival,"Beat @{0} · {1}","Supera a @{0} · {1}"
+hud.perfect,Perfect,Perfecto
+hud.perfect_combo,Perfect ×{0},Perfecto ×{0}
+hud.passed,You passed @{0},Superaste a @{0}
 hud.almost,@{0} is right above you,@{0} está justo encima
 # Game over
 over.keep_going,Keep going?,¿Seguir jugando?
-over.continue_ad,CONTINUE · WATCH AD,CONTINUAR · VER ANUNCIO
+over.continue_ad,Continue · watch ad,Continuar · ver anuncio
 over.no_thanks,No thanks,No, gracias
-over.new_record,NEW RECORD,NUEVO RÉCORD
-over.challenge,CHALLENGE A FRIEND,RETA A UN AMIGO
+over.new_record,New record,Nuevo récord
+over.challenge,Challenge a friend,Reta a un amigo
 over.double,Double coins · watch ad,Duplica monedas · ver anuncio
 over.replay,Play again,Otra vez
 over.home,Home,Inicio
-over.best,BEST {0},RÉCORD {0}
+over.best,Best {0},Récord {0}
 over.coins,+{0} coins,+{0} monedas
 over.verifying,Verifying your run…,Verificando tu partida…
 over.unranked,Offline run: not ranked,Partida sin conexión: no puntúa
@@ -34,19 +34,19 @@ over.queued,Saved. It will be verified when you're back online.,Guardada. Se ver
 over.not_verified,This run could not be verified and does not count.,Esta partida no se pudo verificar y no cuenta.
 over.duel_won,You beat @{0}'s {1}!,¡Superaste los {1} de @{0}!
 over.duel_lost,@{0}'s {1} still stands. Rematch?,Los {1} de @{0} siguen en pie. ¿Revancha?
-over.preparing_clip,PREPARING CLIP…,PREPARANDO CLIP…
+over.preparing_clip,Preparing clip…,Preparando clip…
 # Challenge intro
-intro.eyebrow,CHALLENGE,RETO
+intro.eyebrow,Challenge,Reto
 intro.title,@{0} stacked,@{0} apiló
 intro.rules,"Same blocks, same speed, no continues. Beat the score.","Mismos bloques, misma velocidad, sin continuar. Supera la puntuación."
 intro.expired,"This challenge has expired, but you can still play the same tower.","Este reto ha caducado, pero aún puedes jugar la misma torre."
-intro.accept,ACCEPT CHALLENGE,ACEPTAR RETO
+intro.accept,Accept challenge,Aceptar reto
 intro.later,Not now,Ahora no
 # Code entry
 code.title,Challenge code,Código de reto
 code.body,Type the code from your friend's link or clip.,Escribe el código del enlace o clip de tu amigo.
 code.placeholder,e.g. K7QX9PA,p. ej. K7QX9PA
-code.submit,OPEN CHALLENGE,ABRIR RETO
+code.submit,Open challenge,Abrir reto
 code.invalid,That code doesn't look right. Check it and try again.,Ese código no parece correcto. Revísalo e inténtalo de nuevo.
 # Friends
 friends.title,Friends,Amigos
@@ -90,7 +90,7 @@ skin.matrix,Matrix,Matrix
 # Daily reward
 daily.title,Daily gift,Regalo diario
 daily.rule,Come back every day: the gift grows until day 7. Miss a day and it starts over.,Vuelve cada día: el regalo crece hasta el día 7. Si fallas un día empieza de nuevo.
-daily.claim,CLAIM,RECLAMAR
+daily.claim,Claim,Reclamar
 daily.ready,{0} coins are waiting,Te esperan {0} monedas
 daily.come_back,Come back tomorrow for the next gift,Vuelve mañana por el siguiente regalo
 daily.day,Day {0},Día {0}

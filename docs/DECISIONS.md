@@ -73,7 +73,7 @@ Choices the brief left open, one line of reasoning each. Newest milestone at the
 | Everything (world, UI) built in code; the scene is empty; `App` boots via `RuntimeInitializeOnLoadMethod` | No hand-authored scene/prefab YAML; every piece is reviewable in a diff. |
 | Assemblies: `StackIt.Core` and `StackIt.Client` (no engine refs, unit tested), `StackIt.Runtime`, `StackIt.Editor` | Testable logic stays out of MonoBehaviours. |
 | Own tiny tween runner instead of DOTween | Needs are punch/fade only; no third-party asset to import. |
-| Procedural audio (synthesized clips), no music | No audio assets to license; pitch climbs per perfect. |
+| Procedural audio (synthesized clips), no music | Superseded by the look & feel pass below. |
 | Input via uGUI full-screen tap catcher + Input System UI module | One input path; Input System is the template's only active backend. |
 | Simulation advanced on unscaled time; slow-motion only on game over | Visual effects can never change the run being verified. |
 | Rival ghost uses height (blocks); friends list exposes `best_placed` | The marker is drawn at a height; score alone can't place it. |
@@ -90,3 +90,26 @@ Choices the brief left open, one line of reasoning each. Newest milestone at the
 | UI strings: `Resources/StackIt/strings.csv` imported into the Localization "UI" table; CSV is also the runtime fallback | Translators edit one file; a test enforces en/es completeness and matching placeholders. |
 | iOS Google Sign-In sends no nonce | The GoogleSignIn 7 flow used doesn't take one; Apple and Android flows do. |
 | Unity code verified with `dotnet` compile checks against the editor's assemblies | No Unity license was available in this environment (see PLAN.md, verification status). |
+
+## Look & feel pass — "the sky climbs with you"
+
+Brief from the owner: like Stack by Ketchapp but more premium and juicy, calm, the family-chores app's
+tactile style; free Google Fonts and free sound packs; must run well on an iPhone X / Galaxy A55.
+
+| Decision | Reasoning |
+|---|---|
+| Pastel time-of-day sky (dawn → day → dusk → night by tower height); blocks a step deeper than the sky; lower stack fades into the horizon | One signature idea; replaces the neon-on-purple look, which read as cheap and generic. |
+| Horizon fade done per block in `StackView`, not with Unity fog | Fog would also tint the sky quad, and fog shader variants can be stripped from mobile builds. |
+| Bevelled block meshes (`ChamferBox`, in `StackIt.Client`) built at each block's real size, cached by size | The lit bevels make blocks read as solid objects; non-uniform scaling would stretch the bevels. Pure code, so winding/closure is unit tested. |
+| Bloom and chromatic aberration removed; neutral tonemapping, faint vignette, exposure swell on combos | Calm, and cheap on mid-range GPUs. |
+| UI: ink on paper (chores palette), Fredoka for numbers/titles, Nunito Sans for text, Material Symbols Rounded icons | Matches the chores app the owner likes; icons replace text-only buttons. |
+| Buttons sink onto a darker lip when pressed (`Pressable`), with click + light haptic | Tactile feedback was the main thing the old flat buttons lacked. |
+| Canvas matches width (1080 units) on phones, height on wider screens | Rows can no longer get narrower than designed (the old 50/50 match broke words on tall phones). |
+| Fonts subset with fonttools (Latin + Latin-1 + punctuation; 26 icons) and baked by Setup Project into static TMP atlases | Small repo files; nothing rasterized at runtime; TTFs don't ship. Characters outside the subset fall back to TMP's default font. |
+| Kenney CC0 samples for taps, landings, misses, rewards; synthesized marimba for the perfect chime on a pentatonic scale | Real recordings feel better than synth beeps; the pentatonic scale makes streaks musical (`Feel.PerfectSemitones`, tested). |
+| Shop ids (`synthwave`, `magma`, …) kept; only their looks changed | Renaming would need a data migration; names can change later. |
+| UI strings in sentence case; eyebrows use an uppercase font style | Calmer voice; capitals stay a styling choice, not baked into translations. |
+
+Third-party assets: Fredoka and Nunito Sans (SIL OFL 1.1), Material Symbols Rounded (Apache 2.0) in
+`unity/Assets/_Project/Fonts` with their licences; Kenney "Interface Sounds" and "Impact Sounds" (CC0)
+in `unity/Assets/_Project/Resources/StackIt/Audio` with the licence.

@@ -31,7 +31,7 @@ namespace StackIt.Game
                 renderer.sharedMaterial = Materials.Block;
                 renderer.GetPropertyBlock(view._props);
                 view._props.SetColor(Materials.BaseColor, Palette.Ghost);
-                view._props.SetColor(Materials.EmissionColor, Palette.Ghost * 3f);
+                view._props.SetColor(Materials.EmissionColor, Palette.Ghost * 0.6f); // a soft glow, no bloom needed
                 renderer.SetPropertyBlock(view._props);
                 view._edges[i] = edge.transform;
             }
