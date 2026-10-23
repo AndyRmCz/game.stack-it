@@ -20,7 +20,10 @@ STRINGS: dict[str, dict[Lang, str]] = {
     },
     "ghost": {"en": "@{name}", "es": "@{name}"},
     "tower_alt": {"en": "{name}'s tower, {n} blocks high", "es": "Torre de {name}, {n} bloques"},
-    "accept": {"en": "Accept the challenge", "es": "Aceptar el reto"},
+    "open_app": {"en": "Open in Stack IT", "es": "Abrir en Stack IT"},
+    "score_to_beat": {"en": "Score to beat", "es": "Puntos a superar"},
+    "og_beat": {"en": "Beat my score", "es": "Supera mi puntuación"},
+    "og_generic": {"en": "Can you beat me?", "es": "¿Me superas?"},
     "play_store": {"en": "Get it on Google Play", "es": "Descárgalo en Google Play"},
     "app_store": {"en": "Download on the App Store", "es": "Descárgalo en el App Store"},
     "code_hint": {

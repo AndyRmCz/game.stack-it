@@ -113,3 +113,37 @@ tactile style; free Google Fonts and free sound packs; must run well on an iPhon
 Third-party assets: Fredoka and Nunito Sans (SIL OFL 1.1), Material Symbols Rounded (Apache 2.0) in
 `unity/Assets/_Project/Fonts` with their licences; Kenney "Interface Sounds" and "Impact Sounds" (CC0)
 in `unity/Assets/_Project/Resources/StackIt/Audio` with the licence.
+
+## Pop and Neon looks
+
+Owner's spec: two themes, Pop (light pastel) and Neon (dark glow), switchable in Settings,
+applied to every screen, the gameplay, the share end card and the web pages. Auto mode: every
+judgment call is logged here. Supersedes the colour, font and UI-scale rows of the section above.
+
+| Decision | Reasoning |
+|---|---|
+| Pure theme code in `Client/Theming` (engine-free, tested under .NET) rather than `Core` | `Core` is the deterministic simulation shared with the server; theming has no business there. |
+| A 100-line JSON reader (`MiniJson`) instead of a library | `StackIt.Client` has no JSON dependency and only needs strings, numbers, lists and objects. |
+| Unity and the backend each keep a byte-identical copy of `shared/theme/themes.json`, enforced by tests | Unity loads only from `Assets`, and the backend's Docker/Railway build context is `backend/`; changing deploy config was not worth it. |
+| Extra tokens beyond the spec: `surface.sunken`, `surface.raised`, `surface.highlight(+Border)`, `toast.*`, `overlay.dim`, `medal.*`, `dot.ring`, `danger.onDanger`, `accent2.onAccent2`, `accent.glowPulse`, `block.emission`, `postFx.*` | Every visual difference between the looks is a token, so no screen branches on the look. |
+| `accent` deepened (Pop `#19C9B4` → `#108274`, Neon `#2CF0D6` → `#188274`, edges ×0.68) with white `accent.onAccent`; the glows keep the spec's bright teal | Owner asked for bright text on the primary buttons; white needs ≥4.5:1 (it was 2.1 and 1.4), and small accent chips use the same pair. |
+| `danger` adjusted: Pop `#D64545` → `#D34242`, Neon `#FF5C7A` → `#FF6886` | Minimal change to reach 4.5:1 for "Delete account" text on surfaces. |
+| `surface.raised` (Neon `#12303A`) for modal cards and bottom sheets | Neon's 8% white surface let the 3D tower show through pause, daily and result sheets; renders confirmed it. |
+| `ScreenSpaceOverlay` UI drawn by one SDF shader (`UIRoundedRect`) with all parameters in vertex data | Crisp at any size, one material so everything batches, and the glows survive in recorded clips (no bloom on UI). |
+| Reference canvas 390 × 844, match 0.5, as specified | Replaces the 1080-wide width-match of the previous pass. |
+| Default skin `classic` and sky `synthwave` follow the look (ramp, background); bought skins/skies keep their colours in both looks | Keeps shop ids and purchases intact; renamed both to "Classic". |
+| Blocks unlit with exact face colours (`Block.shader`, by object-space normal) | The spec defines face colours; lit shading could not hit them. Neon adds emission for bloom. |
+| Home hero: a four-block base, a ground shadow and the moving block sliding above it (attract mode) | Matches the reference images. |
+| Pause menu added (pause icon on the HUD; auto-pause when the app loses focus) | Spec; the simulation simply stops ticking, so replays are unaffected. |
+| Game over is one screen: "Continue" is a pill there; any other action ends the run first | The spec lists Continue among the result pills; the old two-step sheet had no primary button. |
+| Pending challenges stored on the device (opened but not played) | The server has no challenge inbox; this drives the Friends section and dot without a backend change. |
+| "New affordable skin" dot: unowned, affordable and not yet seen in the shop | The spec's dot needs a notion of "new"; kept locally. |
+| Friend rows' "Challenge" starts a normal run with that friend as the ghost | Challenges are created from a finished run; this gives the row a useful action now. |
+| Weekly reset countdown from the leaderboard's `since` + 7 days | The API already returns the period start. |
+| Challenge code field takes 7 characters, not 6 | The backend issues 7-character codes (`CHALLENGE_CODE_LENGTH`). |
+| Baked TMP font atlases are generated and git-ignored, rebuilt when their recipe (TTFs, characters, settings) changes | Larger atlases for the full Latin-1 set would add ~16 MB of YAML to the repo. |
+| Icons: Material Symbols Rounded outline (FILL 0, wght 400, opsz 24 ≈ 2 px strokes) plus a filled cut for primary buttons | One consistent outline set, as specified. |
+| Link previews rendered per challenge with Pillow (`/og/{code}.png`), cached | The spec asks for the score on the image; Pillow is the one new backend dependency. |
+| App icons generated from the tokens (`scripts/generate_app_icons.py`); Neon is the store icon | An alternate Pop app icon needs native code on both platforms (iOS alternate icons, Android activity aliases): not simple, left out. |
+| Music generated in code (`MusicPlan` + `MusicService`), G pentatonic like the perfect chime | Sped-up recordings change pitch; a scheduled sequencer changes tempo cleanly, and chimes land in key. |
+| Reduce motion also skips the perfect-drop exposure/chromatic pulse | It is a flash; the spec's list (breathing, shake, glow pulses, slow motion) reads as "no movement or pulsing". |

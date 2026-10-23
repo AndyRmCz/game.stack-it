@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using StackIt.Client.Theming;
 using StackIt.Services;
 using UnityEngine;
 
@@ -8,7 +9,9 @@ namespace StackIt.Game
     /// <summary>
     /// The feel layer, calm by design: a soft puff of dust on every landing, an outline ring that
     /// breathes out from a perfect drop with a climbing chime, a gentle brightness swell on combos,
-    /// haptics, and a slow-motion beat on a new record. Gameplay never depends on any of this.
+    /// haptics, and a slow-motion beat on a new record. Rings take the look's accent, the rival
+    /// burst its accent2. Reduce motion drops the shake and the slow motion. Gameplay never depends
+    /// on any of this.
     /// </summary>
     public sealed class HypeFx : MonoBehaviour
     {
@@ -24,6 +27,17 @@ namespace StackIt.Game
         private AudioService _audio;
         private Coroutine _slowMo;
         private int _nextRing;
+        private Color _accent = Color.white;
+        private Color _accent2 = new Color(1f, 0.42f, 0.36f);
+
+        /// <summary>No screen shake or slow motion (set from the Reduce motion setting).</summary>
+        public bool ReduceMotion { get; set; }
+
+        public void SetLook(ThemePalette look)
+        {
+            _accent = Palette.ToColor(look.Color(T.Accent));
+            _accent2 = Palette.ToColor(look.Color(T.Accent2));
+        }
 
         private void Awake() => _props = new MaterialPropertyBlock();
 
@@ -49,9 +63,9 @@ namespace StackIt.Game
             _audio.Place();
             _audio.Perfect(combo);
             _haptics.Play(combo >= 5 ? HapticKind.Medium : HapticKind.Light);
-            Ring(top, size, Color.white, 0.9f, 1.28f + Mathf.Min(combo, 8) * 0.03f);
-            if (combo >= 3) Ring(top, size, Color.white, 0.5f, 1.6f, 0.12f);
-            _post.Pulse(Mathf.Min(0.25f + combo * 0.08f, 1f));
+            Ring(top, size, _accent, 0.9f, 1.28f + Mathf.Min(combo, 8) * 0.03f);
+            if (combo >= 3) Ring(top, size, _accent, 0.5f, 1.6f, 0.12f);
+            if (!ReduceMotion) _post.Pulse(Mathf.Min(0.25f + combo * 0.08f, 1f));
             Dust(top, size, Color.Lerp(color, Color.white, 0.6f), 12 + Mathf.Min(combo, 8) * 2, 0.9f);
         }
 
@@ -59,17 +73,17 @@ namespace StackIt.Game
         {
             _audio.Miss();
             _haptics.Play(HapticKind.Heavy);
-            _rig.Shake(0.12f);
+            if (!ReduceMotion) _rig.Shake(0.12f);
         }
 
         public void RivalPassed(Vector3 top, Color color)
         {
             _audio.Record();
             _haptics.Play(HapticKind.Success);
-            _post.Pulse(1f);
+            if (!ReduceMotion) _post.Pulse(1f);
             var size = new Vector3(3f, StackView.BlockHeight, 3f);
-            Ring(top, size, new Color(0.18f, 0.5f, 0.98f), 1f, 1.9f);
-            Dust(top, size, Color.white, 40, 1.4f);
+            Ring(top, size, _accent2, 1f, 1.9f);
+            Dust(top, size, Color.Lerp(_accent2, Color.white, 0.4f), 40, 1.4f);
         }
 
         /// <summary>Brief slow-motion as the last block falls on a new record.</summary>
@@ -77,6 +91,7 @@ namespace StackIt.Game
         {
             _audio.Record();
             _haptics.Play(HapticKind.Success);
+            if (ReduceMotion) return;
             if (_slowMo != null) StopCoroutine(_slowMo);
             _slowMo = StartCoroutine(SlowMotion(0.35f, 0.9f));
         }

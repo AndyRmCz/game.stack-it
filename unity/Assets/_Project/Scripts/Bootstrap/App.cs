@@ -1,7 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using StackIt.Client;
 using StackIt.Client.Api;
+using StackIt.Client.Theming;
 using StackIt.Core.Simulation;
 using StackIt.Game;
 using StackIt.Integrations;
@@ -9,6 +11,7 @@ using StackIt.Services;
 using StackIt.Services.Native;
 using StackIt.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace StackIt.Bootstrap
 {
@@ -19,16 +22,23 @@ namespace StackIt.Bootstrap
     /// </summary>
     public sealed class App : MonoBehaviour, IGameFlow
     {
+        private const float SplashMinSeconds = 1.1f;
+        private const float LookFadeSeconds = 0.3f;
+
         private AppConfig _config;
         private AdsConfig _adsConfig;
         private PlayerPrefsStore _store;
         private SaveService _save;
+        private ThemeService _theme;
+        private PendingChallenges _pending;
+        private SeenSkins _seen;
         private AuthService _auth;
         private GameApi _api;
         private IAdsService _ads;
         private IShareService _share;
         private IHaptics _haptics;
         private AudioService _audio;
+        private MusicService _music;
         private RecorderService _recorder;
         private UnityLocalizer _localizer;
         private DeepLinkService _deepLinks;
@@ -37,13 +47,17 @@ namespace StackIt.Bootstrap
         private CameraRig _rig;
         private SkyBackdrop _sky;
         private StackView _view;
+        private HypeFx _fx;
+        private UrpPostFx _postFx;
         private GameController _game;
 
         private Canvas _canvas;
         private Canvas _overlay;
         private UiRouter _router;
+        private SplashScreen _splash;
         private HomeScreen _home;
         private HudScreen _hud;
+        private PauseScreen _pause;
         private GameOverScreen _gameOver;
         private ChallengeIntroScreen _intro;
         private CodeEntryScreen _codeEntry;
@@ -51,6 +65,7 @@ namespace StackIt.Bootstrap
         private Task _signedIn = Task.CompletedTask;
         private List<Friend> _friends = new List<Friend>();
         private SubmitRunResponse _lastResult;
+        private Task _finishing = Task.CompletedTask;
         private bool _lastRunWasRecord;
         private bool _starting;
 
@@ -73,6 +88,12 @@ namespace StackIt.Bootstrap
             _store = new PlayerPrefsStore();
             _save = new SaveService(_store);
             _save.CountSession();
+            _theme = new ThemeService(Look.Catalog, _store);
+            Look.Init(_theme);
+            Look.ReduceMotion = _save.ReduceMotion;
+            _theme.Changed += ApplyLook;
+            _pending = new PendingChallenges(_store);
+            _seen = new SeenSkins(_store);
 
             _localizer = new UnityLocalizer();
             await _localizer.InitializeAsync(_save.Language);
@@ -82,13 +103,15 @@ namespace StackIt.Bootstrap
             var client = new ApiClient(_config.apiBaseUrl);
             _auth = new AuthService(client, _store, new NativeSignInService(_config.googleWebClientId, _config.googleIosClientId));
             _api = new GameApi(client, new OfflineRunQueue(_store), _save);
-            _api.ProfileChanged += _ => ApplyCosmetics();
+            _api.ProfileChanged += _ => ApplyLook(_theme.Palette);
 
             _ads = _adsConfig.adsEnabled ? AdsServiceRegistry.Create() : new NoAdsService();
             _share = new NativeShareService();
             _haptics = new NativeHaptics { Enabled = _save.HapticsOn };
             _audio = gameObject.AddComponent<AudioService>();
             _audio.Enabled = _save.SoundOn;
+            _music = gameObject.AddComponent<MusicService>();
+            _music.Enabled = _save.MusicOn;
             _recorder = gameObject.AddComponent<RecorderService>();
             _recorder.EndCardFactory = card => new EndCardRenderer(card);
             _adPolicy = new AdPolicy(_adsConfig.interstitialMinRuns, _adsConfig.interstitialMinSeconds);
@@ -101,13 +124,19 @@ namespace StackIt.Bootstrap
                 _haptics.Play(HapticKind.Light);
             };
             BuildUi();
-            _router.Reset(_home);
+            _router.Reset(_splash);
+            float splashUntil = Time.realtimeSinceStartup + SplashMinSeconds;
 
             _deepLinks = new DeepLinkService(_config.apiBaseUrl, _config.urlScheme);
             _deepLinks.ChallengeReceived += OpenChallenge;
-            _deepLinks.Start(firstLaunch: _save.IsFirstSession);
 
             _signedIn = SignInAndSync();
+            // Home once signed in (or offline), but never before the splash has had its moment.
+            await Task.WhenAny(_signedIn, Task.Delay(2500));
+            while (Time.realtimeSinceStartup < splashUntil) await Task.Yield();
+            _router.Reset(_home);
+            _music.Home();
+            _deepLinks.Start(firstLaunch: _save.IsFirstSession);
             await _signedIn;
             _ = InitAdsAsync();
 
@@ -152,6 +181,8 @@ namespace StackIt.Bootstrap
         private void OnApplicationFocus(bool focused)
         {
             if (focused && _api != null && _auth.IsSignedIn) _ = _api.FlushQueueAsync();
+            // Leaving the app mid-run pauses it rather than letting the block run away.
+            if (!focused && _game != null && _game.Phase == RunPhase.Playing && !_game.Paused) Pause();
         }
 
         // --- world & UI --------------------------------------------------------------------------
@@ -163,32 +194,29 @@ namespace StackIt.Bootstrap
             DontDestroyOnLoad(_rig.gameObject);
             _sky = SkyBackdrop.Create(_rig.Camera);
 
-            // Soft warm key light from the upper left; the sky provides the ambient fill (SkyBackdrop),
-            // so the three visible faces of each block read as light, mid and shade.
-            var light = new GameObject("Light").AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 0.95f;
-            light.color = new Color(1f, 0.97f, 0.92f);
-            light.transform.rotation = Quaternion.Euler(58f, -20f, 0f);
-            light.shadows = LightShadows.None;
-            DontDestroyOnLoad(light.gameObject);
-
-            var postFx = new GameObject("PostFx").AddComponent<UrpPostFx>();
-            DontDestroyOnLoad(postFx.gameObject);
-            postFx.Configure(_rig.Camera);
+            _postFx = new GameObject("PostFx").AddComponent<UrpPostFx>();
+            DontDestroyOnLoad(_postFx.gameObject);
+            _postFx.Configure(_rig.Camera);
 
             var world = new GameObject("World");
             DontDestroyOnLoad(world);
             _view = world.AddComponent<StackView>();
-            var fx = world.AddComponent<HypeFx>();
-            fx.Init(_rig, postFx, _haptics, _audio);
+            _fx = world.AddComponent<HypeFx>();
+            _fx.Init(_rig, _postFx, _haptics, _audio);
+            _fx.ReduceMotion = _save.ReduceMotion;
             RivalGhostView ghost = RivalGhostView.Create(world.transform);
             _game = world.AddComponent<GameController>();
-            _game.Init(_view, fx, _rig, _sky, ghost);
+            _game.Init(_view, _fx, _rig, _sky, ghost);
             _game.Missed += OnMissed;
+            _game.Placed += step =>
+            {
+                float width = Mathf.Min(step.Block.Width, step.Block.Depth) / (float)SimConstants.BlockSize;
+                _music.Progress(step.N, width);
+            };
 
-            ApplyCosmetics();
             _view.ResetStack(new StackSim(0).Top);
+            ApplyLook(_theme.Palette);
+            _view.SetAttract(true);
             _rig.SetHome(true, snap: true);
         }
 
@@ -209,13 +237,18 @@ namespace StackIt.Bootstrap
                 Share = _share,
                 DeepLinks = _deepLinks,
                 Localizer = _localizer,
+                Theme = _theme,
+                Pending = _pending,
+                Seen = _seen,
                 Game = _game,
                 Flow = this,
                 Router = _router,
             };
             Transform root = _canvas.transform;
-            _home = new HomeScreen(ctx, root);
+            _splash = new SplashScreen(ctx, root);
+            _home = new HomeScreen(ctx, root, reserveBanner: _adsConfig.adsEnabled);
             _hud = new HudScreen(ctx, root);
+            _pause = new PauseScreen(ctx, root);
             _gameOver = new GameOverScreen(ctx, root);
             _intro = new ChallengeIntroScreen(ctx, root);
             _codeEntry = new CodeEntryScreen(ctx, root);
@@ -236,12 +269,66 @@ namespace StackIt.Bootstrap
             _router.Reset(_home);
         }
 
-        private void ApplyCosmetics()
+        /// <summary>
+        /// Pushes the look (and the equipped skin and sky) into the world: blocks, sky, post FX, the
+        /// rival ghost and the effects. The UI follows by itself through the themed components.
+        /// Visual only: never touches the simulation, so switching mid-run is safe.
+        /// </summary>
+        private void ApplyLook(ThemePalette look)
         {
-            if (_game != null && _game.Phase == RunPhase.Playing) return; // never mid-run
-            _view.SetSkin(_api?.Profile?.EquippedBlockSkin);
-            _sky.SetTheme(_api?.Profile?.EquippedTheme);
-            _view.SetHorizon(_sky.Horizon);
+            _sky.SetLook(look, _api?.Profile?.EquippedTheme);
+            _view.SetLook(look, _api?.Profile?.EquippedBlockSkin, _sky.Horizon);
+            _postFx.SetLook(look.Number(T.BloomIntensity), look.Number(T.BloomThreshold), look.Number(T.BloomScatter),
+                look.Number(T.ChromaticPulse));
+            _fx.SetLook(look);
+            _game.Ghost.SetColor(Palette.ToColor(look.Color(T.Accent2)), look.Number(T.BlockEmission) + 0.3f);
+        }
+
+        // --- settings (IGameFlow) ----------------------------------------------------------------
+
+        /// <summary>Switches the look with a 300 ms cross-fade from a snapshot of the old one.</summary>
+        public void SetLook(ThemeId look)
+        {
+            if (look == _theme.Current) return;
+            StartCoroutine(CrossFadeTo(look));
+        }
+
+        private IEnumerator CrossFadeTo(ThemeId look)
+        {
+            yield return new WaitForEndOfFrame();
+            Texture2D snapshot = ScreenCapture.CaptureScreenshotAsTexture();
+            var cover = new GameObject("LookFade", typeof(RectTransform));
+            cover.transform.SetParent(_overlay.transform, false);
+            UiKit.Stretch((RectTransform)cover.transform);
+            var image = cover.AddComponent<RawImage>();
+            image.texture = snapshot;
+            image.raycastTarget = true; // no taps during the fade
+            IgnoreTheming.Mark(image, "snapshot of the previous look");
+            var group = cover.AddComponent<CanvasGroup>();
+
+            _theme.Set(look);
+            _haptics.Play(HapticKind.Light);
+            Tween.Fade(group, 0f, LookFadeSeconds, () =>
+            {
+                Destroy(cover);
+                Destroy(snapshot);
+            });
+        }
+
+        public void SetReduceMotion(bool on)
+        {
+            _save.ReduceMotion = on;
+            Look.ReduceMotion = on;
+            _fx.ReduceMotion = on;
+        }
+
+        public void SetMusic(bool on)
+        {
+            _save.MusicOn = on;
+            _music.Enabled = on;
+            if (!on) return;
+            if (_game.Phase == RunPhase.Playing) _music.StartRun();
+            else _music.Home();
         }
 
         // --- game flow (IGameFlow) ---------------------------------------------------------------
@@ -252,6 +339,7 @@ namespace StackIt.Bootstrap
             _starting = true;
             try
             {
+                await EndPendingRun();
                 await MaybeInterstitial();
                 StartRunResponse run = await _api.TakeReservedRunAsync();
                 int best = BestScore();
@@ -275,6 +363,32 @@ namespace StackIt.Bootstrap
             }
         }
 
+        /// <summary>A normal (ranked) run with a chosen friend as the ghost to beat.</summary>
+        public async void PlayAgainst(string rivalName, int rivalScore, int rivalHeight)
+        {
+            if (_starting) return;
+            _starting = true;
+            try
+            {
+                StartRunResponse run = await _api.TakeReservedRunAsync();
+                StartRun(new RunSetup
+                {
+                    Seed = run != null ? (uint)run.Seed : (uint)Random.Range(int.MinValue, int.MaxValue),
+                    RunId = run?.RunId,
+                    ContinuesAllowed = run?.ContinuesAllowed ?? true,
+                    PersonalBest = BestScore(),
+                    RivalName = rivalName,
+                    RivalHeight = rivalHeight,
+                    RivalScore = rivalScore,
+                });
+                if (run != null) _api.ReserveNextRun();
+            }
+            finally
+            {
+                _starting = false;
+            }
+        }
+
         public async void PlayChallenge(string code)
         {
             if (_starting) return;
@@ -283,6 +397,7 @@ namespace StackIt.Bootstrap
             {
                 await _signedIn;
                 StartRunResponse run = await _api.StartChallengeRunAsync(code);
+                _pending.Remove(code);
                 StartRun(new RunSetup
                 {
                     Seed = (uint)run.Seed,
@@ -316,6 +431,7 @@ namespace StackIt.Bootstrap
                     _router.Toast(L.T("error.own_challenge"));
                     return;
                 }
+                _pending.Add(info.Code, info.CreatorName, info.Score);
                 _intro.Bind(info);
                 _router.Show(_intro);
             }
@@ -328,23 +444,51 @@ namespace StackIt.Bootstrap
         private void StartRun(RunSetup setup)
         {
             _lastResult = null;
-            ApplyCosmetics();
+            ApplyLook(_theme.Palette);
+            _view.SetAttract(false);
             _rig.SetHome(false);
             _game.Begin(setup);
             _router.Reset(_hud);
             _recorder.BeginRun();
+            _music.StartRun();
+        }
+
+        public void Pause()
+        {
+            if (_game.Phase != RunPhase.Playing) return;
+            _game.Pause();
+            _music.Pause(true);
+            _router.Show(_pause, remember: false);
+        }
+
+        public void Resume()
+        {
+            _game.Resume();
+            _music.Pause(false);
+            _router.Reset(_hud);
+        }
+
+        /// <summary>From the pause menu: abandon this run (unsubmitted) and start a fresh one.</summary>
+        public void Restart()
+        {
+            _game.Resume();
+            _game.Idle();
+            _recorder.EndRun();
+            PlayNormal();
         }
 
         private void OnMissed()
         {
+            _rig.SetZoomOut(1f);
             if (_game.CanContinue && _ads.RewardedReady)
             {
-                _gameOver.ShowContinueOffer();
+                _gameOver.ShowContinueOffer(_game.Score, _game.IsNewRecord, _game.Setup.PersonalBest);
                 _router.Show(_gameOver, remember: false);
+                _music.GameOver();
             }
             else
             {
-                FinishRun();
+                _finishing = FinishRun();
             }
         }
 
@@ -355,19 +499,28 @@ namespace StackIt.Bootstrap
             if (rewarded && _game.Continue())
             {
                 _router.Reset(_hud);
+                _music.StartRun();
                 return;
             }
             if (!rewarded) _router.Toast(L.T("flow.no_ad"));
-            FinishRun();
+            _finishing = FinishRun();
         }
 
-        public void DeclineContinue() => FinishRun();
+        public void DeclineContinue() => _finishing = FinishRun();
 
-        private async void FinishRun()
+        /// <summary>Ends a run still waiting on "Continue" (another button on the results was pressed).</summary>
+        private Task EndPendingRun()
+        {
+            if (_game.Phase == RunPhase.AwaitingContinue) _finishing = FinishRun();
+            return _finishing;
+        }
+
+        private async Task FinishRun()
         {
             if (!_game.Finish()) return;
             _recorder.EndRun();
             _adPolicy.RecordRunEnded();
+            _music.GameOver();
 
             RunSetup setup = _game.Setup;
             int score = _game.Score;
@@ -416,6 +569,7 @@ namespace StackIt.Bootstrap
         /// <summary>The viral loop: duel link + auto-recorded clip with an end card, via the share sheet.</summary>
         public async void ShareChallenge()
         {
+            await EndPendingRun(); // pressed while "Continue" was still on offer: the run ends here
             if (_lastResult == null || _lastResult.Status != "verified")
             {
                 _router.Toast(L.T("flow.share_needs_verified"));
@@ -442,15 +596,21 @@ namespace StackIt.Bootstrap
 
         public async void GoHome()
         {
+            await EndPendingRun();
             await MaybeInterstitial();
-            // A clean cut to the base block while Home fades in (the tower is gone).
+            // A clean cut to the base while Home fades in (the tower is gone).
+            _game.Resume();
+            _game.Idle();
             _view.ResetStack(new StackSim(0).Top);
+            ApplyLook(_theme.Palette);
+            _view.SetAttract(true);
             _rig.SetZoomOut(0f, snap: true);
             _rig.Follow(0f, snap: true);
             _rig.SetHome(true, snap: true);
             _sky.SetHeight(0);
             _game.Ghost.Hide();
             _router.Reset(_home);
+            _music.Home();
             if (_auth.IsSignedIn) _ = RefreshFriends();
         }
 

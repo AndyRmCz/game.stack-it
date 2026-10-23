@@ -16,7 +16,7 @@ namespace StackIt.EditorTools
     /// </summary>
     public static class StringsImporter
     {
-        private const string CsvPath = "Assets/_Project/Resources/StackIt/strings.csv";
+        internal const string CsvPath = "Assets/_Project/Resources/StackIt/strings.csv";
         private const string LocalizationDir = "Assets/_Project/Localization";
         private const string TableName = "UI";
 

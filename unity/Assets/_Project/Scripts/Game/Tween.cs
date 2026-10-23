@@ -29,7 +29,7 @@ namespace StackIt.Game
                 if (_runner == null)
                 {
                     var go = new GameObject("Tweens");
-                    DontDestroyOnLoad(go);
+                    if (Application.isPlaying) DontDestroyOnLoad(go); // edit-mode tools and tests build UI too
                     _runner = go.AddComponent<Tween>();
                 }
                 return _runner;
@@ -54,6 +54,20 @@ namespace StackIt.Game
                 target.localScale = new Vector3(s, s, 1f);
             }, () => { if (target != null) target.localScale = Vector3.one; });
         }
+
+        /// <summary>Grows from nothing with a small overshoot (a dot or badge appearing).</summary>
+        public static void PopIn(Transform target, float duration = 0.32f)
+        {
+            target.localScale = Vector3.zero;
+            Run(target, duration, t =>
+            {
+                if (target == null) return;
+                float s = EaseOutBack(t);
+                target.localScale = new Vector3(s, s, 1f);
+            }, () => { if (target != null) target.localScale = Vector3.one; });
+        }
+
+        public static float EaseInOut(float t) => t * t * (3f - 2f * t);
 
         public static void Fade(CanvasGroup group, float to, float duration, Action done = null)
         {

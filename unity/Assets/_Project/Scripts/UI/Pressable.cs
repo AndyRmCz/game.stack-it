@@ -6,14 +6,18 @@ using UnityEngine.UI;
 namespace StackIt.UI
 {
     /// <summary>
-    /// Tactile press for code-built buttons: the face sinks onto its lip (or the whole button
-    /// squishes when it has no lip), with a click and a light haptic through UiKit.Pressed.
-    /// Also dims the button while it is not interactable.
+    /// Tactile press for code-built buttons. With a <see cref="Face"/> (primary buttons) the face
+    /// moves down <see cref="Depth"/> over 60 ms, so its 6 pt edge shrinks to 2, then springs back
+    /// over 140 ms with a slight overshoot; other buttons squish a little. Fires UiKit.Pressed
+    /// (click and light haptic) and dims the button while it is not interactable.
     /// </summary>
     public sealed class Pressable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
     {
+        private const float DownSeconds = 0.06f;
+        private const float UpSeconds = 0.14f;
+
         public RectTransform Face;
-        public float Depth;
+        public float Depth = 4f;
         public Button Button;
 
         private CanvasGroup _group;
@@ -28,7 +32,7 @@ namespace StackIt.UI
             if (Button != null && !Button.IsInteractable()) return;
             _down = true;
             UiKit.Pressed?.Invoke();
-            Animate(1f, 0.06f, false);
+            Animate(1f, DownSeconds, false);
         }
 
         public void OnPointerUp(PointerEventData eventData) => Release();
@@ -38,7 +42,7 @@ namespace StackIt.UI
         {
             if (!_down) return;
             _down = false;
-            Animate(0f, 0.22f, true);
+            Animate(0f, UpSeconds, true);
         }
 
         private void Animate(float to, float duration, bool overshoot)
@@ -54,7 +58,7 @@ namespace StackIt.UI
             Tween.Run(target, duration, t =>
             {
                 if (this == null) return;
-                Apply(overshoot ? Mathf.LerpUnclamped(from, to, Tween.EaseOutBack(t)) : Mathf.Lerp(from, to, t));
+                Apply(overshoot ? Mathf.LerpUnclamped(from, to, Tween.EaseOutBack(t)) : Mathf.Lerp(from, to, Tween.EaseOutCubic(t)));
             });
         }
 
@@ -64,13 +68,13 @@ namespace StackIt.UI
             _amount = amount;
             if (Face != null)
             {
-                var shift = new Vector2(0f, -Depth * 0.8f * amount);
+                var shift = new Vector2(0f, -Depth * amount);
                 Face.offsetMin = _min + shift;
                 Face.offsetMax = _max + shift;
             }
             else
             {
-                float s = 1f - 0.05f * amount;
+                float s = 1f - 0.04f * amount;
                 transform.localScale = new Vector3(s, s, 1f);
             }
         }

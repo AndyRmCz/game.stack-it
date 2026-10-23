@@ -4,39 +4,60 @@ using UnityEngine;
 namespace StackIt.UI
 {
     /// <summary>
-    /// TMP font assets baked by Stack IT ▸ Setup Project into Resources/StackIt/Fonts: Fredoka for
-    /// numbers and titles, Nunito Sans for text, Material Symbols Rounded for icons (also a fallback
-    /// of the text fonts, so an icon codepoint can sit inside any label). Missing assets fall back to
-    /// TMP's default font so the game still runs before setup.
+    /// TMP font assets baked by Stack IT ▸ Setup Project (or automatically on editor load) into
+    /// Resources/StackIt/Fonts: Fredoka for the logo, numbers, titles and primary buttons, Nunito
+    /// for everything else, Material Symbols Rounded for icons (outline set, plus a filled set for
+    /// primary buttons). The text fonts fall back to the outline icons, so an icon codepoint can sit
+    /// inside a label. Missing assets fall back to TMP's default font (no icons), with a warning.
     /// </summary>
     public static class Fonts
     {
         public const string ResourceDir = "StackIt/Fonts/";
-        public const string DisplayName = "Display SDF";
-        public const string BodyName = "Body SDF";
-        public const string BodyBoldName = "BodyBold SDF";
-        public const string IconsName = "Icons SDF";
+        public const string DisplayName = "Fredoka Bold SDF";
+        public const string DisplaySemiName = "Fredoka SemiBold SDF";
+        public const string BodyName = "Nunito Bold SDF";
+        public const string BodyHeavyName = "Nunito ExtraBold SDF";
+        public const string IconsName = "Icons Outline SDF";
+        public const string IconsFilledName = "Icons Filled SDF";
 
-        private static TMP_FontAsset _display, _body, _bodyBold, _icons;
+        private static TMP_FontAsset _display, _displaySemi, _body, _bodyHeavy, _icons, _iconsFilled;
 
+        /// <summary>Fredoka 700.</summary>
         public static TMP_FontAsset Display => Load(ref _display, DisplayName);
+        /// <summary>Fredoka 600 (coin counter).</summary>
+        public static TMP_FontAsset DisplaySemi => Load(ref _displaySemi, DisplaySemiName);
+        /// <summary>Nunito 700.</summary>
         public static TMP_FontAsset Body => Load(ref _body, BodyName);
-        public static TMP_FontAsset BodyBold => Load(ref _bodyBold, BodyBoldName);
+        /// <summary>Nunito 800.</summary>
+        public static TMP_FontAsset BodyHeavy => Load(ref _bodyHeavy, BodyHeavyName);
         public static TMP_FontAsset Icons => Load(ref _icons, IconsName);
+        public static TMP_FontAsset IconsFilled => Load(ref _iconsFilled, IconsFilledName);
+
+        private static bool _warned;
 
         private static TMP_FontAsset Load(ref TMP_FontAsset cache, string name)
         {
             if (cache == null) cache = Resources.Load<TMP_FontAsset>(ResourceDir + name);
-            return cache != null ? cache : TMP_Settings.defaultFontAsset;
+            if (cache != null) return cache;
+            if (!_warned)
+            {
+                // Icons render as empty boxes in the fallback font, so say why.
+                Debug.LogWarning($"Missing Resources/{ResourceDir}{name}.asset; run Stack IT ▸ Setup Project. Using TMP's default font (no icons).");
+                _warned = true;
+            }
+            return TMP_Settings.defaultFontAsset;
         }
     }
 
-    /// <summary>Material Symbols Rounded codepoints. Keep in sync with the subset in Fonts/MaterialSymbolsRounded.ttf.</summary>
+    /// <summary>
+    /// Material Symbols Rounded codepoints (same in the outline and filled fonts). Keep in sync with
+    /// the subset in Fonts/MaterialSymbolsRounded-*.ttf (docs/THEMING.md has the subsetting command).
+    /// </summary>
     public static class Icons
     {
         public const string Friends = "";     // group
         public const string Ranks = "";       // leaderboard
-        public const string Shop = "";        // storefront
+        public const string Shop = "";        // shopping_bag
         public const string Settings = "";    // settings
         public const string Gift = "";        // redeem
         public const string Back = "";        // arrow_back_ios_new
@@ -60,10 +81,30 @@ namespace StackIt.UI
         public const string Copy = "";        // content_copy
         public const string Refresh = "";     // refresh
         public const string Coin = "";        // paid
+        public const string Ticket = "";      // confirmation_number
+        public const string Pause = "";       // pause
+        public const string VideoAd = "";     // smart_display
+        public const string Music = "";       // music_note
+        public const string Look = "";        // palette
+        public const string Motion = "";      // animation
+        public const string Offline = "";     // wifi_off
+        public const string Error = "";       // error
+        public const string Invite = "";      // group_add
+        public const string Challenge = "";   // swords
+        public const string Person = "";      // person
+        public const string Timer = "";       // timer
+        public const string Chevron = "";     // chevron_right
+        public const string Privacy = "";     // shield
+        public const string Terms = "";       // description
+        public const string Dark = "";        // dark_mode
+        public const string Light = "";       // light_mode
+        public const string Hourglass = "";   // hourglass_top
+        public const string CloudOff = "";    // cloud_off
 
-        /// <summary>Every glyph above: what Setup Project bakes into the icon atlas.</summary>
+        /// <summary>Every glyph above: what Setup Project bakes into the icon atlases.</summary>
         public const string All = Friends + Ranks + Shop + Settings + Gift + Back + Close + Play + Replay + Home
             + Share + AddFriend + Add + Check + Lock + Trophy + Bolt + Sound + Haptics + Language + Link + Delete
-            + Star + Copy + Refresh + Coin;
+            + Star + Copy + Refresh + Coin + Ticket + Pause + VideoAd + Music + Look + Motion + Offline + Error
+            + Invite + Challenge + Person + Timer + Chevron + Privacy + Terms + Dark + Light + Hourglass + CloudOff;
     }
 }

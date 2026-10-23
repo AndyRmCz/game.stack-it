@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Header, Query
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 
 from app.api.deps import ChallengeServiceDep, SettingsDep
 from app.core.errors import NotFound
-from app.web import pages
+from app.web import og, pages
 from app.web.i18n import pick_lang
 from app.web.legal import DELETION, PRIVACY, TERMS
 
@@ -44,6 +44,27 @@ async def challenge_landing(
         play_url=settings.play_store_url,
     )
     return HTMLResponse(html, headers={"Cache-Control": "public, max-age=60"})
+
+
+@router.get("/og/{code}.png")
+async def challenge_preview_image(
+    code: str,
+    challenges: ChallengeServiceDep,
+    accept_language: AcceptLanguage = None,
+    lang: LangOverride = None,
+) -> Response:
+    """The link preview (Open Graph) image: the score to beat in the Neon look."""
+    language = pick_lang(accept_language, lang)
+    try:
+        view = await challenges.get(code, viewer_id=None)
+        score: int | None = view.challenge.score
+    except NotFound:
+        score = None  # still a valid image: crawlers cache whatever they get
+    return Response(
+        og.render(score, language),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.get("/.well-known/apple-app-site-association")

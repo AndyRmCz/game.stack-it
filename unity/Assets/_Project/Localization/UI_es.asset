@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 7678713856
-    m_Localized: JUGAR
+    m_Localized: Jugar
     m_Metadata:
       m_Items: []
   - m_Id: 8446271488
@@ -47,11 +47,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854405
-    m_Localized: "R\xC9CORD {0}"
+    m_Localized: "R\xE9cord {0}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854406
-    m_Localized: TOCA PARA SOLTAR. APILA ALTO.
+    m_Localized: Toca para soltar. Apila alto.
     m_Metadata:
       m_Items: []
   - m_Id: 8458854407
@@ -63,19 +63,19 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854409
-    m_Localized: "SUPERA A @{0} \xB7 {1}"
+    m_Localized: "Supera a @{0} \xB7 {1}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854410
-    m_Localized: PERFECTO
+    m_Localized: Perfecto
     m_Metadata:
       m_Items: []
   - m_Id: 8458854411
-    m_Localized: "PERFECTO \xD7{0}"
+    m_Localized: "Perfecto \xD7{0}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854412
-    m_Localized: "\xA1SUPERASTE A @{0}!"
+    m_Localized: "\xA1Superaste a @{0}!"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854413
@@ -87,7 +87,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854415
-    m_Localized: "CONTINUAR \xB7 VER ANUNCIO"
+    m_Localized: "Continuar \xB7 ver anuncio"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854416
@@ -95,11 +95,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854417
-    m_Localized: "NUEVO R\xC9CORD"
+    m_Localized: "Nuevo r\xE9cord"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854418
-    m_Localized: RETA A UN AMIGO
+    m_Localized: Reta a un amigo
     m_Metadata:
       m_Items: []
   - m_Id: 8458854419
@@ -115,7 +115,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854422
-    m_Localized: "R\xC9CORD {0}"
+    m_Localized: "R\xE9cord {0}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854423
@@ -147,11 +147,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854430
-    m_Localized: "PREPARANDO CLIP\u2026"
+    m_Localized: "Preparando clip\u2026"
     m_Metadata:
       m_Items: []
   - m_Id: 8463048704
-    m_Localized: RETO
+    m_Localized: Reto
     m_Metadata:
       m_Items: []
   - m_Id: 8463048705
@@ -167,7 +167,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048708
-    m_Localized: ACEPTAR RETO
+    m_Localized: Aceptar reto
     m_Metadata:
       m_Items: []
   - m_Id: 8463048709
@@ -187,7 +187,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048713
-    m_Localized: ABRIR RETO
+    m_Localized: Unirme
     m_Metadata:
       m_Items: []
   - m_Id: 8463048714
@@ -293,7 +293,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048739
-    m_Localized: "Ne\xF3n cl\xE1sico"
+    m_Localized: "Cl\xE1sico"
     m_Metadata:
       m_Items: []
   - m_Id: 8463048740
@@ -321,7 +321,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048746
-    m_Localized: Synthwave
+    m_Localized: "Cl\xE1sico"
     m_Metadata:
       m_Items: []
   - m_Id: 8463048747
@@ -350,7 +350,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048753
-    m_Localized: RECLAMAR
+    m_Localized: Reclamar
     m_Metadata:
       m_Items: []
   - m_Id: 8463048754
@@ -559,6 +559,94 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 8467243055
     m_Localized: "Usa de 3 a 20 letras, n\xFAmeros, espacios, _ . o -."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234559907028992
+    m_Localized: En pausa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961920
+    m_Localized: Seguir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961921
+    m_Localized: Reiniciar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961922
+    m_Localized: Continuar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961923
+    m_Localized: "Monedas \xD72"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961924
+    m_Localized: Revancha
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961925
+    m_Localized: "T\xFA"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961926
+    m_Localized: Puntos a superar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961927
+    m_Localized: Retos pendientes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961928
+    m_Localized: "@{0} \xB7 supera {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961929
+    m_Localized: Jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961930
+    m_Localized: Retar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961931
+    m_Localized: "C\xF3digo copiado"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961932
+    m_Localized: Invita a tus amigos
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961933
+    m_Localized: Se reinicia en {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961934
+    m_Localized: Racha {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961935
+    m_Localized: Estilo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961936
+    m_Localized: Pop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961937
+    m_Localized: "Ne\xF3n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961938
+    m_Localized: Reducir movimiento
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961939
+    m_Localized: "M\xFAsica"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961940
+    m_Localized: Reintentar
     m_Metadata:
       m_Items: []
   references:

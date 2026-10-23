@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using StackIt.Client;
 using StackIt.Client.Api;
+using StackIt.Client.Theming;
 using StackIt.Core;
 using StackIt.Core.Simulation;
 using StackIt.Game;
@@ -10,76 +12,136 @@ using UnityEngine.UI;
 
 namespace StackIt.UI
 {
-    /// <summary>
-    /// The tower is the hero: a small title above it, one Play button below, a glass dock with the
-    /// four destinations at the bottom. Transparent, so the sky and the base block show through.
-    /// </summary>
-    public sealed class HomeScreen : UiScreen
+    /// <summary>Brief branded loading screen: the logo and three blocks dropping into a stack.</summary>
+    public sealed class SplashScreen : UiScreen
     {
-        private const string CoinTint = "#D99A0B";
+        private readonly IsoTower _tower;
 
-        private readonly TextMeshProUGUI _best;
-        private readonly TextMeshProUGUI _coins;
-        private readonly TextMeshProUGUI _pending;
-        private readonly Image _dailyDot;
+        public override bool AllowsBanner => false;
 
-        public UiScreen Friends, Leaderboard, Shop, Settings, Daily, CodeEntry;
-
-        public HomeScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Home", new Color(0, 0, 0, 0))
+        public SplashScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Splash", ScreenBackground.Gradient)
         {
-            // Top bar: daily gift (left), coins (right).
-            RectTransform top = UiKit.Band(UiKit.Rect("Top", Safe), 1f, 120, pivotY: 1f);
-            top.anchoredPosition = new Vector2(0, -40);
-            HorizontalLayoutGroup row = UiKit.Row(top, 24);
-            row.childForceExpandWidth = false;
-            row.childControlWidth = true;
-
-            Button daily = UiKit.IconButton(top, Icons.Gift, ButtonStyle.Secondary, () => Ctx.Router.Show(Daily), 120);
-            _dailyDot = UiKit.Panel(daily.transform, "Dot", Theme.Tomato, rounded: true, radius: 16);
-            _dailyDot.rectTransform.anchorMin = _dailyDot.rectTransform.anchorMax = new Vector2(1, 1);
-            _dailyDot.rectTransform.sizeDelta = new Vector2(32, 32);
-            _dailyDot.rectTransform.anchoredPosition = new Vector2(-10, -10);
-            UiKit.Size(UiKit.Rect("Fill", top), flexibleWidth: 1);
-            _coins = UiKit.Pill(top, "0", Theme.Paper, Theme.Ink, 108, $"<color={CoinTint}>{Icons.Coin}</color>");
-
-            // Title, small, above the tower.
-            RectTransform title = UiKit.Band(UiKit.Rect("Title", Safe), 0.79f, 300);
-            UiKit.Column(title, 4, null, TextAnchor.MiddleCenter);
-            TextMeshProUGUI logo = UiKit.Display(title, "STACK IT", 150, Theme.Ink);
-            UiKit.OneLine(logo, 90);
-            UiKit.Size(logo.rectTransform, height: 180);
-            _best = UiKit.Caps(title, "", Theme.InkSoft, 36);
-            UiKit.Size(_best.rectTransform, height: 60);
-
-            // Play, below the tower.
-            RectTransform play = UiKit.Band(UiKit.Rect("Play", Safe), 0.27f, 190, inset: Theme.Gutter * 2.5f);
-            UiKit.Column(play, 0);
-            UiKit.Button(play, L.T("home.play"), ButtonStyle.Primary, () => Ctx.Flow.PlayNormal(), 190, Icons.Play);
-
-            RectTransform link = UiKit.Band(UiKit.Rect("Code", Safe), 0.195f, 100, inset: Theme.Gutter * 2f);
-            UiKit.Column(link, 0);
-            Button code = UiKit.Button(link, L.T("home.have_code"), ButtonStyle.Ghost, () => Ctx.Router.Show(CodeEntry), 100);
-            code.GetComponentInChildren<TextMeshProUGUI>().color = Theme.InkSoft;
-            _pending = UiKit.Label(Safe, "", 32, Theme.InkSoft);
-            UiKit.Band(_pending.rectTransform, 0.155f, 50);
-
-            // Dock, above the banner ad.
-            RectTransform dock = UiKit.Card(Safe, "Dock", Theme.Glass, radius: 56);
-            UiKit.Band(dock, 0f, 190, pivotY: 0f);
-            dock.anchoredPosition = new Vector2(0, 190); // banner height + margin
-            UiKit.Row(dock, 0).padding = new RectOffset(16, 16, 20, 16);
-            UiKit.DockItem(dock, Icons.Friends, L.T("home.friends"), () => Ctx.Router.Show(Friends));
-            UiKit.DockItem(dock, Icons.Ranks, L.T("home.ranks"), () => Ctx.Router.Show(Leaderboard));
-            UiKit.DockItem(dock, Icons.Shop, L.T("home.shop"), () => Ctx.Router.Show(Shop));
-            UiKit.DockItem(dock, Icons.Settings, L.T("home.settings"), () => Ctx.Router.Show(Settings));
-
-            Ctx.Api.ProfileChanged += Render;
+            RectTransform column = UiKit.Pin(UiKit.Rect("Column", Safe), new Vector2(0.5f, 0.5f), new Vector2(320, 300), Vector2.zero);
+            column.pivot = new Vector2(0.5f, 0.5f);
+            UiKit.Column(column, 18, null, TextAnchor.MiddleCenter);
+            RectTransform holder = UiKit.Rect("Tower", column);
+            UiKit.Size(holder, height: 150);
+            _tower = holder.gameObject.AddComponent<IsoTower>();
+            _tower.raycastTarget = false;
+            _tower.Footprint = 0.42f;
+            var themed = holder.gameObject.AddComponent<ThemedIsoTower>();
+            themed.Target = _tower;
+            themed.Blocks = 3;
+            themed.WithMoving = false;
+            themed.Refresh();
+            TextMeshProUGUI logo = UiKit.Text(column, "STACK IT", TextRole.Logo);
+            UiKit.Size(logo.rectTransform, height: 70);
+            TextEffect.Add(logo, TextEffectKind.LogoGlow);
         }
 
         protected override void OnShow()
         {
+            // The three blocks drop in one after another.
+            for (int i = 0; i < 3; i++) _tower.SetDrop(i, 6f);
+            for (int i = 0; i < 3; i++)
+            {
+                int index = i;
+                float delay = 0.12f + 0.16f * i;
+                Tween.Run(new object(), delay + 0.38f, t =>
+                {
+                    if (_tower == null) return;
+                    float local = Mathf.Clamp01((t * (delay + 0.38f) - delay) / 0.38f);
+                    _tower.SetDrop(index, 6f * (1f - Tween.EaseOutBack(local)));
+                });
+            }
+        }
+    }
+
+    /// <summary>
+    /// The reference screen. Gift (dot when the daily reward is ready) and coins on top, the logo
+    /// and best score, the tower as the hero (the game world behind this see-through screen), the
+    /// breathing Play button, the code pill and the floating bottom navigation.
+    /// </summary>
+    public sealed class HomeScreen : UiScreen
+    {
+        private readonly TextMeshProUGUI _best;
+        private readonly TextMeshProUGUI _coins;
+        private readonly TextMeshProUGUI _pending;
+        private readonly RoundedRect _giftDot;
+        private readonly RoundedRect _friendsDot;
+        private readonly RoundedRect _shopDot;
+
+        public UiScreen Friends, Leaderboard, Shop, Settings, Daily, CodeEntry;
+
+        public HomeScreen(UiContext ctx, Transform parent, bool reserveBanner) : base(ctx, parent, "Home", ScreenBackground.None)
+        {
+            // Top bar: gift (left), coins (right).
+            RectTransform top = TopBar(Safe);
+            Button gift = UiKit.IconButton(top, Icons.Gift, () => Ctx.Router.Show(Daily));
+            UiKit.Pin((RectTransform)gift.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), Vector2.zero);
+            _giftDot = UiKit.Dot(gift.transform);
+            _coins = UiKit.CoinPill(top);
+            var coins = (RectTransform)_coins.transform.parent;
+            coins.anchorMin = coins.anchorMax = coins.pivot = new Vector2(1, 0.5f);
+            coins.anchoredPosition = Vector2.zero;
+
+            // Logo and best score.
+            RectTransform title = UiKit.Pin(UiKit.Rect("Title", Safe), new Vector2(0.5f, 1f), new Vector2(350, 110),
+                new Vector2(0, -(Ui.TopGap + Ui.IconButton + 40)));
+            UiKit.Column(title, 6, null, TextAnchor.UpperCenter);
+            TextMeshProUGUI logo = UiKit.Text(title, "STACK IT", TextRole.Logo);
+            UiKit.Size(logo.rectTransform, height: 68);
+            TextEffect.Add(logo, TextEffectKind.LogoGlow);
+            _best = UiKit.Text(title, "", TextRole.Overline, T.TextSecondary);
+            UiKit.Size(_best.rectTransform, height: 18);
+            _pending = UiKit.Text(title, "", TextRole.Caption, T.TextSecondary);
+            UiKit.Size(_pending.rectTransform, height: 16);
+
+            // Bottom up: navigation (above the banner's reserved height), code pill, Play.
+            float y = Ui.BottomGap + (reserveBanner ? Ui.Banner : 0f);
+            RectTransform nav = UiKit.NavBar(Safe);
+            UiKit.Band(nav, 0f, Ui.NavHeight, pivotY: 0f).anchoredPosition = new Vector2(0, y);
+            _friendsDot = DotOn(UiKit.NavItem(nav, Icons.Friends, L.T("home.friends"), () => Ctx.Router.Show(Friends)));
+            UiKit.NavItem(nav, Icons.Ranks, L.T("home.ranks"), () => Ctx.Router.Show(Leaderboard));
+            _shopDot = DotOn(UiKit.NavItem(nav, Icons.Shop, L.T("home.shop"), () => Ctx.Router.Show(Shop)));
+            UiKit.NavItem(nav, Icons.Settings, L.T("home.settings"), () => Ctx.Router.Show(Settings));
+            y += Ui.NavHeight + 22f;
+
+            RectTransform code = UiKit.Band(UiKit.Rect("Code", Safe), 0f, Ui.PillHeight, pivotY: 0f);
+            code.anchoredPosition = new Vector2(0, y);
+            UiKit.Column(code, 0, null, TextAnchor.MiddleCenter);
+            UiKit.CenteredPill(code, L.T("home.have_code"), Icons.Ticket, () => Ctx.Router.Show(CodeEntry));
+            y += Ui.PillHeight + 18f;
+
+            RectTransform play = UiKit.Band(UiKit.Rect("Play", Safe), 0f, Ui.PrimaryHeight, pivotY: 0f);
+            play.anchoredPosition = new Vector2(0, y);
+            UiKit.Column(play, 0);
+            UiKit.Primary(play, L.T("home.play"), Icons.Play, () => Ctx.Flow.PlayNormal(), breathe: true);
+
+            Ctx.Api.ProfileChanged += Render;
+            Ctx.Pending.Changed += () => UiKit.ShowDot(_friendsDot, Ctx.Pending.Any);
+        }
+
+        /// <summary>The bar under the safe area's top: 48 tall, inside the side padding.</summary>
+        public static RectTransform TopBar(RectTransform safe)
+        {
+            RectTransform top = UiKit.Rect("Top", safe);
+            top.anchorMin = new Vector2(0, 1);
+            top.anchorMax = new Vector2(1, 1);
+            top.pivot = new Vector2(0.5f, 1);
+            top.sizeDelta = new Vector2(-2 * Ui.Side, Ui.IconButton);
+            top.anchoredPosition = new Vector2(0, -Ui.TopGap);
+            return top;
+        }
+
+        private static RoundedRect DotOn(Button navItem) => UiKit.Dot(navItem.transform.Find("Icon"));
+
+        protected override void OnShow()
+        {
             Render(Ctx.Api.Profile);
+            UiKit.ShowDot(_friendsDot, Ctx.Pending.Any);
             RefreshDaily();
+            RefreshShop();
         }
 
         private async void RefreshDaily()
@@ -87,11 +149,24 @@ namespace StackIt.UI
             try
             {
                 DailyStatus status = await Ctx.Api.DailyAsync();
-                _dailyDot.gameObject.SetActive(!status.ClaimedToday);
+                UiKit.ShowDot(_giftDot, !status.ClaimedToday);
             }
             catch (StackIt.Services.ApiException)
             {
-                _dailyDot.gameObject.SetActive(false);
+                UiKit.ShowDot(_giftDot, false);
+            }
+        }
+
+        private async void RefreshShop()
+        {
+            try
+            {
+                Shop shop = await Ctx.Api.ShopAsync();
+                UiKit.ShowDot(_shopDot, Ctx.Seen.HasNew(ShopScreen.Entries(shop), shop.Balance));
+            }
+            catch (StackIt.Services.ApiException)
+            {
+                UiKit.ShowDot(_shopDot, false);
             }
         }
 
@@ -99,55 +174,66 @@ namespace StackIt.UI
         {
             int best = Mathf.Max(profile?.BestScore ?? 0, Ctx.Save.LocalBest);
             _best.text = best > 0 ? L.T("home.best", best) : L.T("home.tagline");
-            _coins.text = UiKit.WithIcon($"<color={CoinTint}>{Icons.Coin}</color>", (profile?.Coins ?? 0).ToString("N0"));
+            _coins.text = (profile?.Coins ?? 0).ToString("N0");
             int pending = Ctx.Api.PendingSubmissions;
             _pending.text = pending > 0 ? L.T("home.pending", pending) : "";
         }
     }
 
-    /// <summary>In-game HUD. The whole screen is the tap target, so there are no buttons to miss.</summary>
+    /// <summary>
+    /// In-game HUD: the whole screen is the tap target. Pause (top-left), the score (top centre,
+    /// glowing in Neon), the combo pill that punches in on each perfect, the rival's marker (an
+    /// accent2 line and a chip at the rival's height) and the "You passed" banner.
+    /// </summary>
     public sealed class HudScreen : UiScreen
     {
         private readonly TextMeshProUGUI _score;
         private readonly TextMeshProUGUI _combo;
-        private readonly TextMeshProUGUI _rival;
-        private readonly TextMeshProUGUI _callout;
+        private readonly RectTransform _banner;
+        private readonly TextMeshProUGUI _bannerText;
         private readonly TextMeshProUGUI _hint;
+        private readonly RivalMarker _rival;
 
         public override bool AllowsBanner => false;
 
-        public HudScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Hud", new Color(0, 0, 0, 0))
+        public HudScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Hud", ScreenBackground.None)
         {
-            Root.GetComponent<Image>().raycastTarget = true; // tap catcher
+            var catcher = Root.gameObject.AddComponent<Image>();
+            catcher.color = Color.clear;
+            IgnoreTheming.Mark(catcher, "invisible full-screen tap catcher");
             Root.gameObject.AddComponent<TapForwarder>().Hud = this;
 
-            _rival = UiKit.Pill(Safe, "", Theme.Pool, Theme.Paper, 84, Icons.Trophy);
-            Float(_rival, 0.955f);
-            _score = UiKit.Display(Safe, "0", 230, Theme.Paper, shadow: true);
-            UiKit.Band(_score.rectTransform, 0.85f, 260);
-            _combo = UiKit.Pill(Safe, "", Theme.Paper, Theme.Ink, 88);
-            Float(_combo, 0.755f);
-            _callout = UiKit.Display(Safe, "", 76, Theme.Paper, shadow: true);
-            UiKit.Band(_callout.rectTransform, 0.66f, 120);
-            UiKit.OneLine(_callout, 44);
-            _hint = UiKit.Label(Safe, L.T("hud.tap_hint"), 42, Theme.Paper, TextAlignmentOptions.Center, bold: true);
-            _hint.gameObject.AddComponent<TextEffect>().Shadow = true;
-            UiKit.Band(_hint.rectTransform, 0.2f, 80);
+            _rival = RivalMarker.Create(Safe, ctx);
+
+            RectTransform top = HomeScreen.TopBar(Safe);
+            Button pause = UiKit.IconButton(top, Icons.Pause, () => Ctx.Flow.Pause());
+            UiKit.Pin((RectTransform)pause.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), Vector2.zero);
+
+            _score = UiKit.Text(Safe, "0", TextRole.BigNumber, T.TextPrimary, size: 72f);
+            UiKit.Pin(_score.rectTransform, new Vector2(0.5f, 1f), new Vector2(240, 90), new Vector2(0, -(Ui.TopGap + 40)));
+            _score.rectTransform.pivot = new Vector2(0.5f, 1f);
+            TextEffect.Add(_score, TextEffectKind.LogoGlow);
+
+            _combo = UiKit.Chip(Safe, "", T.Accent, T.AccentOn, 32f, Icons.Star);
+            var combo = (RectTransform)_combo.transform.parent;
+            UiKit.Pin(combo, new Vector2(0.5f, 1f), new Vector2(120, 32), new Vector2(0, -(Ui.TopGap + 136)));
+            combo.pivot = new Vector2(0.5f, 0.5f);
+
+            RoundedRect banner = UiKit.Solid(Safe, "Passed", T.Accent2, 18f, glow: T.Accent2Glow);
+            _banner = banner.rectTransform;
+            UiKit.Pin(_banner, new Vector2(0.5f, 1f), new Vector2(320, 44), new Vector2(0, -(Ui.TopGap + 186)));
+            _banner.pivot = new Vector2(0.5f, 0.5f);
+            _bannerText = UiKit.Text(_banner, "", TextRole.Title, T.Accent2On, size: 20f);
+            _bannerText.fontStyle = FontStyles.UpperCase;
+            UiKit.Stretch(_bannerText.rectTransform, 12, 0, 12, 0);
+            UiKit.OneLine(_bannerText, 12f);
+
+            _hint = UiKit.Text(Safe, L.T("hud.tap_hint"), TextRole.Body, T.TextPrimary);
+            UiKit.Band(_hint.rectTransform, 0.16f, 40);
 
             ctx.Game.Placed += OnPlaced;
             ctx.Game.RivalProgress += OnRival;
         }
-
-        /// <summary>Centres a free-floating pill at a vertical anchor.</summary>
-        private static void Float(TextMeshProUGUI pill, float anchorY)
-        {
-            var bg = (RectTransform)pill.transform.parent;
-            bg.anchorMin = bg.anchorMax = new Vector2(0.5f, anchorY);
-            bg.pivot = new Vector2(0.5f, 0.5f);
-            bg.anchoredPosition = Vector2.zero;
-        }
-
-        private static void ShowPill(TextMeshProUGUI pill, bool visible) => pill.transform.parent.gameObject.SetActive(visible);
 
         private void OnTap() => Ctx.Game.Tap();
 
@@ -155,39 +241,43 @@ namespace StackIt.UI
         {
             RunSetup setup = Ctx.Game.Setup;
             _score.text = Ctx.Game.Score.ToString();
-            ShowPill(_combo, false);
-            _callout.text = "";
+            _combo.transform.parent.gameObject.SetActive(false);
+            _banner.gameObject.SetActive(false);
             _hint.gameObject.SetActive(Ctx.Game.Height == 0);
-            bool rival = setup != null && setup.RivalScore > 0;
-            ShowPill(_rival, rival);
-            if (rival) _rival.text = UiKit.WithIcon(Icons.Trophy, L.T("hud.rival", setup.RivalName, setup.RivalScore));
+            bool rival = setup != null && setup.RivalHeight > 0 && Ctx.Game.Height < setup.RivalHeight;
+            _rival.Show(rival ? setup.RivalName : null, setup?.RivalHeight ?? 0, setup?.RivalScore ?? 0);
         }
 
         private void OnPlaced(Step step)
         {
             _hint.gameObject.SetActive(false);
             _score.text = step.Score.ToString();
-            Tween.Punch(_score.transform, step.Perfect ? 0.16f : 0.08f, 0.3f);
+            if (!Look.ReduceMotion) Tween.Punch(_score.transform, step.Perfect ? 0.16f : 0.08f, 0.3f);
+            GameObject combo = _combo.transform.parent.gameObject;
             if (step.Perfect)
             {
-                ShowPill(_combo, true);
-                _combo.text = UiKit.WithIcon(Icons.Star, step.Combo > 1 ? L.T("hud.perfect_combo", step.Combo) : L.T("hud.perfect"));
-                Transform pill = _combo.transform.parent;
-                Tween.Punch(pill, 0.18f, 0.35f);
+                combo.SetActive(true);
+                _combo.text = step.Combo > 1 ? L.T("hud.perfect_combo", step.Combo) : L.T("hud.perfect");
+                Tween.Punch(combo.transform, Look.ReduceMotion ? 0f : 0.22f, 0.35f);
             }
             else
             {
-                ShowPill(_combo, false);
+                combo.SetActive(false);
             }
         }
 
         private void OnRival(RivalEvent e)
         {
             string name = Ctx.Game.Setup?.RivalName ?? "";
-            _callout.text = e == RivalEvent.Passed ? L.T("hud.passed", name) : L.T("hud.almost", name);
-            Tween.Punch(_callout.transform, 0.2f, 0.4f);
-            Tween.Run(_callout, 2.4f, t => _callout.alpha = t < 0.75f ? 1f : 1f - (t - 0.75f) / 0.25f);
-            if (e == RivalEvent.Passed) ShowPill(_rival, false);
+            _bannerText.text = e == RivalEvent.Passed ? L.T("hud.passed", name) : L.T("hud.almost", name);
+            _banner.gameObject.SetActive(true);
+            if (!Look.ReduceMotion) Tween.Punch(_banner, 0.2f, 0.4f);
+            var group = _banner.GetComponent<CanvasGroup>();
+            if (group == null) group = _banner.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 1f;
+            Tween.Run(group, 2.4f, t => group.alpha = t < 0.75f ? 1f : 1f - (t - 0.75f) / 0.25f,
+                () => { if (_banner != null) _banner.gameObject.SetActive(false); });
+            if (e == RivalEvent.Passed) _rival.Show(null, 0, 0);
         }
 
         private sealed class TapForwarder : MonoBehaviour, IPointerDownHandler
@@ -197,108 +287,244 @@ namespace StackIt.UI
         }
     }
 
+    /// <summary>The rival's height on screen: an accent2 line across and a chip with their avatar and score.</summary>
+    public sealed class RivalMarker : MonoBehaviour
+    {
+        private RectTransform _space;
+        private RectTransform _line;
+        private TextMeshProUGUI _label;
+        private TextMeshProUGUI _initial;
+        private int _height;
+
+        public static RivalMarker Create(RectTransform safe, UiContext ctx)
+        {
+            RectTransform root = UiKit.Stretch(UiKit.Rect("Rival", safe));
+            var marker = root.gameObject.AddComponent<RivalMarker>();
+            marker._space = safe;
+            RoundedRect line = UiKit.Solid(root, "Line", T.Accent2, 1f, alpha: 0.85f, glow: T.Accent2Glow);
+            marker._line = line.rectTransform;
+            marker._line.anchorMin = new Vector2(0, 0);
+            marker._line.anchorMax = new Vector2(1, 0);
+            marker._line.pivot = new Vector2(0.5f, 0.5f);
+            marker._line.sizeDelta = new Vector2(0, 2);
+
+            RoundedRect chip = UiKit.Solid(marker._line, "Chip", T.Accent2, 15f, glow: T.Accent2Glow);
+            UiKit.Pin(chip.rectTransform, new Vector2(1f, 0.5f), new Vector2(150, 30), new Vector2(-Ui.Side, 0));
+            HorizontalLayoutGroup row = UiKit.Row(chip.rectTransform, 6);
+            row.padding = new RectOffset(4, 10, 3, 3);
+            row.childForceExpandWidth = false;
+            marker._initial = UiKit.Avatar(chip.transform, "?", 24f).GetComponentInChildren<TextMeshProUGUI>();
+            marker._label = UiKit.Text(chip.transform, "", TextRole.Pill, T.Accent2On, TextAlignmentOptions.Left, 12f);
+            UiKit.Size(marker._label.rectTransform, flexibleWidth: 1);
+            UiKit.OneLine(marker._label, 9f);
+            root.gameObject.SetActive(false);
+            return marker;
+        }
+
+        public void Show(string name, int height, int score)
+        {
+            _height = height;
+            bool visible = !string.IsNullOrEmpty(name) && height > 0;
+            gameObject.SetActive(visible);
+            if (!visible) return;
+            _label.text = L.T("hud.rival", name, score);
+            _initial.text = name.Substring(0, 1).ToUpperInvariant();
+        }
+
+        private void LateUpdate()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+            // The top surface of the rival's highest block.
+            var world = new Vector3(0f, StackView.Y(_height) + StackView.BlockHeight * 0.5f, 0f);
+            Vector3 screen = cam.WorldToScreenPoint(world);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_space, screen, null, out Vector2 local);
+            float y = local.y - _space.rect.yMin;
+            _line.anchoredPosition = new Vector2(0f, y);
+            _line.gameObject.SetActive(screen.z > 0f && y > 0f && y < _space.rect.height);
+        }
+    }
+
+    /// <summary>Pause card: Resume, Restart, Home, the look switch, sound and haptics.</summary>
+    public sealed class PauseScreen : UiScreen
+    {
+        public override bool AllowsBanner => false;
+
+        public PauseScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Pause", ScreenBackground.Dim)
+        {
+            RectTransform card = UiKit.Surface(Safe, "Card", SurfaceKind.Raised, Ui.SheetRadius).rectTransform;
+            card.anchorMin = new Vector2(0, 0.5f);
+            card.anchorMax = new Vector2(1, 0.5f);
+            card.pivot = new Vector2(0.5f, 0.5f);
+            card.sizeDelta = new Vector2(-2 * Ui.Side, 400);
+            UiKit.Column(card, 14, new RectOffset(20, 20, 24, 24), TextAnchor.UpperCenter);
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            UiKit.Size(UiKit.Text(card, L.T("pause.title"), TextRole.Title).rectTransform, height: 36);
+            UiKit.Primary(card, L.T("pause.resume"), Icons.Play, () => Ctx.Flow.Resume());
+            RectTransform pills = UiKit.Rect("Pills", card);
+            UiKit.Size(pills, height: Ui.PillHeight);
+            HorizontalLayoutGroup row = UiKit.Row(pills, 12);
+            row.childForceExpandWidth = false;
+            UiKit.Pill(pills, L.T("pause.restart"), Icons.Replay, () => Ctx.Flow.Restart());
+            UiKit.Pill(pills, L.T("over.home"), Icons.Home, () => Ctx.Flow.GoHome());
+
+            UiKit.Spacer(card, 4);
+            SettingsScreen.LookSwitch(card, ctx);
+            UiKit.Toggle(card, Icons.Sound, L.T("settings.sound"), ctx.Save.SoundOn, on => { ctx.Save.SoundOn = on; ctx.Audio.Enabled = on; });
+            UiKit.Toggle(card, Icons.Haptics, L.T("settings.haptics"), ctx.Save.HapticsOn, on => { ctx.Save.HapticsOn = on; ctx.Haptics.Enabled = on; });
+        }
+    }
+
     /// <summary>
-    /// Two phases: first "keep going?" (rewarded continue) when allowed, then the results sheet with
-    /// the big "Challenge a friend" call to action. The sheet leaves the top of the screen to the
-    /// camera pulling back over the whole tower.
+    /// Results sheet under the camera's pull-back over the whole tower: score, best, coins, the
+    /// challenge result, the breathing "Challenge a friend" (the viral loop gets the accent) and
+    /// the pills: Play again, Continue (once per run), Double coins, Rematch.
     /// </summary>
     public sealed class GameOverScreen : UiScreen
     {
-        private const string CoinTint = "#D99A0B";
-
-        private readonly RectTransform _continuePanel;
-        private readonly RectTransform _resultPanel;
-        private readonly TextMeshProUGUI _banner;
-        private readonly TextMeshProUGUI _score;
+        private readonly RectTransform _sheet;
+        private readonly RectTransform _record;
         private readonly TextMeshProUGUI _best;
+        private readonly TextMeshProUGUI _score;
+        private readonly RectTransform _coinsRow;
         private readonly TextMeshProUGUI _coins;
+        private readonly RectTransform _duel;
+        private readonly TextMeshProUGUI _youScore;
+        private readonly TextMeshProUGUI _rivalName;
+        private readonly TextMeshProUGUI _rivalScore;
+        private readonly TextMeshProUGUI _duelResult;
         private readonly TextMeshProUGUI _status;
-        private readonly TextMeshProUGUI _duel;
-        private readonly Button _double;
         private readonly Button _challenge;
+        private readonly Button _continue;
+        private readonly Button _double;
+        private readonly Button _rematch;
+        private int _shownCoins;
+        private bool _awaitingContinue;
 
-        public GameOverScreen(UiContext ctx, Transform parent) : base(ctx, parent, "GameOver", new Color(0.086f, 0.129f, 0.243f, 0.12f))
+        public GameOverScreen(UiContext ctx, Transform parent) : base(ctx, parent, "GameOver", ScreenBackground.None)
         {
-            // Phase 1: continue offer.
-            _continuePanel = Sheet("Continue", new RectOffset(64, 64, 72, 56));
-            UiKit.Display(_continuePanel, L.T("over.keep_going"), 76, Theme.Ink);
-            UiKit.Spacer(_continuePanel, 8);
-            UiKit.Button(_continuePanel, L.T("over.continue_ad"), ButtonStyle.Rival, () => Ctx.Flow.ContinueWithAd(), 170, Icons.Play);
-            UiKit.Button(_continuePanel, L.T("over.no_thanks"), ButtonStyle.Ghost, () => Ctx.Flow.DeclineContinue(), 120);
+            RectTransform top = HomeScreen.TopBar(Safe);
+            Button home = UiKit.IconButton(top, Icons.Home, () => Ctx.Flow.GoHome());
+            UiKit.Pin((RectTransform)home.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), Vector2.zero);
 
-            // Phase 2: results.
-            _resultPanel = Sheet("Results", new RectOffset(64, 64, 64, 56));
-            RectTransform bannerRow = UiKit.Rect("Banner", _resultPanel);
-            HorizontalLayoutGroup bannerLayout = UiKit.Row(bannerRow, 0);
-            bannerLayout.childForceExpandWidth = false;
-            UiKit.Size(bannerRow, height: 84);
-            _banner = UiKit.Pill(bannerRow, L.T("over.new_record"), Theme.Sun, Theme.Ink, 84, Icons.Star);
-            _score = UiKit.Display(_resultPanel, "0", 210, Theme.Ink);
-            UiKit.Size(_score.rectTransform, height: 220);
-            _best = UiKit.Caps(_resultPanel, "", Theme.InkSoft, 34);
-            _duel = UiKit.Label(_resultPanel, "", 44, Theme.Pool, TextAlignmentOptions.Center, bold: true);
-            _coins = UiKit.Label(_resultPanel, "", 46, Theme.Ink, TextAlignmentOptions.Center, bold: true);
-            _status = UiKit.Label(_resultPanel, "", 34, Theme.InkSoft);
-            UiKit.Spacer(_resultPanel, 8);
-            _challenge = UiKit.Button(_resultPanel, L.T("over.challenge"), ButtonStyle.Rival, () => Ctx.Flow.ShareChallenge(), 180, Icons.Share);
-            _double = UiKit.Button(_resultPanel, L.T("over.double"), ButtonStyle.Reward, () => Ctx.Flow.DoubleCoins(), 130, Icons.Play);
-            RectTransform row = UiKit.Rect("Row", _resultPanel);
-            UiKit.Size(row, height: 140);
-            UiKit.Row(row, 24);
-            UiKit.Button(row, L.T("over.replay"), ButtonStyle.Primary, () => Ctx.Flow.PlayNormal(), 140, Icons.Replay);
-            UiKit.Button(row, L.T("over.home"), ButtonStyle.Secondary, () => Ctx.Flow.GoHome(), 140, Icons.Home);
+            _sheet = UiRouter.BottomSheet(Safe);
+
+            _record = UiKit.Solid(_sheet, "Record", T.Accent2, 14f, glow: T.Accent2Glow).rectTransform;
+            UiKit.Size(_record, height: 28);
+            var recordFit = _record.gameObject.AddComponent<HorizontalLayoutGroup>();
+            recordFit.padding = new RectOffset(14, 14, 0, 0);
+            recordFit.childAlignment = TextAnchor.MiddleCenter;
+            recordFit.childForceExpandWidth = false;
+            recordFit.childForceExpandHeight = false;
+            recordFit.spacing = 6;
+            recordFit.childControlWidth = true; // the label hugs its text, next to the star
+            UiKit.Icon(_record, Icons.Star, 16f, T.Accent2On, filled: true);
+            UiKit.Text(_record, L.T("over.new_record"), TextRole.Overline, T.Accent2On, TextAlignmentOptions.Left);
+            Centre(_record, 28);
+
+            _best = UiKit.Text(_sheet, "", TextRole.Overline, T.TextSecondary);
+            UiKit.Size(_best.rectTransform, height: 18);
+            _score = UiKit.Text(_sheet, "0", TextRole.BigNumber, T.TextPrimary, size: 88f);
+            UiKit.Size(_score.rectTransform, height: 96);
+
+            _coinsRow = UiKit.Rect("Coins", _sheet);
+            HorizontalLayoutGroup coinsRow = UiKit.Row(_coinsRow, 8);
+            coinsRow.childForceExpandWidth = false;
+            coinsRow.childForceExpandHeight = false;
+            UiKit.Coin(_coinsRow, 22f);
+            _coins = UiKit.Text(_coinsRow, "", TextRole.Coin);
+            Centre(_coinsRow, 26);
+
+            _duel = UiKit.Rect("Duel", _sheet);
+            UiKit.Column(_duel, 6);
+            RectTransform scores = UiKit.Rect("Scores", _duel);
+            UiKit.Size(scores, height: 60);
+            UiKit.Row(scores, 12);
+            _youScore = Side(scores, L.T("over.you"), out _);
+            _rivalScore = Side(scores, "", out _rivalName);
+            _duelResult = UiKit.Text(_duel, "", TextRole.Body, T.TextPrimary);
+            UiKit.Size(_duelResult.rectTransform, height: 22);
+
+            _status = UiKit.Text(_sheet, "", TextRole.Caption, T.TextSecondary);
+            UiKit.Size(_status.rectTransform, height: 16);
+
+            _challenge = UiKit.Primary(_sheet, L.T("over.challenge"), Icons.Share, () => Ctx.Flow.ShareChallenge(), breathe: true);
+
+            RectTransform pills = UiKit.Rect("Pills", _sheet);
+            UiKit.Size(pills, height: Ui.PillHeight);
+            HorizontalLayoutGroup row = UiKit.Row(pills, 10);
+            row.childForceExpandWidth = false;
+            UiKit.Pill(pills, L.T("over.replay"), Icons.Replay, () => Ctx.Flow.PlayNormal());
+            _continue = UiKit.Pill(pills, L.T("over.continue"), Icons.VideoAd, () => Ctx.Flow.ContinueWithAd());
+            _rematch = UiKit.Pill(pills, L.T("over.rematch"), Icons.Challenge, Rematch);
+            RectTransform more = UiKit.Rect("More", _sheet);
+            UiKit.Size(more, height: Ui.PillHeight);
+            HorizontalLayoutGroup moreRow = UiKit.Row(more, 10);
+            moreRow.childForceExpandWidth = false;
+            _double = UiKit.Pill(more, L.T("over.double_short"), Icons.VideoAd, () => Ctx.Flow.DoubleCoins());
         }
 
-        /// <summary>A paper sheet pinned to the bottom that grows with its content.</summary>
-        private RectTransform Sheet(string name, RectOffset padding)
+        /// <summary>Centres a hugging child on its own line of the sheet's column.</summary>
+        private static void Centre(RectTransform child, float height)
         {
-            RectTransform sheet = UiKit.Card(Safe, name, radius: 64);
-            sheet.anchorMin = new Vector2(0, 0);
-            sheet.anchorMax = new Vector2(1, 0);
-            sheet.pivot = new Vector2(0.5f, 0);
-            sheet.sizeDelta = new Vector2(-2 * SheetMargin, 600);
-            sheet.anchoredPosition = new Vector2(0, SheetMargin);
-            UiKit.Column(sheet, 18, padding, TextAnchor.UpperCenter);
-            sheet.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            return sheet;
+            child.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            RectTransform line = UiKit.Rect(child.name + "Line", child.parent);
+            line.SetSiblingIndex(child.GetSiblingIndex());
+            child.SetParent(line, false);
+            UiKit.Size(line, height: height);
+            HorizontalLayoutGroup row = UiKit.Row(line, 0);
+            row.childForceExpandWidth = false;
+            row.childControlWidth = true;
         }
 
-        private const float SheetMargin = 24f;
-
-        private static void Rise(RectTransform sheet)
+        private static TextMeshProUGUI Side(RectTransform parent, string name, out TextMeshProUGUI nameLabel)
         {
-            Tween.Run(sheet, 0.45f, t =>
-            {
-                if (sheet != null) sheet.anchoredPosition = new Vector2(0f, Mathf.Lerp(SheetMargin - 700f, SheetMargin, Tween.EaseOutCubic(t)));
-            });
+            RectTransform col = UiKit.Rect("Side", parent);
+            UiKit.Column(col, 0, null, TextAnchor.MiddleCenter);
+            nameLabel = UiKit.Text(col, name, TextRole.Overline, T.TextSecondary);
+            UiKit.OneLine(nameLabel, 9f);
+            UiKit.Size(nameLabel.rectTransform, height: 18);
+            TextMeshProUGUI score = UiKit.Text(col, "", TextRole.BigNumber, T.TextPrimary, size: 36f);
+            UiKit.Size(score.rectTransform, height: 40);
+            return score;
         }
 
-        public override bool AllowsBanner => !_continuePanel.gameObject.activeSelf;
+        public override bool AllowsBanner => !_awaitingContinue;
 
-        public void ShowContinueOffer()
+        /// <summary>The block fell and a rewarded continue is possible: results so far, plus Continue.</summary>
+        public void ShowContinueOffer(int score, bool newRecord, int best)
         {
-            _continuePanel.gameObject.SetActive(true);
-            _resultPanel.gameObject.SetActive(false);
-            Rise(_continuePanel);
+            _awaitingContinue = true;
+            Fill(score, newRecord, best, ranked: true, challengeCode: Ctx.Game.Setup?.ChallengeCode);
+            _status.text = L.T("over.keep_going");
+            _continue.gameObject.SetActive(true);
+            _challenge.interactable = true; // pressing it ends the run, then shares
         }
 
         /// <summary>Immediate results from the local simulation; the server result refines them.</summary>
         public void ShowLocalResult(int score, bool newRecord, int best, bool ranked)
         {
-            _continuePanel.gameObject.SetActive(false);
-            _resultPanel.gameObject.SetActive(true);
-            _banner.transform.parent.parent.gameObject.SetActive(newRecord);
-            if (newRecord) Tween.Punch(_banner.transform.parent, 0.25f, 0.5f);
-            _score.text = score.ToString();
-            CountUp(score);
-            _best.text = L.T("over.best", Mathf.Max(best, score));
-            SetCoins(ranked ? Economy.CoinsForRun(score) : 0);
+            _awaitingContinue = false;
+            Fill(score, newRecord, best, ranked, Ctx.Game.Setup?.ChallengeCode);
             _status.text = ranked ? L.T("over.verifying") : L.T("over.unranked");
-            _status.gameObject.SetActive(true);
-            _duel.gameObject.SetActive(false);
-            _double.gameObject.SetActive(false);
             _challenge.interactable = false;
-            Rise(_resultPanel);
+        }
+
+        private void Fill(int score, bool newRecord, int best, bool ranked, string challengeCode)
+        {
+            _record.parent.gameObject.SetActive(newRecord);
+            if (newRecord && !Look.ReduceMotion) Tween.Punch(_record, 0.25f, 0.5f);
+            CountUp(_score, score, null);
+            _best.text = L.T("over.best", Mathf.Max(best, score));
+            _shownCoins = 0;
+            SetCoins(ranked ? Economy.CoinsForRun(score) : 0);
+            _duel.gameObject.SetActive(false);
+            _continue.gameObject.SetActive(false);
+            _double.transform.parent.gameObject.SetActive(false);
+            _rematch.gameObject.SetActive(!string.IsNullOrEmpty(challengeCode));
+            UiKit.SetLabel(_challenge, L.T("over.challenge"));
+            UiRouter.Rise(_sheet);
         }
 
         public void ShowServerResult(SubmitRunResponse result, bool rewardedReady)
@@ -310,107 +536,147 @@ namespace StackIt.UI
             }
             bool verified = result.Status == "verified";
             _status.text = verified ? "" : L.T("over.not_verified");
-            _status.gameObject.SetActive(!verified);
             _best.text = L.T("over.best", result.BestScore);
             SetCoins(verified ? result.CoinsEarned * (result.CoinsDoubled ? 2 : 1) : 0);
-            _double.gameObject.SetActive(verified && rewardedReady && result.CoinsEarned > 0 && !result.CoinsDoubled);
+            _double.transform.parent.gameObject.SetActive(verified && rewardedReady && result.CoinsEarned > 0 && !result.CoinsDoubled);
             _challenge.interactable = verified;
-            if (result.Challenge != null)
-            {
-                _duel.gameObject.SetActive(true);
-                _duel.text = result.Challenge.Won
-                    ? L.T("over.duel_won", result.Challenge.Rival.DisplayName, result.Challenge.Rival.Score)
-                    : L.T("over.duel_lost", result.Challenge.Rival.DisplayName, result.Challenge.Rival.Score);
-            }
+            if (result.Challenge != null) ShowDuel(result);
+        }
+
+        /// <summary>Challenge runs: both scores side by side and who won.</summary>
+        private void ShowDuel(SubmitRunResponse result)
+        {
+            Rival rival = result.Challenge.Rival;
+            _duel.gameObject.SetActive(true);
+            _youScore.text = (result.Score ?? 0).ToString();
+            _rivalName.text = "@" + rival.DisplayName;
+            _rivalScore.text = rival.Score.ToString();
+            _duelResult.text = result.Challenge.Won ? L.T("over.duel_won", rival.DisplayName, rival.Score) : L.T("over.duel_lost", rival.DisplayName, rival.Score);
+            ThemedGraphic.Bind(_duelResult, result.Challenge.Won ? T.Success : T.TextPrimary);
+            _rematch.gameObject.SetActive(true);
+        }
+
+        private void Rematch()
+        {
+            string code = Ctx.Game.Setup?.ChallengeCode;
+            if (!string.IsNullOrEmpty(code)) Ctx.Flow.PlayChallenge(code);
         }
 
         public void ShowCoinsDoubled(int coins)
         {
             SetCoins(coins);
-            Tween.Punch(_coins.transform, 0.25f);
-            _double.gameObject.SetActive(false);
+            _double.transform.parent.gameObject.SetActive(false);
         }
 
         public void SetSharing(bool busy)
         {
             _challenge.interactable = !busy;
-            UiKit.SetText(_challenge, busy ? L.T("over.preparing_clip") : L.T("over.challenge"), busy ? null : Icons.Share);
+            UiKit.SetLabel(_challenge, busy ? L.T("over.preparing_clip") : L.T("over.challenge"));
         }
 
         private void SetCoins(int coins)
         {
-            _coins.gameObject.SetActive(coins > 0);
-            _coins.text = UiKit.WithIcon($"<color={CoinTint}>{Icons.Coin}</color>", L.T("over.coins", coins));
+            _coinsRow.parent.gameObject.SetActive(coins > 0);
+            if (coins <= 0) return;
+            int from = _shownCoins;
+            _shownCoins = coins;
+            TextMeshProUGUI label = _coins;
+            Tween.Run(label, 0.6f, t =>
+            {
+                if (label != null) label.text = L.T("over.coins", Mathf.RoundToInt(Mathf.Lerp(from, coins, Tween.EaseOutCubic(t))));
+            }, () =>
+            {
+                if (label == null) return;
+                label.text = L.T("over.coins", coins);
+                if (!Look.ReduceMotion) Tween.Punch(label.transform.parent, 0.18f, 0.3f);
+            });
         }
 
-        /// <summary>The score counts up from zero: a small payoff for the run.</summary>
-        private void CountUp(int score)
+        /// <summary>Counts up to the number, with a short punch on the last tick.</summary>
+        private static void CountUp(TextMeshProUGUI label, int value, System.Action done)
         {
-            TextMeshProUGUI label = _score;
-            Tween.Run(label, Mathf.Clamp(score * 0.03f, 0.4f, 1.2f), t =>
+            Tween.Run(label, Mathf.Clamp(value * 0.03f, 0.4f, 1.2f), t =>
             {
-                if (label != null) label.text = Mathf.RoundToInt(score * Tween.EaseOutCubic(t)).ToString();
+                if (label != null) label.text = Mathf.RoundToInt(value * Tween.EaseOutCubic(t)).ToString();
+            }, () =>
+            {
+                if (label == null) return;
+                label.text = value.ToString();
+                if (!Look.ReduceMotion) Tween.Punch(label.transform, 0.12f, 0.28f);
+                done?.Invoke();
             });
         }
     }
 
+    /// <summary>Opened from a deep link or a code: who challenges you and the score to beat.</summary>
     public sealed class ChallengeIntroScreen : UiScreen
     {
+        private readonly RectTransform _avatar;
         private readonly TextMeshProUGUI _title;
         private readonly TextMeshProUGUI _score;
         private readonly TextMeshProUGUI _note;
         private string _code;
 
-        public ChallengeIntroScreen(UiContext ctx, Transform parent) : base(ctx, parent, "ChallengeIntro", Theme.Scrim)
-        {
-            RectTransform card = UiKit.Card(Safe, "Card", radius: 64);
-            card.anchorMin = new Vector2(0, 0.5f);
-            card.anchorMax = new Vector2(1, 0.5f);
-            card.pivot = new Vector2(0.5f, 0.5f);
-            card.sizeDelta = new Vector2(-2 * Theme.Gutter, 900);
-            card.anchoredPosition = Vector2.zero;
-            UiKit.Column(card, 20, new RectOffset(64, 64, 72, 56), TextAnchor.MiddleCenter);
-            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        public override bool AllowsBanner => false;
 
-            UiKit.Caps(card, L.T("intro.eyebrow"), Theme.Pool, 34);
-            _title = UiKit.Label(card, "", 52, Theme.Ink, TextAlignmentOptions.Center, bold: true);
-            _score = UiKit.Display(card, "", 240, Theme.Pool);
-            UiKit.Size(_score.rectTransform, height: 250);
-            _note = UiKit.Label(card, L.T("intro.rules"), 38, Theme.InkSoft);
-            UiKit.Spacer(card, 16);
-            UiKit.Button(card, L.T("intro.accept"), ButtonStyle.Rival, () => Ctx.Flow.PlayChallenge(_code), 180, Icons.Play);
-            UiKit.Button(card, L.T("intro.later"), ButtonStyle.Ghost, () => Ctx.Flow.GoHome(), 120);
+        public ChallengeIntroScreen(UiContext ctx, Transform parent) : base(ctx, parent, "ChallengeIntro", ScreenBackground.Gradient)
+        {
+            RectTransform column = UiKit.Stretch(UiKit.Rect("Column", Safe), Ui.Side, 0, Ui.Side, Ui.BottomGap);
+            UiKit.Column(column, 12, new RectOffset(0, 0, 80, 0), TextAnchor.UpperCenter);
+            _avatar = UiKit.Rect("AvatarLine", column);
+            UiKit.Size(_avatar, height: 76);
+            HorizontalLayoutGroup avatarRow = UiKit.Row(_avatar, 0);
+            avatarRow.childForceExpandWidth = false;
+            avatarRow.childControlWidth = true;
+            _title = UiKit.Text(column, "", TextRole.Title);
+            UiKit.Size(_title.rectTransform, height: 36);
+            UiKit.OneLine(_title, 18f);
+            UiKit.Spacer(column, 16);
+            UiKit.Size(UiKit.Text(column, L.T("intro.score_to_beat"), TextRole.Overline, T.TextSecondary).rectTransform, height: 18);
+            _score = UiKit.Text(column, "", TextRole.BigNumber, T.TextPrimary, size: 96f);
+            UiKit.Size(_score.rectTransform, height: 104);
+            TextEffect.Add(_score, TextEffectKind.LogoGlow);
+            _note = UiKit.Text(column, L.T("intro.rules"), TextRole.Body, T.TextSecondary);
+            UiKit.Flex(column);
+            UiKit.Primary(column, L.T("intro.accept"), Icons.Play, () => Ctx.Flow.PlayChallenge(_code), breathe: true);
+            UiKit.CenteredPill(column, L.T("intro.later"), Icons.Close, () => Ctx.Flow.GoHome());
         }
 
         public void Bind(ChallengeInfo info)
         {
             _code = info.Code;
+            UiKit.Clear(_avatar);
+            UiKit.Avatar(_avatar, info.CreatorName, 72f);
             _title.text = L.T("intro.title", info.CreatorName);
             _score.text = info.Score.ToString();
             _note.text = info.Expired ? L.T("intro.expired") : L.T("intro.rules");
         }
     }
 
-    /// <summary>"Got a challenge code?" — the fallback when a link could not open the app directly.</summary>
+    /// <summary>"Got a challenge code?": a bottom sheet with a large code field.</summary>
     public sealed class CodeEntryScreen : UiScreen
     {
         private readonly TMP_InputField _input;
+        private readonly RectTransform _sheet;
 
-        public CodeEntryScreen(UiContext ctx, Transform parent) : base(ctx, parent, "CodeEntry", Theme.Enamel)
+        public override bool AllowsBanner => false;
+
+        public CodeEntryScreen(UiContext ctx, Transform parent) : base(ctx, parent, "CodeEntry", ScreenBackground.Dim)
         {
-            Header(L.T("code.title"), () => Ctx.Router.Back());
-            RectTransform body = Body();
-            UiKit.Column(body, 32, new RectOffset(0, 0, 60, 0));
-            UiKit.Label(body, L.T("code.body"), Theme.BodySize, Theme.InkSoft);
-            _input = UiKit.Input(body, L.T("code.placeholder"), 12, TMP_InputField.CharacterValidation.Alphanumeric);
+            Root.GetComponentInChildren<RoundedRect>().gameObject.AddComponent<Button>().onClick.AddListener(() => Ctx.Router.Back());
+            _sheet = UiRouter.BottomSheet(Safe);
+            UiKit.Size(UiKit.Text(_sheet, L.T("code.title"), TextRole.Title).rectTransform, height: 36);
+            UiKit.Text(_sheet, L.T("code.body"), TextRole.Body, T.TextSecondary);
+            _input = UiKit.Input(_sheet, L.T("code.placeholder"), DeepLinks.ChallengeCodeLength, TMP_InputField.CharacterValidation.Alphanumeric, big: true);
             _input.onValidateInput = (text, index, c) => char.ToUpperInvariant(c);
-            UiKit.Button(body, L.T("code.submit"), ButtonStyle.Primary, Submit);
+            UiKit.Primary(_sheet, L.T("code.submit"), Icons.Play, Submit);
         }
 
         protected override void OnShow()
         {
             _input.text = "";
             _input.ActivateInputField();
+            UiRouter.Rise(_sheet);
         }
 
         private void Submit()

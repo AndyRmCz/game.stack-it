@@ -221,18 +221,34 @@ rewarded continue once per run and never in challenge duels.
    - creates `Resources/StackIt/AppConfig.asset` and `AdsConfig.asset`
    - creates the URP materials
    - creates the empty `Scenes/Main.unity` and adds it to Build Settings
-   - applies player settings (bundle ID, portrait, IL2CPP, min SDK 26 / iOS 15)
+   - applies player settings (bundle ID, portrait, IL2CPP, min SDK 26 / iOS 15, the Neon app icon)
    - imports the TMP Essentials
+   - copies the look tokens `shared/theme/themes.json` to `Resources/StackIt/themes.json`
+   - bakes the TMP font atlases into `Resources/StackIt/Fonts` (generated, git-ignored)
    - imports `strings.csv` into the Localization "UI" table
    - toggles the AdMob define
+
+   The editor also does the token copy, the font bake (when the fonts or the subset changed) and
+   the strings import on its own when it loads or when `strings.csv` changes (`AutoSetup`).
+
+   **Fonts** (all SIL OFL 1.1 or Apache 2.0, licences next to them in `Assets/_Project/Fonts`):
+   Fredoka 700/600 and Nunito 700/800, instanced and subset to Latin + Latin-1 (Spanish included),
+   and Material Symbols Rounded in an outline and a filled cut (only the icons in `UI/Fonts.cs`).
+   To add an icon or characters, re-subset with fonttools (`docs/THEMING.md` has the command); the
+   atlases rebuild by themselves.
+
+   **Shaders**: `Resources/StackIt/Shaders/UIRoundedRect.shader` (every UI surface, border, shadow
+   and glow) and `Block.shader` (the blocks' exact face colours) live in Resources, so builds always
+   include them; nothing to set up.
 3. Edit `AppConfig.asset`: `apiBaseUrl = <BASE_URL>` (or `http://<your LAN IP>:8000` for a
    device against your laptop), store URLs and Google client IDs.
 4. Press Play in `Main.unity`. In the editor, rewarded ads "succeed" instantly so continue and
    double-coins can be tested.
-5. Tests: *Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All*. These are the same files
-   `dotnet test` runs, including the golden vectors.
+5. Tests: *Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All*. `StackIt.Tests.EditMode` holds
+   the same files `dotnet test` runs (golden vectors, tokens, contrast); `StackIt.Tests.UI` needs
+   the engine (uGUI layout, every screen's graphics follow the look).
 6. **Localization**: UI text lives in `Assets/_Project/Resources/StackIt/strings.csv` (`key,en,es`).
-   After editing it run **Stack IT ▸ Import Strings**. Localization uses Addressables: keep
+   The editor re-imports it when it changes (or run **Stack IT ▸ Import Strings**). Localization uses Addressables: keep
    *Edit ▸ Preferences ▸ Addressables ▸ Build Addressables on Player Build* enabled (default).
 
 ### Android build

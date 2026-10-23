@@ -29,10 +29,6 @@ namespace StackIt.Game
                 edge.transform.SetParent(go.transform, false);
                 var renderer = edge.GetComponent<MeshRenderer>();
                 renderer.sharedMaterial = Materials.Block;
-                renderer.GetPropertyBlock(view._props);
-                view._props.SetColor(Materials.BaseColor, Palette.Ghost);
-                view._props.SetColor(Materials.EmissionColor, Palette.Ghost * 0.6f); // a soft glow, no bloom needed
-                renderer.SetPropertyBlock(view._props);
                 view._edges[i] = edge.transform;
             }
             go.SetActive(false);
@@ -56,6 +52,21 @@ namespace StackIt.Game
         }
 
         public void Hide() => gameObject.SetActive(false);
+
+        /// <summary>The rival's frame in the look's accent2, glowing a little (Neon's bloom catches it).</summary>
+        public void SetColor(Color accent2, float glow)
+        {
+            foreach (Transform edge in _edges)
+            {
+                var renderer = edge.GetComponent<MeshRenderer>();
+                renderer.GetPropertyBlock(_props);
+                _props.SetColor(Materials.Top, accent2);
+                _props.SetColor(Materials.Left, accent2);
+                _props.SetColor(Materials.Right, accent2);
+                _props.SetFloat(Materials.Glow, glow);
+                renderer.SetPropertyBlock(_props);
+            }
+        }
 
         private void Update()
         {

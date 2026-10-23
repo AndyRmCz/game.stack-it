@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 7678713856
-    m_Localized: PLAY
+    m_Localized: Play
     m_Metadata:
       m_Items: []
   - m_Id: 8446271488
@@ -47,11 +47,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854405
-    m_Localized: BEST {0}
+    m_Localized: Best {0}
     m_Metadata:
       m_Items: []
   - m_Id: 8458854406
-    m_Localized: TAP TO DROP. STACK HIGH.
+    m_Localized: Tap to drop. Stack high.
     m_Metadata:
       m_Items: []
   - m_Id: 8458854407
@@ -63,19 +63,19 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854409
-    m_Localized: "BEAT @{0} \xB7 {1}"
+    m_Localized: "Beat @{0} \xB7 {1}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854410
-    m_Localized: PERFECT
+    m_Localized: Perfect
     m_Metadata:
       m_Items: []
   - m_Id: 8458854411
-    m_Localized: "PERFECT \xD7{0}"
+    m_Localized: "Perfect \xD7{0}"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854412
-    m_Localized: YOU PASSED @{0}!
+    m_Localized: You passed @{0}!
     m_Metadata:
       m_Items: []
   - m_Id: 8458854413
@@ -87,7 +87,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854415
-    m_Localized: "CONTINUE \xB7 WATCH AD"
+    m_Localized: "Continue \xB7 watch ad"
     m_Metadata:
       m_Items: []
   - m_Id: 8458854416
@@ -95,11 +95,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854417
-    m_Localized: NEW RECORD
+    m_Localized: New record
     m_Metadata:
       m_Items: []
   - m_Id: 8458854418
-    m_Localized: CHALLENGE A FRIEND
+    m_Localized: Challenge a friend
     m_Metadata:
       m_Items: []
   - m_Id: 8458854419
@@ -115,7 +115,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854422
-    m_Localized: BEST {0}
+    m_Localized: Best {0}
     m_Metadata:
       m_Items: []
   - m_Id: 8458854423
@@ -147,11 +147,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8458854430
-    m_Localized: "PREPARING CLIP\u2026"
+    m_Localized: "Preparing clip\u2026"
     m_Metadata:
       m_Items: []
   - m_Id: 8463048704
-    m_Localized: CHALLENGE
+    m_Localized: Challenge
     m_Metadata:
       m_Items: []
   - m_Id: 8463048705
@@ -167,7 +167,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048708
-    m_Localized: ACCEPT CHALLENGE
+    m_Localized: Accept challenge
     m_Metadata:
       m_Items: []
   - m_Id: 8463048709
@@ -187,7 +187,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048713
-    m_Localized: OPEN CHALLENGE
+    m_Localized: Join
     m_Metadata:
       m_Items: []
   - m_Id: 8463048714
@@ -292,7 +292,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048739
-    m_Localized: Classic Neon
+    m_Localized: Classic
     m_Metadata:
       m_Items: []
   - m_Id: 8463048740
@@ -320,7 +320,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048746
-    m_Localized: Synthwave
+    m_Localized: Classic
     m_Metadata:
       m_Items: []
   - m_Id: 8463048747
@@ -349,7 +349,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048753
-    m_Localized: CLAIM
+    m_Localized: Claim
     m_Metadata:
       m_Items: []
   - m_Id: 8463048754
@@ -556,6 +556,94 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 8467243055
     m_Localized: "Use 3\u201320 letters, digits, spaces, _ . or -."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234559907028992
+    m_Localized: Paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961920
+    m_Localized: Resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961921
+    m_Localized: Restart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961922
+    m_Localized: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961923
+    m_Localized: Double coins
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961924
+    m_Localized: Rematch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961925
+    m_Localized: You
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961926
+    m_Localized: Score to beat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961927
+    m_Localized: Challenges waiting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961928
+    m_Localized: "@{0} \xB7 {1} to beat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961929
+    m_Localized: Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961930
+    m_Localized: Challenge
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961931
+    m_Localized: Code copied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961932
+    m_Localized: Invite friends
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961933
+    m_Localized: Resets in {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961934
+    m_Localized: Streak {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961935
+    m_Localized: Look
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961936
+    m_Localized: Pop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961937
+    m_Localized: Neon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961938
+    m_Localized: Reduce motion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961939
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 234560250961940
+    m_Localized: Retry
     m_Metadata:
       m_Items: []
   references:

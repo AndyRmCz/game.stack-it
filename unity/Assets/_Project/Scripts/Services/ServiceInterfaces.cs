@@ -96,8 +96,11 @@ namespace StackIt.Services
     /// <summary>Post-processing hooks used by the hype layer (URP volume on device).</summary>
     public interface IPostFx
     {
-        /// <summary>A brief, gentle brightening of the whole frame (0..1).</summary>
+        /// <summary>A brief, gentle brightening of the whole frame and a chromatic pulse (0..1).</summary>
         void Pulse(float strength);
+
+        /// <summary>The look's post-processing: bloom (intensity 0 = off) and the perfect's chromatic pulse.</summary>
+        void SetLook(float bloomIntensity, float bloomThreshold, float bloomScatter, float chromaticPulse);
     }
 
     public interface ILocalizer

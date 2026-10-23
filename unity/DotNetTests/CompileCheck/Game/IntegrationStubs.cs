@@ -5,6 +5,7 @@ namespace StackIt.Integrations
     public sealed class UrpPostFx : UnityEngine.MonoBehaviour, StackIt.Services.IPostFx
     {
         public void Pulse(float strength) { }
+        public void SetLook(float bloomIntensity, float bloomThreshold, float bloomScatter, float chromaticPulse) { }
         public void Configure(UnityEngine.Camera camera) { }
     }
 

@@ -1,12 +1,14 @@
 using StackIt.Client;
+using StackIt.Client.Theming;
 using UnityEngine;
 
 namespace StackIt.Game
 {
     /// <summary>
-    /// Block skins and sky themes (ids match the backend's skins table; the names are historical,
-    /// the looks are the calm "the sky climbs with you" set). Each sky moves through four moments as
-    /// the tower grows; blocks are soft matte colors a step deeper than the sky so they always read.
+    /// Block skins and sky themes (ids match the backend's skins table; the names are historical).
+    /// The default skin ("classic") and sky ("synthwave") follow the look (Pop/Neon): the tower takes
+    /// the look's height ramp and the sky its background gradient. The other, purchasable ones keep
+    /// their own colours in every look: each sky moves through four moments as the tower grows.
     /// </summary>
     public static class Palette
     {
@@ -16,7 +18,18 @@ namespace StackIt.Game
         /// <summary>Tower heights (in blocks) where each sky moment is reached.</summary>
         private static readonly float[] SkyStops = { 0f, 25f, 55f, 90f };
 
-        public static readonly Color Ghost = new Color(0.18f, 0.5f, 0.98f);
+        public static bool FollowsLook(string skinOrTheme) =>
+            string.IsNullOrEmpty(skinOrTheme) || skinOrTheme == DefaultBlockSkin || skinOrTheme == DefaultTheme;
+
+        /// <summary>Top-face colour of block <paramref name="index"/> (0 = the base) for a skin in a look.</summary>
+        public static Color BlockTop(string skin, int index, ThemePalette look)
+        {
+            if (!FollowsLook(skin)) return Block(skin, index);
+            if (index <= 0) return ToColor(look.Colors(T.BlockBase)[0]);
+            return ToColor(HeightRamp.At(look.Colors(T.BlockRamp), index));
+        }
+
+        public static Color ToColor(Rgba c) => new Color(c.R, c.G, c.B, c.A);
 
         public static Color Block(string skin, int index)
         {

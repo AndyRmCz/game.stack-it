@@ -26,6 +26,7 @@ namespace StackIt.EditorTools
 
         public void OnPreprocessBuild(BuildReport report)
         {
+            ThemesSync.Run();
             if (report.summary.platform == BuildTarget.Android) WriteAndroidManifest();
         }
 

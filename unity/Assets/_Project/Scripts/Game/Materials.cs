@@ -13,24 +13,32 @@ namespace StackIt.Game
         public static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
         public static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
         public static readonly int BaseMap = Shader.PropertyToID("_BaseMap");
-        private static readonly int Smoothness = Shader.PropertyToID("_Smoothness");
+        public static readonly int Top = Shader.PropertyToID("_Top");
+        public static readonly int Left = Shader.PropertyToID("_Left");
+        public static readonly int Right = Shader.PropertyToID("_Right");
+        public static readonly int Glow = Shader.PropertyToID("_Glow");
 
         private static Material _block;
         private static Material _sky;
         private static Material _fx;
         private static Material _dust;
 
-        /// <summary>Matte porcelain: soft highlight on the bevels, no gloss, emission only for flashes.</summary>
+        /// <summary>
+        /// Unlit blocks with exact face colours (StackIt/Block, in Resources/StackIt/Shaders so builds
+        /// include it); per-block colours go in a MaterialPropertyBlock (_Top, _Left, _Right, _Glow).
+        /// </summary>
         public static Material Block
         {
             get
             {
                 if (_block != null) return _block;
-                _block = new Material(Load("BlockMaterial", "Universal Render Pipeline/Lit"));
-                _block.EnableKeyword("_EMISSION");
-                _block.SetFloat(Smoothness, 0.22f);
-                _block.SetColor(EmissionColor, Color.black);
-                _block.enableInstancing = true;
+                Shader shader = Resources.Load<Shader>("StackIt/Shaders/Block");
+                if (shader == null)
+                {
+                    Debug.LogWarning("Missing Resources/StackIt/Shaders/Block.shader; blocks use URP Unlit.");
+                    shader = Shader.Find("Universal Render Pipeline/Unlit");
+                }
+                _block = new Material(shader) { name = "Block", enableInstancing = true };
                 return _block;
             }
         }

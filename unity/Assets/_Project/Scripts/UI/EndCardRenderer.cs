@@ -1,3 +1,4 @@
+using StackIt.Client.Theming;
 using StackIt.Services;
 using StackIt.Services.Native;
 using TMPro;
@@ -7,8 +8,10 @@ using UnityEngine.UI;
 namespace StackIt.UI
 {
     /// <summary>
-    /// The clip's closing card ("48 — Can you beat me? Code K7QX9PA"), drawn offscreen by its own
-    /// camera straight into the recorder's render texture. Never shown on the device screen.
+    /// The clip's closing card in the player's current look: the logo, the big score, "Can you beat
+    /// me?" and the challenge code in a pill, drawn offscreen by its own camera straight into the
+    /// recorder's 720 × 1280 render texture (sizes are in pixels; the score is 220 px so it stays
+    /// readable in a phone feed). Never shown on the device screen.
     /// </summary>
     public sealed class EndCardRenderer : IEndCardRenderer
     {
@@ -26,7 +29,7 @@ namespace StackIt.UI
             _camera = _root.AddComponent<Camera>();
             _camera.enabled = false;
             _camera.clearFlags = CameraClearFlags.SolidColor;
-            _camera.backgroundColor = Theme.Enamel;
+            _camera.backgroundColor = Look.C(T.TextPrimary); // hidden behind the gradient
             _camera.cullingMask = 1 << Layer;
             _camera.orthographic = true;
 
@@ -37,22 +40,45 @@ namespace StackIt.UI
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.worldCamera = _camera;
             canvas.planeDistance = 1f;
+            canvas.vertexColorAlwaysGammaSpace = true;
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(RecorderService.Width, RecorderService.Height);
             _group = canvasGo.AddComponent<CanvasGroup>();
 
+            UiKit.Background(canvasGo.transform, 0.5f);
             RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
-            UiKit.Column(col, 18, null, TextAnchor.MiddleCenter);
-            UiKit.Caps(col, "STACK IT", Theme.InkSoft, 40);
-            TextMeshProUGUI score = UiKit.Display(col, card.Score.ToString(), 230, Theme.Ink);
-            UiKit.Size(score.rectTransform, height: 250);
+            UiKit.Column(col, 22, null, TextAnchor.MiddleCenter);
+            TextMeshProUGUI logo = UiKit.Text(col, "STACK IT", TextRole.Logo, size: 96f);
+            UiKit.Size(logo.rectTransform, height: 110);
+            TextEffect.Add(logo, TextEffectKind.LogoGlow);
+            TextMeshProUGUI score = UiKit.Text(col, card.Score.ToString(), TextRole.BigNumber, T.TextPrimary, size: 220f);
+            UiKit.Size(score.rectTransform, height: 240);
+            TextEffect.Add(score, TextEffectKind.LogoGlow);
             _score = score.rectTransform;
-            UiKit.Label(col, card.Headline, 60, Theme.Ink, TextAlignmentOptions.Center, true);
+            TextMeshProUGUI headline = UiKit.Text(col, card.Headline, TextRole.Title, T.TextPrimary, size: 60f);
+            UiKit.Size(headline.rectTransform, height: 76);
             if (!string.IsNullOrEmpty(card.Code))
             {
-                TextMeshProUGUI code = UiKit.Display(col, card.Code, 72, Theme.Pool);
-                code.characterSpacing = 14;
+                // The code in a pill, like the app's secondary buttons.
+                RectTransform line = UiKit.Rect("CodeLine", col);
+                UiKit.Size(line, height: 104);
+                HorizontalLayoutGroup row = UiKit.Row(line, 0);
+                row.childForceExpandWidth = false;
+                row.childControlWidth = true;
+                RoundedRect pill = UiKit.Shape(line, "Code", 52f);
+                var themed = pill.gameObject.AddComponent<ThemedButton>();
+                themed.Kind = ButtonKind.Secondary;
+                themed.Face = pill;
+                HorizontalLayoutGroup inside = UiKit.Row(pill.rectTransform, 0);
+                inside.padding = new RectOffset(48, 48, 0, 0);
+                inside.childForceExpandWidth = false;
+                TextMeshProUGUI code = UiKit.Text(pill.transform, card.Code, TextRole.BigNumber, null, size: 64f);
+                code.characterSpacing = 14f;
+                themed.Ink = new Graphic[] { code };
+                ThemedPart.Mark(code, themed);
+                themed.Refresh();
+                pill.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             SetLayer(_root.transform);
         }

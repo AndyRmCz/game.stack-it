@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using StackIt.Client;
 using StackIt.Client.Api;
-using StackIt.Core;
+using StackIt.Client.Theming;
 using StackIt.Game;
 using StackIt.Services;
 using TMPro;
@@ -10,81 +12,141 @@ using UnityEngine.UI;
 
 namespace StackIt.UI
 {
+    /// <summary>Empty, offline and error states: an outline icon, one friendly line and one action.</summary>
+    public static class States
+    {
+        public static RectTransform Show(Transform parent, string glyph, string message, string action, string actionIcon, Action onAction)
+        {
+            RectTransform box = UiKit.Rect("State", parent);
+            UiKit.Column(box, 12, new RectOffset(16, 16, 32, 16), TextAnchor.UpperCenter);
+            UiKit.Icon(box, glyph, 40f, T.TextSecondary);
+            UiKit.Text(box, message, TextRole.Body, T.TextSecondary);
+            if (onAction != null) UiKit.CenteredPill(box, action, actionIcon, () => onAction());
+            return box;
+        }
+
+        /// <summary>Offline vs. any other failure, with Retry.</summary>
+        public static void Failed(Transform parent, ApiException e, Action retry) =>
+            Show(parent, e.IsOffline ? Icons.Offline : Icons.Error, Errors.Describe(e), L.T("common.retry"), Icons.Refresh, retry);
+    }
+
     public sealed class FriendsScreen : UiScreen
     {
         private readonly TextMeshProUGUI _myCode;
         private readonly TMP_InputField _input;
         private readonly RectTransform _list;
 
-        public FriendsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Friends", Theme.Enamel)
+        public FriendsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Friends", ScreenBackground.Gradient)
         {
             Header(L.T("friends.title"), () => Ctx.Router.Back());
             RectTransform body = Body();
-            UiKit.Column(body, 28);
+            UiKit.Column(body, Ui.RowGap);
 
+            // Your code: big, copyable, shareable.
             RectTransform card = UiKit.Card(body, "MyCode");
-            UiKit.Column(card, 12, new RectOffset(48, 48, 40, 44));
-            UiKit.Caps(card, L.T("friends.your_code"), Theme.InkSoft);
-            _myCode = UiKit.Display(card, "—", 100, Theme.Ink);
-            _myCode.characterSpacing = 10;
-            UiKit.Size(_myCode.rectTransform, height: 120);
-            UiKit.Button(card, L.T("friends.share_code"), ButtonStyle.Secondary, ShareCode, 120, Icons.Share);
+            UiKit.Column(card, 8, new RectOffset(16, 16, 16, 16), TextAnchor.UpperCenter);
+            UiKit.Size(UiKit.Text(card, L.T("friends.your_code"), TextRole.Overline, T.TextSecondary).rectTransform, height: 18);
+            RectTransform codeRow = UiKit.Rect("CodeRow", card);
+            UiKit.Size(codeRow, height: Ui.IconButton);
+            HorizontalLayoutGroup codeLayout = UiKit.Row(codeRow, 10);
+            codeLayout.childForceExpandWidth = false;
+            _myCode = UiKit.Text(codeRow, "—", TextRole.BigNumber, T.TextPrimary, size: 34f);
+            _myCode.characterSpacing = 12f;
+            UiKit.IconButton(codeRow, Icons.Copy, CopyCode);
+            UiKit.CenteredPill(card, L.T("friends.share_code"), Icons.Share, ShareCode);
 
+            // Add by code.
             RectTransform addRow = UiKit.Rect("Add", body);
-            UiKit.Size(addRow, height: 140);
-            UiKit.Row(addRow, 20);
+            UiKit.Size(addRow, height: 48);
+            HorizontalLayoutGroup add = UiKit.Row(addRow, 10);
+            add.childForceExpandWidth = false;
             _input = UiKit.Input(addRow, L.T("friends.code_placeholder"), 12, TMP_InputField.CharacterValidation.Alphanumeric);
-            UiKit.Size((RectTransform)_input.transform, flexibleWidth: 3);
-            Button add = UiKit.Button(addRow, L.T("friends.add"), ButtonStyle.Primary, Add, 140, Icons.AddFriend);
-            UiKit.Size((RectTransform)add.transform, flexibleWidth: 1.4f);
+            UiKit.Size((RectTransform)_input.transform, flexibleWidth: 1);
+            UiKit.Pill(addRow, L.T("friends.add"), Icons.AddFriend, Add);
 
-            _list = UiKit.ScrollList(body, 20);
-            UiKit.Size((RectTransform)_list.parent, height: 900).flexibleHeight = 1;
+            _list = UiKit.ScrollList(body, Ui.RowGap);
+            UiKit.Size((RectTransform)_list.parent, height: 300).flexibleHeight = 1;
         }
 
         protected override void OnShow()
         {
             _myCode.text = Ctx.Api.Profile?.FriendCode ?? "—";
-            Guard(Load());
+            Load();
         }
 
-        private async System.Threading.Tasks.Task Load()
+        private async void Load()
         {
-            List<Friend> friends = await Ctx.Api.FriendsAsync();
             UiKit.Clear(_list);
-            if (friends.Count == 0)
+            Pending();
+            try
             {
-                UiKit.Label(_list, L.T("friends.empty"), 40, Theme.InkSoft);
-                return;
+                List<Friend> friends = await Ctx.Api.FriendsAsync();
+                if (friends.Count == 0)
+                {
+                    States.Show(_list, Icons.Invite, L.T("friends.empty"), L.T("friends.invite"), Icons.Share, ShareCode);
+                    return;
+                }
+                foreach (Friend friend in friends) Row(friend);
             }
-            foreach (Friend friend in friends) Row(friend);
+            catch (ApiException e)
+            {
+                States.Failed(_list, e, Load);
+            }
+        }
+
+        /// <summary>Challenges opened but not played yet, with the accent2 dot.</summary>
+        private void Pending()
+        {
+            if (!Ctx.Pending.Any) return;
+            TextMeshProUGUI heading = UiKit.Text(_list, L.T("friends.pending"), TextRole.Overline, T.TextSecondary, TextAlignmentOptions.Left);
+            UiKit.Size(heading.rectTransform, height: 20);
+            foreach (PendingChallenge c in Ctx.Pending.Items)
+            {
+                RectTransform row = UiKit.ListRow(_list);
+                RoundedRect dot = UiKit.Solid(row, "Dot", T.Accent2, Ui.Dot / 2f, glow: T.Accent2Glow);
+                UiKit.Size(dot.rectTransform, Ui.Dot, Ui.Dot);
+                UiKit.Grow(UiKit.OneLine(UiKit.Text(row, L.T("friends.pending_row", c.CreatorName, c.Score), TextRole.Body, T.TextPrimary,
+                    TextAlignmentOptions.Left), 12f));
+                string code = c.Code;
+                ChipButton(row, L.T("friends.play"), Icons.Play, () => Ctx.Flow.OpenChallenge(code));
+            }
         }
 
         private void Row(Friend friend)
         {
-            RectTransform row = UiKit.Card(_list, "Friend", radius: 36);
-            UiKit.Size(row, height: 140);
-            HorizontalLayoutGroup layout = UiKit.Row(row, 24);
-            layout.padding = new RectOffset(28, 16, 22, 22);
-            layout.childForceExpandWidth = false;
-            string initial = string.IsNullOrEmpty(friend.DisplayName) ? "?" : friend.DisplayName.Substring(0, 1).ToUpperInvariant();
-            UiKit.Badge(row, initial, Theme.WithAlpha(Theme.Pool, 0.14f), Theme.Pool, 96);
-            TextMeshProUGUI name = UiKit.Label(row, friend.DisplayName, Theme.BodySize, Theme.Ink, TextAlignmentOptions.Left, bold: true);
-            UiKit.OneLine(name, 30);
-            UiKit.Size(name.rectTransform, flexibleWidth: 1);
-            TextMeshProUGUI best = UiKit.Display(row, friend.BestScore?.ToString() ?? "–", 56, Theme.Ink);
-            best.alignment = TextAlignmentOptions.Right;
-            UiKit.Size(best.rectTransform, width: 150);
-            Button remove = UiKit.IconButton(row, Icons.Close, ButtonStyle.Ghost, () =>
+            RectTransform row = UiKit.ListRow(_list);
+            UiKit.Avatar(row, friend.DisplayName, 40f);
+            RectTransform text = UiKit.Rect("Text", row);
+            UiKit.Column(text, 0, null, TextAnchor.MiddleLeft);
+            UiKit.Size(text, flexibleWidth: 1);
+            UiKit.OneLine(UiKit.Text(text, friend.DisplayName, TextRole.Body, T.TextPrimary, TextAlignmentOptions.Left), 12f);
+            UiKit.Text(text, friend.BestScore != null ? L.T("home.best", friend.BestScore) : "—", TextRole.Caption, T.TextSecondary, TextAlignmentOptions.Left);
+            if (friend.BestScore != null && friend.BestPlaced != null)
+                ChipButton(row, L.T("friends.challenge"), Icons.Challenge,
+                    () => Ctx.Flow.PlayAgainst(friend.DisplayName, friend.BestScore.Value, friend.BestPlaced.Value));
+            Button remove = UiKit.IconButton(row, Icons.Close, () =>
                 Ctx.Router.Confirm(L.T("friends.remove_confirm", friend.DisplayName), L.T("friends.remove"),
-                    () => Guard(RemoveThenReload(friend.UserId))), 96);
-            remove.GetComponentInChildren<TextMeshProUGUI>().color = Theme.InkSoft;
+                    () => Guard(RemoveThenReload(friend.UserId)), destructive: true));
+            UiKit.Size((RectTransform)remove.transform, 40, 40);
+        }
+
+        /// <summary>A small accent chip that is also a button.</summary>
+        public static Button ChipButton(Transform parent, string text, string icon, Action onClick)
+        {
+            TextMeshProUGUI label = UiKit.Chip(parent, text, T.Accent, T.AccentOn, 30f, icon);
+            var chip = (RectTransform)label.transform.parent;
+            chip.GetComponent<RoundedRect>().raycastTarget = true;
+            var button = chip.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => onClick());
+            chip.gameObject.AddComponent<Pressable>().Button = button;
+            return button;
         }
 
         private async System.Threading.Tasks.Task RemoveThenReload(string userId)
         {
             await Ctx.Api.RemoveFriendAsync(userId);
-            await Load();
+            Load();
         }
 
         private void Add() => Guard(AddAsync());
@@ -96,7 +158,15 @@ namespace StackIt.UI
             Friend friend = await Ctx.Api.AddFriendAsync(code);
             _input.text = "";
             Ctx.Router.Toast(L.T("friends.added", friend.DisplayName));
-            await Load();
+            Load();
+        }
+
+        private void CopyCode()
+        {
+            string code = Ctx.Api.Profile?.FriendCode;
+            if (code == null) return;
+            GUIUtility.systemCopyBuffer = code;
+            Ctx.Router.Toast(L.T("friends.copied"));
         }
 
         private void ShareCode()
@@ -110,19 +180,23 @@ namespace StackIt.UI
     public sealed class LeaderboardScreen : UiScreen
     {
         private readonly RectTransform _list;
-        private readonly TextMeshProUGUI _note;
+        private readonly RectTransform _mine;
+        private readonly TextMeshProUGUI _countdown;
         private readonly Action<int> _selectTab;
-        private bool _showWeekly;
+        private bool _showWeekly = true;
 
-        public LeaderboardScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Leaderboard", Theme.Enamel)
+        public LeaderboardScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Leaderboard", ScreenBackground.Gradient)
         {
             Header(L.T("ranks.title"), () => Ctx.Router.Back());
             RectTransform body = Body();
-            UiKit.Column(body, 24);
-            _selectTab = UiKit.Segmented(body, new[] { L.T("ranks.all_time"), L.T("ranks.weekly") }, i => Select(i == 1));
-            _note = UiKit.Label(body, "", Theme.CaptionSize, Theme.InkSoft);
-            _list = UiKit.ScrollList(body, 16);
-            UiKit.Size((RectTransform)_list.parent, height: 1100).flexibleHeight = 1;
+            UiKit.Column(body, Ui.RowGap);
+            _selectTab = UiKit.Segmented(body, new[] { L.T("ranks.weekly"), L.T("ranks.all_time") }, i => Select(i == 0));
+            _countdown = UiKit.Text(body, "", TextRole.Overline, T.TextSecondary);
+            UiKit.Size(_countdown.rectTransform, height: 18);
+            _list = UiKit.ScrollList(body, Ui.RowGap);
+            UiKit.Size((RectTransform)_list.parent, height: 300).flexibleHeight = 1;
+            _mine = UiKit.Rect("Mine", body); // the player's own row, pinned under the list
+            UiKit.Column(_mine, 0);
         }
 
         protected override void OnShow() => Select(_showWeekly);
@@ -130,80 +204,105 @@ namespace StackIt.UI
         private void Select(bool weekly)
         {
             _showWeekly = weekly;
-            _selectTab(weekly ? 1 : 0);
-            _note.text = weekly ? L.T("ranks.weekly_note") : "";
-            _note.gameObject.SetActive(weekly);
-            Guard(Load(weekly));
+            _selectTab(weekly ? 0 : 1);
+            _countdown.gameObject.SetActive(weekly);
+            Load(weekly);
         }
 
-        private async System.Threading.Tasks.Task Load(bool weekly)
+        private async void Load(bool weekly)
         {
-            Leaderboard board = await Ctx.Api.LeaderboardAsync(weekly);
-            if (weekly != _showWeekly) return; // user switched tabs meanwhile
             UiKit.Clear(_list);
-            if (board.Entries.Count <= 1)
+            UiKit.Clear(_mine);
+            Leaderboard board;
+            try
             {
-                UiKit.Label(_list, L.T("ranks.empty"), 40, Theme.InkSoft);
+                board = await Ctx.Api.LeaderboardAsync(weekly);
             }
+            catch (ApiException e)
+            {
+                States.Failed(_list, e, () => Load(weekly));
+                return;
+            }
+            if (weekly != _showWeekly) return; // switched tabs meanwhile
+            if (weekly && DateTime.TryParse(board.Since, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out DateTime since))
+                _countdown.text = L.T("ranks.resets_in", WeeklyReset.Short(WeeklyReset.Remaining(since, DateTime.UtcNow)));
+            if (board.Entries.Count <= 1)
+                States.Show(_list, Icons.Trophy, L.T("ranks.empty"), L.T("friends.invite"), Icons.Share, () => Ctx.Router.Back());
             foreach (LeaderboardEntry entry in board.Entries)
             {
-                RectTransform row = UiKit.Card(_list, "Entry", entry.IsMe ? Theme.Hex(0xe3eeff) : Theme.Paper, radius: 36);
-                UiKit.Size(row, height: 132);
-                HorizontalLayoutGroup layout = UiKit.Row(row, 24);
-                layout.padding = new RectOffset(24, 40, 18, 18);
-                layout.childForceExpandWidth = false;
-                bool podium = entry.Rank <= 3;
-                UiKit.Badge(row, entry.Rank.ToString(), podium ? Theme.Sun : Theme.Enamel, podium ? Theme.Ink : Theme.InkSoft, 96);
-                TextMeshProUGUI name = UiKit.Label(row, entry.IsMe ? L.T("ranks.you", entry.DisplayName) : entry.DisplayName,
-                    Theme.BodySize, Theme.Ink, TextAlignmentOptions.Left, bold: true);
-                UiKit.OneLine(name, 30);
-                UiKit.Size(name.rectTransform, flexibleWidth: 1);
-                TextMeshProUGUI score = UiKit.Display(row, entry.Score.ToString(), 60, entry.IsMe ? Theme.Pool : Theme.Ink);
-                score.alignment = TextAlignmentOptions.Right;
-                UiKit.Size(score.rectTransform, width: 180);
+                Entry(_list, entry);
+                if (entry.IsMe) Entry(_mine, entry);
             }
+        }
+
+        private static void Entry(Transform parent, LeaderboardEntry entry)
+        {
+            RectTransform row;
+            if (entry.IsMe)
+            {
+                row = UiKit.Surface(parent, "Me", SurfaceKind.Highlight, Ui.CardRadius).rectTransform;
+                UiKit.Size(row, height: 60);
+                HorizontalLayoutGroup layout = UiKit.Row(row, 12);
+                layout.padding = new RectOffset((int)Ui.CardPad, (int)Ui.CardPad, 8, 8);
+                layout.childForceExpandWidth = false;
+                layout.childForceExpandHeight = false;
+            }
+            else
+            {
+                row = UiKit.ListRow(parent, 60);
+            }
+            if (entry.Rank <= 3) UiKit.Medal(row, entry.Rank);
+            else UiKit.Size(UiKit.Text(row, entry.Rank.ToString(), TextRole.Pill, T.TextSecondary).rectTransform, 32, 32);
+            UiKit.Grow(UiKit.OneLine(UiKit.Text(row, entry.IsMe ? L.T("ranks.you", entry.DisplayName) : entry.DisplayName,
+                TextRole.Body, T.TextPrimary, TextAlignmentOptions.Left), 12f));
+            TextMeshProUGUI score = UiKit.Text(row, entry.Score.ToString(), TextRole.BigNumber, T.TextPrimary, TextAlignmentOptions.Right, 24f);
+            UiKit.Size(score.rectTransform, width: 70);
         }
     }
 
     public sealed class ShopScreen : UiScreen
     {
-        private const string CoinTint = "#D99A0B";
-
         private readonly RectTransform _grid;
         private readonly TextMeshProUGUI _balance;
         private readonly Action<int> _selectTab;
         private string _kind = "block";
         private Shop _shop;
 
-        public ShopScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Shop", Theme.Enamel)
+        public ShopScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Shop", ScreenBackground.Gradient)
         {
             Header(L.T("shop.title"), () => Ctx.Router.Back());
+            _balance = UiKit.CoinPill(HomeScreen.TopBar(Safe));
+            var coins = (RectTransform)_balance.transform.parent;
+            coins.anchorMin = coins.anchorMax = coins.pivot = new Vector2(1, 0.5f);
+
             RectTransform body = Body();
-            UiKit.Column(body, 28);
-
-            RectTransform balanceRow = UiKit.Rect("Balance", body);
-            UiKit.Size(balanceRow, height: 100);
-            UiKit.Row(balanceRow, 0).childForceExpandWidth = false;
-            _balance = UiKit.Pill(balanceRow, "", Theme.Paper, Theme.Ink, 100);
-
+            UiKit.Column(body, Ui.RowGap);
             _selectTab = UiKit.Segmented(body, new[] { L.T("shop.blocks"), L.T("shop.themes") }, i => Select(i == 0 ? "block" : "theme"));
-
-            RectTransform viewport = UiKit.Rect("Grid", body);
-            UiKit.Size(viewport, height: 1150).flexibleHeight = 1;
-            _grid = UiKit.Stretch(UiKit.Rect("Items", viewport));
-            var grid = _grid.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(472, 420);
-            grid.spacing = new Vector2(24, 28);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 2;
-            grid.childAlignment = TextAnchor.UpperCenter;
+            _grid = UiKit.ScrollList(body, Ui.RowGap);
+            UiKit.Size((RectTransform)_grid.parent, height: 300).flexibleHeight = 1;
         }
 
-        protected override void OnShow() => Guard(Reload());
-
-        private async System.Threading.Tasks.Task Reload()
+        /// <summary>The shop as (id, price, owned) for the "new affordable skin" dot.</summary>
+        public static IEnumerable<(string Id, int Price, bool Owned)> Entries(Shop shop)
         {
-            _shop = await Ctx.Api.ShopAsync();
+            foreach (ShopItem item in shop.Items) yield return (item.SkinId, item.Price, item.Owned);
+        }
+
+        protected override void OnShow() => Reload();
+
+        private async void Reload()
+        {
+            try
+            {
+                _shop = await Ctx.Api.ShopAsync();
+            }
+            catch (ApiException e)
+            {
+                UiKit.Clear(_grid);
+                States.Failed(_grid, e, Reload);
+                return;
+            }
+            Ctx.Seen.MarkSeen(Entries(_shop), _shop.Balance);
             Render();
         }
 
@@ -217,60 +316,116 @@ namespace StackIt.UI
         {
             _selectTab(_kind == "block" ? 0 : 1);
             if (_shop == null) return;
-            _balance.text = UiKit.WithIcon($"<color={CoinTint}>{Icons.Coin}</color>", _shop.Balance.ToString("N0"));
+            _balance.text = _shop.Balance.ToString("N0");
             UiKit.Clear(_grid);
+            RectTransform line = null;
+            int column = 0;
             foreach (ShopItem item in _shop.Items)
-                if (item.Kind == _kind) Card(item);
+            {
+                if (item.Kind != _kind) continue;
+                if (column == 0)
+                {
+                    line = UiKit.Rect("Line", _grid);
+                    UiKit.Size(line, height: 236);
+                    UiKit.Row(line, Ui.RowGap);
+                }
+                Card(line, item);
+                column = (column + 1) % 2;
+            }
+            if (column == 1) UiKit.Rect("Empty", line); // keep the last card at half width
         }
 
-        private void Card(ShopItem item)
+        private void Card(RectTransform line, ShopItem item)
         {
-            RectTransform card = UiKit.Card(_grid, item.SkinId, radius: 44);
-            UiKit.Column(card, 14, new RectOffset(28, 28, 28, 24), TextAnchor.UpperCenter);
+            RectTransform card = UiKit.Card(line, item.SkinId);
+            UiKit.Column(card, 8, new RectOffset(12, 12, 12, 12), TextAnchor.UpperCenter);
+            var tap = card.gameObject.AddComponent<Button>();
+            card.GetComponent<RoundedRect>().raycastTarget = true;
+            tap.transition = Selectable.Transition.None;
+            tap.onClick.AddListener(() => OnItem(item, card));
 
-            Swatch(card, item);
-            TextMeshProUGUI name = UiKit.Label(card, L.T("skin." + item.SkinId), 40, Theme.Ink, TextAlignmentOptions.Center, bold: true);
-            UiKit.OneLine(name, 28);
-            UiKit.Size(name.rectTransform, height: 56);
+            Preview(card, item);
+            TextMeshProUGUI name = UiKit.Text(card, L.T("skin." + item.SkinId), TextRole.Body, T.TextPrimary);
+            UiKit.OneLine(name, 12f);
+            UiKit.Size(name.rectTransform, height: 22);
 
+            RectTransform state = UiKit.Rect("State", card);
+            UiKit.Size(state, height: 32);
+            HorizontalLayoutGroup row = UiKit.Row(state, 0);
+            row.childForceExpandWidth = false;
+            row.childControlWidth = true;
             if (item.Equipped)
             {
-                TextMeshProUGUI equipped = UiKit.Label(card, UiKit.WithIcon(Icons.Check, L.T("shop.equipped")), 40, Theme.Mint, TextAlignmentOptions.Center, bold: true);
-                UiKit.Size(equipped.rectTransform, height: 104);
+                // Accent check badge: what you are using now.
+                RoundedRect badge = UiKit.Solid(card, "Equipped", T.Accent, 14f, glow: T.AccentGlow);
+                UiKit.Pin(badge.rectTransform, new Vector2(1, 1), new Vector2(28, 28), new Vector2(-8, -8));
+                UiKit.IgnoreLayout(badge);
+                UiKit.Stretch(UiKit.Icon(badge.transform, Icons.Check, 18f, T.AccentOn).rectTransform);
+                UiKit.Text(state, L.T("shop.equipped"), TextRole.Pill, T.TextSecondary);
             }
             else if (item.Owned)
-                UiKit.Button(card, L.T("shop.equip"), ButtonStyle.Secondary, () => OnItem(item), 104);
+            {
+                UiKit.Pill(state, L.T("shop.equip"), Icons.Check, () => OnItem(item, card));
+            }
             else
-                UiKit.Button(card, item.Price.ToString("N0"), ButtonStyle.Reward, () => OnItem(item), 104, Icons.Coin);
+            {
+                bool affordable = _shop.Balance >= item.Price;
+                RoundedRect price = affordable
+                    ? UiKit.Solid(state, "Price", T.Accent, 16f, glow: T.AccentGlow)
+                    : UiKit.Surface(state, "Price", SurfaceKind.Sunken, 16f);
+                HorizontalLayoutGroup p = UiKit.Row(price.rectTransform, 6);
+                p.padding = new RectOffset(6, 12, 0, 0);
+                p.childForceExpandWidth = false;
+                p.childForceExpandHeight = false;
+                UiKit.Coin(price.transform, 20f);
+                UiKit.Text(price.transform, item.Price.ToString("N0"), TextRole.Coin, affordable ? T.AccentOn : T.TextPrimary, size: 15f);
+                price.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
         }
 
-        /// <summary>A mini tower of the skin's first blocks, or a slice of the theme's sky.</summary>
-        private static void Swatch(RectTransform card, ShopItem item)
+        /// <summary>A live mini tower: the skin's colours (block skins) or the theme's sky (themes).</summary>
+        private void Preview(RectTransform card, ShopItem item)
         {
-            RectTransform swatch = UiKit.Rect("Swatch", card);
-            UiKit.Size(swatch, height: 180);
-            if (item.Kind == "block")
+            RectTransform frame;
+            if (item.Kind == "theme" && !Palette.FollowsLook(item.SkinId))
             {
-                VerticalLayoutGroup column = UiKit.Column(swatch, 6, new RectOffset(40, 40, 8, 8), TextAnchor.LowerCenter);
-                column.childForceExpandHeight = true;
-                for (int i = 5; i >= 0; i--) // drawn top to bottom
-                    UiKit.Panel(swatch, "Block", Palette.Block(item.SkinId, i * 3 + 1), rounded: true, radius: 10);
-                return;
-            }
-            Image frame = UiKit.Panel(swatch, "Sky", Color.white, rounded: true, radius: 28);
-            UiKit.Stretch(frame.rectTransform);
-            frame.gameObject.AddComponent<Mask>(); // clips the bands to the rounded corners
-            VerticalLayoutGroup bands = UiKit.Column(frame.rectTransform, 0);
-            bands.childForceExpandHeight = true;
-            for (int i = 0; i < 6; i++)
-            {
+                frame = UiKit.Rect("Sky", card);
+                var sky = frame.gameObject.AddComponent<GradientBackground>();
                 Palette.Sky(item.SkinId, 12f, out Color top, out Color bottom);
-                UiKit.Panel(frame.transform, "Band", Color.Lerp(top, bottom, i / 5f));
+                sky.SetStops(top, Color.Lerp(top, bottom, 0.5f), bottom, 0.5f);
+                IgnoreTheming.Mark(sky, "skin preview: the theme's own sky");
             }
+            else if (item.Kind == "theme")
+            {
+                frame = UiKit.Rect("Sky", card);
+                var sky = frame.gameObject.AddComponent<GradientBackground>();
+                var themed = frame.gameObject.AddComponent<ThemedGradientBackground>();
+                themed.Target = sky;
+                themed.Refresh();
+            }
+            else
+            {
+                frame = UiKit.Surface(card, "Stage", SurfaceKind.Sunken, 14f).rectTransform;
+            }
+            UiKit.Size(frame, height: 130);
+
+            RectTransform holder = UiKit.Stretch(UiKit.Rect("Tower", frame), 8, 10, 8, 10);
+            var tower = holder.gameObject.AddComponent<IsoTower>();
+            tower.raycastTarget = false;
+            tower.Footprint = 0.5f;
+            var blocks = new List<IsoTower.BlockFaces>();
+            string skin = item.Kind == "block" ? item.SkinId : null;
+            for (int i = 0; i < 3; i++) blocks.Add(IsoTower.FromTop(Palette.BlockTop(skin, i * 4, Look.P)));
+            tower.SetBlocks(blocks);
+            Color[] moving = Look.Colors(T.BlockMoving);
+            tower.SetMoving(new IsoTower.BlockFaces { Top = moving[0], Left = moving[1], Right = moving[2] }, true);
+            IgnoreTheming.Mark(tower, "skin preview");
+            holder.gameObject.AddComponent<TowerSlide>().Tower = tower;
         }
 
-        private void OnItem(ShopItem item)
+        private void OnItem(ShopItem item, RectTransform card)
         {
+            if (item.Equipped) return;
             if (item.Owned)
             {
                 Guard(Equip(item.SkinId));
@@ -278,11 +433,23 @@ namespace StackIt.UI
             }
             if (_shop.Balance < item.Price)
             {
+                Shake(card);
+                Ctx.Haptics.Play(HapticKind.Medium);
                 Ctx.Router.Toast(L.T("error.insufficient_funds"));
                 return;
             }
             Ctx.Router.Confirm(L.T("shop.confirm", L.T("skin." + item.SkinId), item.Price), L.T("shop.buy", item.Price),
                 () => Guard(Buy(item.SkinId)));
+        }
+
+        private static void Shake(RectTransform card)
+        {
+            if (Look.ReduceMotion) return;
+            Vector2 rest = card.anchoredPosition;
+            Tween.Run(card, 0.36f, t =>
+            {
+                if (card != null) card.anchoredPosition = rest + new Vector2(Mathf.Sin(t * Mathf.PI * 6f) * 8f * (1f - t), 0f);
+            }, () => { if (card != null) card.anchoredPosition = rest; });
         }
 
         private async System.Threading.Tasks.Task Buy(string skinId)
@@ -300,62 +467,155 @@ namespace StackIt.UI
         }
     }
 
+    /// <summary>Slides an IsoTower's top block back and forth (the shop's "live" previews).</summary>
+    public sealed class TowerSlide : MonoBehaviour
+    {
+        public IsoTower Tower;
+        private float _phase;
+
+        private void OnEnable() => _phase = UnityEngine.Random.value * 6f;
+
+        private void Update()
+        {
+            if (Tower == null || Look.ReduceMotion) return;
+            Tower.SetSlide(Mathf.Sin(Time.unscaledTime * 1.6f + _phase));
+        }
+    }
+
+    /// <summary>
+    /// Daily reward modal: the streak as an overline, a 7-day grid (claimed days checked, today in the
+    /// accent with its glow, future days dimmed) and Claim.
+    /// </summary>
     public sealed class DailyRewardScreen : UiScreen
     {
         private static readonly int[] Rewards = { 25, 35, 50, 70, 90, 120, 200 }; // mirrors DAILY_REWARDS
-        private readonly RectTransform _days;
+        private const float TileHeight = 96f;
+
+        private readonly TextMeshProUGUI _streak;
         private readonly TextMeshProUGUI _title;
+        private readonly RectTransform _days;
         private readonly Button _claim;
+        private readonly RectTransform _card;
         private DailyStatus _status;
 
-        public DailyRewardScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Daily", Theme.Enamel)
+        public override bool AllowsBanner => false;
+
+        public DailyRewardScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Daily", ScreenBackground.Dim)
         {
-            Header(L.T("daily.title"), () => Ctx.Router.Back());
-            RectTransform body = Body();
-            UiKit.Column(body, 40, new RectOffset(0, 0, 40, 0));
-            _title = UiKit.Display(body, "", 64, Theme.Ink);
-            _title.textWrappingMode = TextWrappingModes.Normal;
-            _days = UiKit.Rect("Days", body);
-            UiKit.Size(_days, height: 230);
-            UiKit.Row(_days, 12);
-            UiKit.Label(body, L.T("daily.rule"), Theme.SmallSize, Theme.InkSoft);
-            _claim = UiKit.Button(body, L.T("daily.claim"), ButtonStyle.Reward, Claim, 170, Icons.Gift);
+            _card = UiKit.Surface(Safe, "Modal", SurfaceKind.Raised, Ui.SheetRadius).rectTransform;
+            _card.anchorMin = new Vector2(0, 0.5f);
+            _card.anchorMax = new Vector2(1, 0.5f);
+            _card.pivot = new Vector2(0.5f, 0.5f);
+            _card.sizeDelta = new Vector2(-2 * Ui.Side, 400);
+            UiKit.Column(_card, 14, new RectOffset(16, 16, 20, 20), TextAnchor.UpperCenter);
+            _card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            Button close = UiKit.IconButton(_card, Icons.Close, () => Ctx.Router.Back());
+            UiKit.IgnoreLayout(close);
+            UiKit.Pin((RectTransform)close.transform, new Vector2(1, 1), new Vector2(Ui.IconButton, Ui.IconButton), new Vector2(-10, -10));
+
+            UiKit.Size(UiKit.Text(_card, L.T("daily.title"), TextRole.Title).rectTransform, height: 34);
+            _streak = UiKit.Text(_card, "", TextRole.Overline, T.TextSecondary);
+            UiKit.Size(_streak.rectTransform, height: 18);
+            _title = UiKit.Text(_card, "", TextRole.Body, T.TextPrimary);
+            _days = UiKit.Rect("Days", _card);
+            UiKit.Column(_days, 10);
+            UiKit.Text(_card, L.T("daily.rule"), TextRole.Caption, T.TextSecondary);
+            _claim = UiKit.Primary(_card, L.T("daily.claim"), Icons.Gift, Claim);
         }
 
-        protected override void OnShow() => Guard(Load());
-
-        private async System.Threading.Tasks.Task Load()
+        protected override void OnShow()
         {
-            _status = await Ctx.Api.DailyAsync();
-            Render();
+            Load();
+            UiRouter.Rise(_card, 0f);
+        }
+
+        private async void Load()
+        {
+            try
+            {
+                _status = await Ctx.Api.DailyAsync();
+                Render();
+            }
+            catch (ApiException e)
+            {
+                Ctx.Router.Toast(Errors.Describe(e));
+            }
         }
 
         private void Render()
         {
-            int nextDay = _status.ClaimedToday ? _status.Streak : _status.Streak + 1;
-            _title.text = _status.ClaimedToday ? L.T("daily.come_back") : L.T("daily.ready", _status.NextReward);
+            bool claimed = _status.ClaimedToday;
+            int nextDay = claimed ? _status.Streak : _status.Streak + 1;
+            int cycleDay = Mathf.Min(nextDay, Rewards.Length);
+            _streak.text = L.T("daily.streak", _status.Streak);
+            _title.text = claimed ? L.T("daily.come_back") : L.T("daily.ready", _status.NextReward);
+
+            // Days 1-4 on top; 5, 6 and the big day 7 (two tiles wide) below.
             UiKit.Clear(_days);
+            RectTransform row = null;
             for (int day = 1; day <= Rewards.Length; day++)
             {
-                int cycleDay = Mathf.Min(nextDay, Rewards.Length);
-                bool done = day < cycleDay || (_status.ClaimedToday && day == cycleDay);
-                bool today = day == cycleDay && !_status.ClaimedToday;
-                RectTransform cell = UiKit.Card(_days, "Day" + day, today ? Theme.Sun : Theme.Paper, radius: 28, shadow: today);
-                UiKit.Column(cell, 6, new RectOffset(4, 4, 22, 22), TextAnchor.MiddleCenter);
-                UiKit.Label(cell, L.T("daily.day", day), 26, today ? Theme.Ink : Theme.InkSoft, TextAlignmentOptions.Center, bold: true);
-                if (done) UiKit.Icon(cell, Icons.Check, 56, Theme.Mint);
-                else UiKit.Display(cell, Rewards[day - 1].ToString(), 44, Theme.Ink);
+                if (day == 1 || day == 5)
+                {
+                    row = UiKit.Rect("Week", _days);
+                    UiKit.Size(row, height: TileHeight);
+                    UiKit.Row(row, 10);
+                }
+                bool done = day < cycleDay || (claimed && day == cycleDay);
+                bool today = day == cycleDay && !claimed;
+                RectTransform tile = Tile(row, day, done, today);
+                // Equal shares whatever the text, so both rows line up; day 7 takes two plus the gap.
+                bool big = day == Rewards.Length;
+                UiKit.Size(tile, width: big ? 10 : 0, flexibleWidth: big ? 2 : 1);
             }
-            _claim.interactable = !_status.ClaimedToday;
+            _claim.gameObject.SetActive(!claimed);
+            _claim.interactable = true;
         }
 
-        private void Claim() => Guard(ClaimAsync());
+        private static RectTransform Tile(RectTransform row, int day, bool done, bool today)
+        {
+            RoundedRect surface = today
+                ? UiKit.Solid(row, "Day" + day, T.Accent, 16f, glow: T.AccentGlow)
+                : UiKit.Surface(row, "Day" + day, done ? SurfaceKind.Card : SurfaceKind.Sunken, 16f);
+            RectTransform tile = surface.rectTransform;
+            UiKit.Column(tile, 2, new RectOffset(4, 4, 10, 8), TextAnchor.MiddleCenter);
+            string ink = today ? T.AccentOn : done ? T.Success : T.TextSecondary;
+            UiKit.Size(UiKit.Text(tile, L.T("daily.day", day), TextRole.Caption, ink).rectTransform, height: 16);
+            if (done)
+            {
+                UiKit.Icon(tile, Icons.Check, 26f, T.Success);
+            }
+            else
+            {
+                RectTransform coin = UiKit.Rect("CoinLine", tile);
+                UiKit.Size(coin, height: 26);
+                HorizontalLayoutGroup r = UiKit.Row(coin, 0);
+                r.childForceExpandWidth = false;
+                r.childForceExpandHeight = false; // keep the coin round
+                r.childControlWidth = true;
+                if (day == Rewards.Length) UiKit.Icon(coin, Icons.Gift, 26f, ink, filled: today);
+                else UiKit.Coin(coin, 20f);
+            }
+            UiKit.Size(UiKit.Text(tile, Rewards[day - 1].ToString(), TextRole.Coin, today ? T.AccentOn : T.TextPrimary).rectTransform, height: 22);
+            if (!today && !done) tile.gameObject.AddComponent<CanvasGroup>().alpha = 0.7f; // future days dimmed
+            return tile;
+        }
 
-        private async System.Threading.Tasks.Task ClaimAsync()
+        private async void Claim()
         {
             _claim.interactable = false;
-            // Key per calendar day: double taps and retries resolve to one claim.
-            _status = await Ctx.Api.ClaimDailyAsync("daily-" + DateTime.UtcNow.ToString("yyyyMMdd"));
+            try
+            {
+                // Key per calendar day: double taps and retries resolve to one claim.
+                _status = await Ctx.Api.ClaimDailyAsync("daily-" + DateTime.UtcNow.ToString("yyyyMMdd"));
+            }
+            catch (ApiException e)
+            {
+                _claim.interactable = true;
+                Ctx.Router.Toast(Errors.Describe(e));
+                return;
+            }
             Ctx.Audio.Reward();
             Ctx.Haptics.Play(HapticKind.Success);
             Ctx.Router.Toast(L.T("daily.claimed", _status.ClaimedAmount ?? 0));
@@ -363,57 +623,155 @@ namespace StackIt.UI
         }
     }
 
+    /// <summary>
+    /// Grouped cards: Look (Pop / Neon), motion, sound, music and haptics, language, account, legal,
+    /// ad choices and Delete account.
+    /// </summary>
     public sealed class SettingsScreen : UiScreen
     {
         private readonly TMP_InputField _name;
         private readonly RectTransform _account;
 
-        public SettingsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Settings", Theme.Enamel)
+        public SettingsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Settings", ScreenBackground.Gradient)
         {
             Header(L.T("settings.title"), () => Ctx.Router.Back());
-            RectTransform body = UiKit.ScrollList(Body(), 20);
+            RectTransform body = UiKit.ScrollList(Body(), Ui.RowGap);
 
-            UiKit.Caps(body, L.T("settings.name"), Theme.InkSoft, align: TextAlignmentOptions.Left);
-            RectTransform nameRow = UiKit.Rect("NameRow", body);
-            UiKit.Size(nameRow, height: 140);
-            UiKit.Row(nameRow, 16);
-            _name = UiKit.Input(nameRow, L.T("settings.name_placeholder"), 20);
-            UiKit.Size((RectTransform)_name.transform, flexibleWidth: 3);
-            UiKit.Size((RectTransform)UiKit.Button(nameRow, L.T("settings.save"), ButtonStyle.Primary, Rename, 140).transform, flexibleWidth: 1.2f);
+            LookSwitch(body, ctx);
 
-            UiKit.Spacer(body, 12);
             RectTransform prefs = Group(body);
+            UiKit.Toggle(prefs, Icons.Motion, L.T("settings.reduce_motion"), ctx.Save.ReduceMotion, on => ctx.Flow.SetReduceMotion(on));
             UiKit.Toggle(prefs, Icons.Sound, L.T("settings.sound"), ctx.Save.SoundOn, on => { ctx.Save.SoundOn = on; ctx.Audio.Enabled = on; });
+            UiKit.Toggle(prefs, Icons.Music, L.T("settings.music"), ctx.Save.MusicOn, on => ctx.Flow.SetMusic(on));
             UiKit.Toggle(prefs, Icons.Haptics, L.T("settings.haptics"), ctx.Save.HapticsOn, on => { ctx.Save.HapticsOn = on; ctx.Haptics.Enabled = on; });
 
-            UiKit.Spacer(body, 12);
-            UiKit.Caps(body, L.T("settings.language"), Theme.InkSoft, align: TextAlignmentOptions.Left);
+            Overline(body, L.T("settings.language"));
             Action<int> lang = UiKit.Segmented(body, new[] { "English", "Español" }, i => SetLanguage(i == 0 ? "en" : "es"));
             lang(ctx.Localizer.Language == "es" ? 1 : 0);
 
-            UiKit.Spacer(body, 12);
-            UiKit.Caps(body, L.T("settings.account"), Theme.InkSoft, align: TextAlignmentOptions.Left);
-            _account = UiKit.Rect("Account", body);
-            UiKit.Column(_account, 16);
+            Overline(body, L.T("settings.account"));
+            RectTransform account = Group(body);
+            RectTransform nameRow = UiKit.Rect("NameRow", account);
+            UiKit.Size(nameRow, height: 48);
+            HorizontalLayoutGroup row = UiKit.Row(nameRow, 10);
+            row.childForceExpandWidth = false;
+            _name = UiKit.Input(nameRow, L.T("settings.name_placeholder"), 20);
+            UiKit.Size((RectTransform)_name.transform, flexibleWidth: 1);
+            UiKit.Pill(nameRow, L.T("settings.save"), Icons.Check, Rename);
+            _account = UiKit.Rect("Providers", account);
+            UiKit.Column(_account, 8);
 
-            UiKit.Spacer(body, 12);
+            RectTransform legal = Group(body);
             if (ctx.Ads.PrivacyOptionsRequired)
-                UiKit.Button(body, L.T("settings.privacy_choices"), ButtonStyle.Secondary, () => ctx.Ads.ShowPrivacyOptions(), 120);
-            UiKit.Button(body, L.T("settings.privacy"), ButtonStyle.Ghost, () => Application.OpenURL(ctx.Config.apiBaseUrl + "/privacy?lang=" + ctx.Localizer.Language), 100);
-            UiKit.Button(body, L.T("settings.terms"), ButtonStyle.Ghost, () => Application.OpenURL(ctx.Config.apiBaseUrl + "/terms?lang=" + ctx.Localizer.Language), 100);
-            UiKit.Spacer(body, 20);
-            UiKit.Button(body, L.T("settings.delete"), ButtonStyle.Danger, () =>
-                ctx.Router.Confirm(L.T("settings.delete_confirm"), L.T("settings.delete_yes"), () => ctx.Flow.DeleteAccount()), 120, Icons.Delete);
-            UiKit.Label(body, "Stack IT " + Application.version, Theme.CaptionSize, Theme.InkSoft);
+                LinkRow(legal, Icons.Privacy, L.T("settings.privacy_choices"), () => ctx.Ads.ShowPrivacyOptions());
+            LinkRow(legal, Icons.Privacy, L.T("settings.privacy"), () => Application.OpenURL(ctx.Config.apiBaseUrl + "/privacy?lang=" + ctx.Localizer.Language));
+            LinkRow(legal, Icons.Terms, L.T("settings.terms"), () => Application.OpenURL(ctx.Config.apiBaseUrl + "/terms?lang=" + ctx.Localizer.Language));
+
+            RectTransform danger = Group(body);
+            LinkRow(danger, Icons.Delete, L.T("settings.delete"), () =>
+                ctx.Router.Confirm(L.T("settings.delete_confirm"), L.T("settings.delete_yes"), () => ctx.Flow.DeleteAccount(), destructive: true),
+                T.Danger);
+            UiKit.Size(UiKit.Text(body, "Stack IT " + Application.version, TextRole.Caption, T.TextSecondary).rectTransform, height: 24);
         }
 
-        /// <summary>A paper card holding a few rows.</summary>
+        /// <summary>
+        /// "Look": two tiles previewing Pop (pastel) and Neon (dark with a teal glow). The previews
+        /// show their own look whatever the current one is; the selected tile wears the accent ring.
+        /// </summary>
+        public static void LookSwitch(Transform parent, UiContext ctx)
+        {
+            Overline(parent, L.T("settings.look"));
+            RectTransform row = UiKit.Rect("Look", parent);
+            UiKit.Size(row, height: 92);
+            UiKit.Row(row, Ui.RowGap);
+            var rings = new List<(ThemeId Id, ThemedSurface Ring)>();
+            foreach (ThemePalette look in Look.Catalog.All)
+            {
+                ThemeId id = look.Id;
+                RoundedRect tile = UiKit.Shape(row, "Tile " + id, 16f);
+                tile.raycastTarget = true;
+                ThemedSurface ring = ThemedSurface.Bind(tile, SurfaceKind.Solid, T.Accent);
+                ring.FillAlpha = 0f;
+                ring.RingToken = T.SecondaryBorder; // bright in both looks
+                rings.Add((id, ring));
+
+                RectTransform swatch = UiKit.Stretch(UiKit.Rect("Swatch", tile.transform), 4, 4, 4, 30);
+                var sky = swatch.gameObject.AddComponent<GradientBackground>();
+                Rgba[] stops = look.Colors(T.BgGradient);
+                sky.SetStops(Look.ToColor(stops[0]), Look.ToColor(stops[1]), Look.ToColor(stops[2]), 0.5f);
+                IgnoreTheming.Mark(sky, "look preview");
+                RoundedRect glow = UiKit.Shape(swatch, "Glow", 0f);
+                UiKit.Pin(glow.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+                Glow centre = look.Glow(T.BgCenterGlow);
+                glow.SetShadow(Look.ToColor(centre.Color), 40f, 0f);
+                IgnoreTheming.Mark(glow, "look preview");
+                RectTransform towerRect = UiKit.Stretch(UiKit.Rect("Tower", swatch), 0, 6, 0, 6);
+                var tower = towerRect.gameObject.AddComponent<IsoTower>();
+                tower.Footprint = 0.3f;
+                Rgba[] faces = look.Colors(T.BlockBase);
+                Rgba[] moving = look.Colors(T.BlockMoving);
+                tower.SetBlocks(new[] { new IsoTower.BlockFaces { Top = Look.ToColor(faces[0]), Left = Look.ToColor(faces[1]), Right = Look.ToColor(faces[2]) } });
+                tower.SetMoving(new IsoTower.BlockFaces { Top = Look.ToColor(moving[0]), Left = Look.ToColor(moving[1]), Right = Look.ToColor(moving[2]) }, true);
+                IgnoreTheming.Mark(tower, "look preview");
+
+                TextMeshProUGUI label = UiKit.Text(tile.transform, L.T("look." + ThemeCatalog.Key(id)), TextRole.Pill, T.TextPrimary);
+                UiKit.Pin(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(120, 26), new Vector2(0, 2));
+                label.rectTransform.pivot = new Vector2(0.5f, 0f);
+
+                var button = tile.gameObject.AddComponent<Button>();
+                button.transition = Selectable.Transition.None;
+                button.onClick.AddListener(() =>
+                {
+                    UiKit.Pressed?.Invoke();
+                    ctx.Flow.SetLook(id);
+                });
+                tile.gameObject.AddComponent<Pressable>().Button = button;
+            }
+            void Mark(ThemePalette current)
+            {
+                foreach ((ThemeId id, ThemedSurface ring) in rings)
+                {
+                    if (ring == null) continue;
+                    ring.RingWidth = id == current.Id ? 2.5f : 0f;
+                    ring.Refresh();
+                }
+            }
+            Mark(Look.P);
+            Look.Changed += Mark;
+        }
+
+        private static void Overline(Transform parent, string text)
+        {
+            TextMeshProUGUI label = UiKit.Text(parent, text, TextRole.Overline, T.TextSecondary, TextAlignmentOptions.Left);
+            UiKit.Size(label.rectTransform, height: 22);
+        }
+
+        /// <summary>A card holding a few rows.</summary>
         private static RectTransform Group(RectTransform parent)
         {
-            // The parent column sizes it from its own layout group; no fitter needed.
             RectTransform card = UiKit.Card(parent, "Group");
-            UiKit.Column(card, 0, new RectOffset(40, 32, 12, 12));
+            UiKit.Column(card, 4, new RectOffset((int)Ui.CardPad, (int)Ui.CardPad, 8, 8));
             return card;
+        }
+
+        /// <summary>A tappable row: icon, label, chevron.</summary>
+        private static void LinkRow(Transform group, string icon, string text, Action onClick, string token = T.TextPrimary)
+        {
+            RectTransform row = UiKit.Rect("Link", group);
+            UiKit.Size(row, height: 48);
+            var hit = row.gameObject.AddComponent<Image>();
+            hit.color = Color.clear;
+            IgnoreTheming.Mark(hit, "invisible tap area");
+            HorizontalLayoutGroup layout = UiKit.Row(row, 12);
+            layout.childForceExpandWidth = false;
+            UiKit.Icon(row, icon, Ui.IconSize, token == T.TextPrimary ? T.TextSecondary : token);
+            UiKit.Grow(UiKit.Text(row, text, TextRole.Body, token, TextAlignmentOptions.Left));
+            UiKit.Icon(row, Icons.Chevron, 18f, T.TextSecondary);
+            var button = row.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = hit;
+            button.onClick.AddListener(() => onClick());
+            row.gameObject.AddComponent<Pressable>().Button = button;
         }
 
         protected override void OnShow()
@@ -432,12 +790,20 @@ namespace StackIt.UI
                 string id = provider == SignInProvider.Google ? "google" : "apple";
                 if (providers.Contains(id))
                 {
-                    UiKit.Label(_account, UiKit.WithIcon(Icons.Check, L.T("settings.linked_" + id)), Theme.BodySize, Theme.Mint, TextAlignmentOptions.Left, bold: true);
+                    TextMeshProUGUI linked = UiKit.Text(_account, UiKit.WithIcon(Icons.Check, L.T("settings.linked_" + id)), TextRole.Body, T.Success,
+                        TextAlignmentOptions.Left);
+                    UiKit.Size(linked.rectTransform, height: 36);
                     continue;
                 }
-                UiKit.Button(_account, L.T("settings.link_" + id), ButtonStyle.Secondary, () => Guard(Link(provider)), 130, Icons.Link);
+                RectTransform line = UiKit.Rect("Link", _account);
+                UiKit.Size(line, height: Ui.PillHeight);
+                HorizontalLayoutGroup row = UiKit.Row(line, 0);
+                row.childForceExpandWidth = false;
+                row.childAlignment = TextAnchor.MiddleLeft;
+                UiKit.Pill(line, L.T("settings.link_" + id), Icons.Link, () => Guard(Link(provider)));
             }
-            if (_account.childCount == 0) UiKit.Label(_account, L.T("settings.guest_note"), Theme.SmallSize, Theme.InkSoft, TextAlignmentOptions.Left);
+            if (_account.childCount == 0)
+                UiKit.Text(_account, L.T("settings.guest_note"), TextRole.Caption, T.TextSecondary, TextAlignmentOptions.Left);
         }
 
         private async System.Threading.Tasks.Task Link(SignInProvider provider)

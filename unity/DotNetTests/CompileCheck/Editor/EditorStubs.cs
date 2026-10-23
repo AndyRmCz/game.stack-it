@@ -3,6 +3,7 @@ namespace StackIt.EditorTools
 {
     public static class StringsImporter
     {
+        internal const string CsvPath = "Assets/_Project/Resources/StackIt/strings.csv";
         public static void Import() { }
     }
 }

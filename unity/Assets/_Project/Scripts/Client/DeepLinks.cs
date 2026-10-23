@@ -11,6 +11,9 @@ namespace StackIt.Client
         private const int MinLength = 4;
         private const int MaxLength = 10;
 
+        /// <summary>Challenge codes the backend issues (CHALLENGE_CODE_LENGTH): what the code box accepts.</summary>
+        public const int ChallengeCodeLength = 7;
+
         /// <summary>
         /// Accepts https://{base}/c/{code} (Universal Links / App Links) and {scheme}://c/{code}.
         /// Anything else, including other hosts, returns null.

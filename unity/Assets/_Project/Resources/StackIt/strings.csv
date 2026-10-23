@@ -15,8 +15,11 @@ hud.tap_hint,Tap anywhere to drop the block,Toca en cualquier lugar para soltar 
 hud.rival,"Beat @{0} · {1}","Supera a @{0} · {1}"
 hud.perfect,Perfect,Perfecto
 hud.perfect_combo,Perfect ×{0},Perfecto ×{0}
-hud.passed,You passed @{0},Superaste a @{0}
+hud.passed,You passed @{0}!,¡Superaste a @{0}!
 hud.almost,@{0} is right above you,@{0} está justo encima
+pause.title,Paused,En pausa
+pause.resume,Resume,Seguir
+pause.restart,Restart,Reiniciar
 # Game over
 over.keep_going,Keep going?,¿Seguir jugando?
 over.continue_ad,Continue · watch ad,Continuar · ver anuncio
@@ -35,6 +38,10 @@ over.not_verified,This run could not be verified and does not count.,Esta partid
 over.duel_won,You beat @{0}'s {1}!,¡Superaste los {1} de @{0}!
 over.duel_lost,@{0}'s {1} still stands. Rematch?,Los {1} de @{0} siguen en pie. ¿Revancha?
 over.preparing_clip,Preparing clip…,Preparando clip…
+over.continue,Continue,Continuar
+over.double_short,Double coins,Monedas ×2
+over.rematch,Rematch,Revancha
+over.you,You,Tú
 # Challenge intro
 intro.eyebrow,Challenge,Reto
 intro.title,@{0} stacked,@{0} apiló
@@ -42,11 +49,12 @@ intro.rules,"Same blocks, same speed, no continues. Beat the score.","Mismos blo
 intro.expired,"This challenge has expired, but you can still play the same tower.","Este reto ha caducado, pero aún puedes jugar la misma torre."
 intro.accept,Accept challenge,Aceptar reto
 intro.later,Not now,Ahora no
+intro.score_to_beat,Score to beat,Puntos a superar
 # Code entry
 code.title,Challenge code,Código de reto
 code.body,Type the code from your friend's link or clip.,Escribe el código del enlace o clip de tu amigo.
 code.placeholder,e.g. K7QX9PA,p. ej. K7QX9PA
-code.submit,Open challenge,Abrir reto
+code.submit,Join,Unirme
 code.invalid,That code doesn't look right. Check it and try again.,Ese código no parece correcto. Revísalo e inténtalo de nuevo.
 # Friends
 friends.title,Friends,Amigos
@@ -59,6 +67,12 @@ friends.remove_confirm,Remove @{0} from your friends?,¿Quitar a @{0} de tus ami
 friends.remove,Remove,Quitar
 friends.added,@{0} is now your friend,@{0} ya es tu amigo
 friends.share_text,Add me on Stack IT! My friend code: {0},¡Agrégame en Stack IT! Mi código de amigo: {0}
+friends.pending,Challenges waiting,Retos pendientes
+friends.pending_row,@{0} · {1} to beat,@{0} · supera {1}
+friends.play,Play,Jugar
+friends.challenge,Challenge,Retar
+friends.copied,Code copied,Código copiado
+friends.invite,Invite friends,Invita a tus amigos
 # Leaderboards
 ranks.title,Friends ranking,Ranking de amigos
 ranks.all_time,All time,Histórico
@@ -66,6 +80,7 @@ ranks.weekly,This week,Esta semana
 ranks.weekly_note,Resets every Monday at 00:00 UTC,Se reinicia cada lunes a las 00:00 UTC
 ranks.empty,Challenge a friend to fill this board.,Reta a un amigo para llenar este ranking.
 ranks.you,{0} (you),{0} (tú)
+ranks.resets_in,Resets in {0},Se reinicia en {0}
 # Shop
 shop.title,Shop,Tienda
 shop.blocks,Blocks,Bloques
@@ -75,14 +90,14 @@ shop.buy,{0} coins,{0} monedas
 shop.equip,Equip,Equipar
 shop.equipped,Equipped,Equipado
 shop.confirm,Buy {0} for {1} coins?,¿Comprar {0} por {1} monedas?
-skin.classic,Classic Neon,Neón clásico
+skin.classic,Classic,Clásico
 skin.glass,Glass,Cristal
 skin.magma,Magma,Magma
 skin.aurora,Aurora,Aurora
 skin.circuit,Circuit,Circuito
 skin.prism,Prism,Prisma
 skin.gold,Gold,Oro
-skin.synthwave,Synthwave,Synthwave
+skin.synthwave,Classic,Clásico
 skin.midnight,Midnight,Medianoche
 skin.sunset,Sunset,Atardecer
 skin.vapor,Vapor,Vapor
@@ -95,6 +110,7 @@ daily.ready,{0} coins are waiting,Te esperan {0} monedas
 daily.come_back,Come back tomorrow for the next gift,Vuelve mañana por el siguiente regalo
 daily.day,Day {0},Día {0}
 daily.claimed,+{0} coins,+{0} monedas
+daily.streak,Streak {0},Racha {0}
 # Settings
 settings.title,Settings,Ajustes
 settings.name,Display name,Nombre visible
@@ -103,6 +119,11 @@ settings.save,Save,Guardar
 settings.saved,Name saved,Nombre guardado
 settings.sound,Sound,Sonido
 settings.haptics,Vibration,Vibración
+settings.look,Look,Estilo
+look.pop,Pop,Pop
+look.neon,Neon,Neón
+settings.reduce_motion,Reduce motion,Reducir movimiento
+settings.music,Music,Música
 settings.language,Language,Idioma
 settings.account,Account,Cuenta
 settings.guest_note,You're playing as a guest. Your progress is saved on this device.,Juegas como invitado. Tu progreso se guarda en este dispositivo.
@@ -120,6 +141,7 @@ settings.delete,Delete account,Eliminar cuenta
 settings.delete_confirm,"This permanently deletes your account, scores, coins and skins. It cannot be undone.","Esto elimina para siempre tu cuenta, puntuaciones, monedas y aspectos. No se puede deshacer."
 settings.delete_yes,Delete forever,Eliminar para siempre
 common.cancel,Cancel,Cancelar
+common.retry,Retry,Reintentar
 # Sharing
 share.text,I stacked {0} in Stack IT. Can you beat me? Code {1},Apilé {0} en Stack IT. ¿Me superas? Código {1}
 share.headline,Can you beat me?,¿Me superas?

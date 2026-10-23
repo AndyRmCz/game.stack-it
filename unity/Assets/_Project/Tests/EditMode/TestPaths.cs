@@ -11,10 +11,16 @@ namespace StackIt.Tests
         /// </summary>
         public static string SimVectorsDir() => FindUp(Path.Combine("shared", "sim-vectors"));
 
+        /// <summary>shared/theme/themes.json, the look tokens.</summary>
+        public static string ThemesJson() => Path.Combine(FindUp(Path.Combine("shared", "theme")), "themes.json");
+
+        /// <summary>Assets/_Project/Resources/StackIt, found the same way.</summary>
+        public static string ResourcesDir() => FindUp(Path.Combine("Assets", "_Project", "Resources", "StackIt"));
+
         /// <summary>Assets/_Project/Scripts, found the same way.</summary>
         public static string ScriptsDir() => FindUp(Path.Combine("Assets", "_Project", "Scripts"));
 
-        private static string FindUp(string relative)
+        public static string FindUp(string relative)
         {
             foreach (string start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
             {

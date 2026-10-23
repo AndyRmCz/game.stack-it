@@ -3,8 +3,8 @@ using UnityEngine;
 namespace StackIt.Game
 {
     /// <summary>
-    /// Isometric orthographic camera. Three framings, eased between: home (the base block resting low
-    /// in a wide sky), play (follows the top of the tower) and game over (pulls back over the whole
+    /// Isometric orthographic camera. Three framings, eased between: home (the hero tower between
+    /// the logo and the Play button), play (follows the top of the tower) and game over (pulls back over the whole
     /// tower, high on screen above the results sheet).
     /// </summary>
     public sealed class CameraRig : MonoBehaviour
@@ -82,10 +82,12 @@ namespace StackIt.Game
             float towerSize = Mathf.Max(baseSize, _y + 3f);
             size = Mathf.Lerp(size, towerSize, _zoom);
             focusY = Mathf.Lerp(focusY, _y * 0.5f - 0.5f * towerSize, _zoom);
-            // Home: wider, the base resting at about a third of the screen's height.
-            float homeSize = baseSize * 1.25f;
+            // Home: the hero (the four-block base and the block sliding above it) a little above
+            // mid-screen, between the logo and Play.
+            float homeSize = baseSize * 1.15f;
+            const float heroCentre = -0.9f; // world Y: halfway between the base's foot and the moving block
             size = Mathf.Lerp(size, homeSize, _home);
-            focusY = Mathf.Lerp(focusY, _y + 0.32f * homeSize, _home);
+            focusY = Mathf.Lerp(focusY, heroCentre - 0.16f * homeSize, _home);
 
             Camera.orthographicSize = size;
             Vector3 position = new Vector3(0f, focusY, 0f) - View * Vector3.forward * Distance;

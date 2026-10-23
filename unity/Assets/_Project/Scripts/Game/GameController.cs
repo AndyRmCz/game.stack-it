@@ -55,6 +55,9 @@ namespace StackIt.Game
         public bool IsNewRecord => Score > (Setup?.PersonalBest ?? 0) && Score > 0;
         public IReadOnlyList<InputEvent> Events => _events;
         public bool CanContinue => Phase == RunPhase.AwaitingContinue && _sim.CanContinue;
+
+        /// <summary>Paused runs freeze the simulation (no ticks pass, so the replay is unaffected) and ignore taps.</summary>
+        public bool Paused { get; private set; }
         public RivalGhostView Ghost => _ghost;
 
         public event Action<Step> Placed;
@@ -72,6 +75,7 @@ namespace StackIt.Game
 
         public void Begin(RunSetup setup)
         {
+            Paused = false;
             Setup = setup;
             _sim = new StackSim(setup.Seed, setup.ContinuesAllowed);
             _events.Clear();
@@ -89,7 +93,7 @@ namespace StackIt.Game
         /// <summary>Called by the full-screen tap catcher in the HUD.</summary>
         public void Tap()
         {
-            if (Phase != RunPhase.Playing) return;
+            if (Phase != RunPhase.Playing || Paused) return;
             // Taps in the first few ticks after a spawn are ignored, like the server requires.
             if (_sim.Tick < _sim.EarliestTapTick) return;
 
@@ -141,6 +145,20 @@ namespace StackIt.Game
             return true;
         }
 
+        public void Pause()
+        {
+            if (Phase == RunPhase.Playing) Paused = true;
+        }
+
+        public void Resume() => Paused = false;
+
+        /// <summary>Back to Home: no run, the view shows the attract loop.</summary>
+        public void Idle()
+        {
+            Phase = RunPhase.Idle;
+            Paused = false;
+        }
+
         /// <summary>Ends the run for good (no continue). Returns false if it was already finished.</summary>
         public bool Finish()
         {
@@ -152,9 +170,10 @@ namespace StackIt.Game
 
         private void Update()
         {
-            if (Phase != RunPhase.Playing)
+            if (Phase == RunPhase.Idle) return; // Home's attract loop owns the moving block
+            if (Phase != RunPhase.Playing || Paused)
             {
-                if (_sim != null) _view.ShowMoving(_sim, 0f);
+                if (_sim != null && !Paused) _view.ShowMoving(_sim, 0f);
                 return;
             }
             // Real time, not Time.deltaTime: slow-motion effects must never change the simulation.

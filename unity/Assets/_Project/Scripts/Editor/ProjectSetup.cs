@@ -37,7 +37,8 @@ namespace StackIt.EditorTools
             ApplyPlayerSettings(config);
             UpdateAdMobDefine();
             ImportTmpEssentials();
-            CreateFonts();
+            ThemesSync.Run();
+            if (FontsStale()) CreateFonts();
             StringsImporter.Import();
             AssetDatabase.SaveAssets();
             Debug.Log("Stack IT setup complete. Press Play in Assets/_Project/Scenes/Main.unity.");
@@ -77,53 +78,70 @@ namespace StackIt.EditorTools
         // --- fonts ---------------------------------------------------------------------------------
 
         private const string FontSourceDir = "Assets/_Project/Fonts";
-        private const string FontAssetDir = ResourcesDir + "/Fonts";
+        internal const string FontAssetDir = ResourcesDir + "/Fonts";
+
+        private const string FontRecipeFile = FontAssetDir + "/recipe.txt";
+        private const int FontBakeVersion = 2; // bump when the bake settings below change
 
         /// <summary>
         /// Bakes static TMP font assets from the subset TTFs in Assets/_Project/Fonts (only the atlases
-        /// ship, not the TTFs). Text fonts fall back to the icon font, then to TMP's default font for
-        /// characters outside the subset (e.g. in player names). Delete an asset to rebuild it.
+        /// ship, not the TTFs). They are generated files (git-ignored): AutoSetup rebuilds them when
+        /// they are missing or their recipe (sources, characters, settings) changed. Text fonts fall
+        /// back to the outline icons, then to TMP's default font for characters outside the subset
+        /// (e.g. in player names).
         /// </summary>
-        private static void CreateFonts()
+        internal static void CreateFonts()
         {
+            if (AssetDatabase.IsValidFolder(FontAssetDir)) AssetDatabase.DeleteAsset(FontAssetDir);
             Directory.CreateDirectory(FontAssetDir);
-            TMP_FontAsset icons = CreateFont("MaterialSymbolsRounded.ttf", Fonts.IconsName, Icons.All, 96, null);
+            // Icons: ~45 glyphs at 72 px sampling fit a 1024x512 atlas.
+            TMP_FontAsset icons = CreateFont("MaterialSymbolsRounded-Outline.ttf", Fonts.IconsName, Icons.All, 72, 1024, 512, null);
+            CreateFont("MaterialSymbolsRounded-Filled.ttf", Fonts.IconsFilledName, Icons.All, 72, 1024, 512, null);
             var fallbacks = new List<TMP_FontAsset> { icons };
             if (TMP_Settings.defaultFontAsset != null) fallbacks.Add(TMP_Settings.defaultFontAsset);
+            // Text: ~210 characters at 56 px sampling fit a 1024x2048 atlas.
             string text = TextCharacters();
-            CreateFont("Fredoka-SemiBold.ttf", Fonts.DisplayName, text, 64, fallbacks);
-            CreateFont("NunitoSans-SemiBold.ttf", Fonts.BodyName, text, 64, fallbacks);
-            CreateFont("NunitoSans-ExtraBold.ttf", Fonts.BodyBoldName, text, 64, fallbacks);
+            CreateFont("Fredoka-Bold.ttf", Fonts.DisplayName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("Fredoka-SemiBold.ttf", Fonts.DisplaySemiName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("Nunito-Bold.ttf", Fonts.BodyName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("Nunito-ExtraBold.ttf", Fonts.BodyHeavyName, text, 56, 1024, 2048, fallbacks);
+            File.WriteAllText(FontRecipeFile, FontRecipe());
+            AssetDatabase.SaveAssets();
         }
 
-        /// <summary>Printable ASCII, Latin-1 (Spanish and most Western European text) and typographic punctuation.</summary>
+        /// <summary>True when the baked fonts are missing or were made from other sources or settings.</summary>
+        internal static bool FontsStale() => !File.Exists(FontRecipeFile) || File.ReadAllText(FontRecipeFile) != FontRecipe();
+
+        private static string FontRecipe()
+        {
+            var recipe = new StringBuilder($"v{FontBakeVersion}|{TextCharacters()}|{Icons.All}");
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+                foreach (string file in Directory.GetFiles(FontSourceDir, "*.ttf").OrderBy(f => f, StringComparer.Ordinal))
+                    recipe.Append('|').Append(Path.GetFileName(file)).Append(':').Append(BitConverter.ToString(md5.ComputeHash(File.ReadAllBytes(file))));
+            return recipe.ToString();
+        }
+
+        /// <summary>Printable ASCII, Latin-1 (Spanish: á é í ó ú ñ ¿ ¡ and most Western European text) and typographic punctuation.</summary>
         private static string TextCharacters()
         {
             var chars = new StringBuilder();
             for (char c = ' '; c <= '~'; c++) chars.Append(c);
             for (char c = ' '; c <= 'ÿ'; c++) chars.Append(c);
-            chars.Append("  –—‘’“”•…‹›€");
+            chars.Append("–—‘’“”•…‹›€");
             return chars.ToString();
         }
 
-        private static TMP_FontAsset CreateFont(string file, string name, string characters, int samplingSize, List<TMP_FontAsset> fallbacks)
+        private static TMP_FontAsset CreateFont(string file, string name, string characters, int samplingSize, int atlasWidth, int atlasHeight,
+            List<TMP_FontAsset> fallbacks)
         {
             string path = $"{FontAssetDir}/{name}.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (existing != null)
-            {
-                if (fallbacks != null) existing.fallbackFontAssetTable = fallbacks;
-                EditorUtility.SetDirty(existing);
-                return existing;
-            }
-
             var font = AssetDatabase.LoadAssetAtPath<Font>($"{FontSourceDir}/{file}");
             if (font == null) throw new InvalidOperationException($"Font {FontSourceDir}/{file} not found.");
             TMP_FontAsset asset = TMP_FontAsset.CreateFontAsset(font, samplingSize, samplingSize / 8, GlyphRenderMode.SDFAA,
-                1024, 1024, AtlasPopulationMode.Dynamic, enableMultiAtlasSupport: false);
+                atlasWidth, atlasHeight, AtlasPopulationMode.Dynamic, enableMultiAtlasSupport: false);
             asset.name = name;
             if (!asset.TryAddCharacters(characters, out string missing) && !string.IsNullOrEmpty(missing))
-                Debug.LogWarning($"{name}: {missing.Length} characters not in {file} (they use the fallback fonts).");
+                Debug.LogWarning($"{name}: {missing.Length} characters not in {file} or not room in the atlas (they use the fallback fonts).");
             asset.atlasPopulationMode = AtlasPopulationMode.Static; // fixed atlas; the TTF is not needed at runtime
             if (fallbacks != null) asset.fallbackFontAssetTable = fallbacks;
 
@@ -164,6 +182,9 @@ namespace StackIt.EditorTools
         private static void ApplyPlayerSettings(AppConfig config)
         {
             PlayerSettings.productName = "Stack IT";
+            // The Neon icon is the store icon (backend/scripts/generate_app_icons.py draws both looks).
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/Icons/AppIcon-Neon.png");
+            if (icon != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
             PlayerSettings.companyName = "Stack IT";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, config.bundleId);
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, config.bundleId);

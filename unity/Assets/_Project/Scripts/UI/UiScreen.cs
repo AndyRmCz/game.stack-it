@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using StackIt.Bootstrap;
+using StackIt.Client;
+using StackIt.Client.Theming;
 using StackIt.Game;
 using StackIt.Services;
 using TMPro;
@@ -13,14 +15,21 @@ namespace StackIt.UI
     public interface IGameFlow
     {
         void PlayNormal();
+        void PlayAgainst(string rivalName, int rivalScore, int rivalHeight);
         void PlayChallenge(string code);
         void OpenChallenge(string code);
         void ContinueWithAd();
         void DeclineContinue();
         void DoubleCoins();
         void ShareChallenge();
+        void Pause();
+        void Resume();
+        void Restart();
         void GoHome();
         void DeleteAccount();
+        void SetLook(ThemeId look);
+        void SetReduceMotion(bool on);
+        void SetMusic(bool on);
     }
 
     /// <summary>What a screen may use. Built once by the App.</summary>
@@ -36,13 +45,26 @@ namespace StackIt.UI
         public IShareService Share;
         public DeepLinkService DeepLinks;
         public ILocalizer Localizer;
+        public IThemeService Theme;
+        public PendingChallenges Pending;
+        public SeenSkins Seen;
         public GameController Game;
         public IGameFlow Flow;
         public UiRouter Router;
     }
 
+    public enum ScreenBackground
+    {
+        Gradient, // the look's background (menus)
+        None,     // see-through: the game world shows behind (Home, HUD, Game Over)
+        Dim,      // overlay.dim over the game (pause, dialogs)
+    }
+
     public abstract class UiScreen
     {
+        private const float ShowSeconds = 0.22f;
+        private const float Rise = 16f;
+
         protected readonly UiContext Ctx;
         public readonly RectTransform Root;
         protected readonly RectTransform Safe;
@@ -51,12 +73,12 @@ namespace StackIt.UI
         /// <summary>Menu screens show the banner ad; gameplay screens never do.</summary>
         public virtual bool AllowsBanner => true;
 
-        protected UiScreen(UiContext ctx, Transform parent, string name, Color background)
+        protected UiScreen(UiContext ctx, Transform parent, string name, ScreenBackground background)
         {
             Ctx = ctx;
-            Image bg = UiKit.Panel(parent, name, background);
-            Root = UiKit.Stretch(bg.rectTransform);
-            bg.raycastTarget = background.a > 0f;
+            Root = UiKit.Stretch(UiKit.Rect(name, parent));
+            if (background == ScreenBackground.Gradient) UiKit.Background(Root);
+            else if (background == ScreenBackground.Dim) UiKit.Dim(Root);
             _group = Root.gameObject.AddComponent<CanvasGroup>();
             Safe = UiKit.SafeArea(Root);
             Root.gameObject.SetActive(false);
@@ -69,12 +91,13 @@ namespace StackIt.UI
             Root.gameObject.SetActive(true);
             Root.SetAsLastSibling();
             _group.alpha = 0f;
-            Tween.Fade(_group, 1f, 0.22f);
-            // Content rises a little as it fades in: calm, and tells the eye where to look.
+            Tween.Fade(_group, 1f, ShowSeconds);
+            // The incoming screen fades in and slides up 16 pt (a plain fade with Reduce motion).
             RectTransform safe = Safe;
-            Tween.Run(safe, 0.32f, t =>
+            float from = Look.ReduceMotion ? 0f : -Rise;
+            Tween.Run(safe, ShowSeconds, t =>
             {
-                if (safe != null) safe.anchoredPosition = new Vector2(0f, Mathf.Lerp(-36f, 0f, Tween.EaseOutCubic(t)));
+                if (safe != null) safe.anchoredPosition = new Vector2(0f, Mathf.Lerp(from, 0f, Tween.EaseOutCubic(t)));
             });
             OnShow();
         }
@@ -89,32 +112,29 @@ namespace StackIt.UI
         protected virtual void OnShow() { }
         protected virtual void OnHide() { }
 
+        /// <summary>Top bar: back icon button on the left, the screen title centred.</summary>
         protected RectTransform Header(string title, Action back)
         {
             RectTransform bar = UiKit.Rect("Header", Safe);
             bar.anchorMin = new Vector2(0, 1);
             bar.anchorMax = new Vector2(1, 1);
             bar.pivot = new Vector2(0.5f, 1);
-            bar.sizeDelta = new Vector2(0, 180);
-            bar.anchoredPosition = Vector2.zero;
+            bar.sizeDelta = new Vector2(0, Ui.IconButton);
+            bar.anchoredPosition = new Vector2(0, -Ui.TopGap);
 
-            Button backButton = UiKit.IconButton(bar, Icons.Back, ButtonStyle.Secondary, () => back(), 120);
-            RectTransform b = (RectTransform)backButton.transform;
-            b.anchorMin = b.anchorMax = new Vector2(0, 0.5f);
-            b.pivot = new Vector2(0, 0.5f);
-            b.sizeDelta = new Vector2(120, 120);
-            b.anchoredPosition = new Vector2(Theme.Gutter, 0);
+            Button backButton = UiKit.IconButton(bar, Icons.Back, () => back());
+            UiKit.Pin((RectTransform)backButton.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), new Vector2(Ui.Side, 0));
 
-            TextMeshProUGUI label = UiKit.Display(bar, title, Theme.TitleSize, Theme.Ink);
-            UiKit.Stretch(label.rectTransform, 200, 0, 200, 0);
-            UiKit.OneLine(label, 40);
+            TextMeshProUGUI label = UiKit.Text(bar, title, TextRole.Title);
+            UiKit.Stretch(label.rectTransform, Ui.Side + Ui.IconButton + 8, 0, Ui.Side + Ui.IconButton + 8, 0);
+            UiKit.OneLine(label, 18);
             return bar;
         }
 
-        /// <summary>Content area under a header.</summary>
-        protected RectTransform Body(float top = 200f)
+        /// <summary>Content area under the header, inside the side and bottom padding.</summary>
+        protected RectTransform Body(float top = Ui.TopGap + Ui.IconButton + 20f, float bottom = Ui.BottomGap)
         {
-            return UiKit.Stretch(UiKit.Rect("Body", Safe), Theme.Gutter, top, Theme.Gutter, Theme.Gutter);
+            return UiKit.Stretch(UiKit.Rect("Body", Safe), Ui.Side, top, Ui.Side, bottom);
         }
 
         protected async void Guard(System.Threading.Tasks.Task task)
@@ -142,16 +162,18 @@ namespace StackIt.UI
         }
     }
 
-    /// <summary>One screen at a time, plus overlays (toast, confirm dialog).</summary>
+    /// <summary>One screen at a time, plus overlays (toast, confirmation sheet, theme cross-fade).</summary>
     public sealed class UiRouter
     {
         private readonly Stack<UiScreen> _history = new Stack<UiScreen>();
         private readonly IAdsService _ads;
-        private readonly TextMeshProUGUI _toast;
+        private readonly RectTransform _toast;
+        private readonly TextMeshProUGUI _toastText;
         private readonly CanvasGroup _toastGroup;
-        private readonly RectTransform _dialog;
-        private readonly TextMeshProUGUI _dialogText;
-        private readonly Button _dialogConfirm;
+        private readonly RectTransform _sheet;
+        private readonly RectTransform _sheetCard;
+        private readonly TextMeshProUGUI _sheetText;
+        private readonly RectTransform _sheetActions;
         private Action _onConfirm;
 
         public UiScreen Current { get; private set; }
@@ -159,40 +181,61 @@ namespace StackIt.UI
         public UiRouter(Transform overlayParent, IAdsService ads)
         {
             _ads = ads;
-            RectTransform t = UiKit.Card(overlayParent, "Toast", Theme.Ink, radius: 48f);
-            t.anchorMin = new Vector2(0.06f, 0.84f);
-            t.anchorMax = new Vector2(0.94f, 0.91f);
-            t.offsetMin = t.offsetMax = Vector2.zero;
-            _toast = UiKit.Label(t, "", 40, Theme.Paper, TextAlignmentOptions.Center, bold: true);
-            UiKit.Stretch(_toast.rectTransform, 44, 8, 44, 8);
-            _toast.enableAutoSizing = true;
-            _toast.fontSizeMin = 28;
-            _toast.fontSizeMax = 40;
-            _toastGroup = t.gameObject.AddComponent<CanvasGroup>();
+            RectTransform safe = UiKit.SafeArea(overlayParent);
+
+            // Toast: a themed surface near the top.
+            RoundedRect toast = UiKit.Surface(safe, "Toast", SurfaceKind.Toast, Ui.SheetRadius);
+            _toast = toast.rectTransform;
+            UiKit.Band(_toast, 1f, 56, pivotY: 1f);
+            _toast.anchoredPosition = new Vector2(0, -(Ui.TopGap + Ui.IconButton + 12));
+            _toastText = UiKit.Text(_toast, "", TextRole.Body, T.ToastText);
+            UiKit.Stretch(_toastText.rectTransform, 18, 6, 18, 6);
+            _toastText.enableAutoSizing = true;
+            _toastText.fontSizeMin = 12;
+            _toastText.fontSizeMax = 16;
+            _toastGroup = _toast.gameObject.AddComponent<CanvasGroup>();
             _toastGroup.alpha = 0f;
             _toastGroup.blocksRaycasts = false;
 
-            Image scrim = UiKit.Panel(overlayParent, "Dialog", Theme.Scrim);
-            scrim.raycastTarget = true; // blocks the screen underneath
-            _dialog = UiKit.Stretch(scrim.rectTransform);
-            RectTransform c = UiKit.Card(_dialog, "Card", radius: 56f);
-            c.anchorMin = new Vector2(0.07f, 0.5f);
-            c.anchorMax = new Vector2(0.93f, 0.5f);
-            c.pivot = new Vector2(0.5f, 0.5f);
-            c.sizeDelta = new Vector2(0f, 600f); // width from the anchors, height from the fitter
-            c.anchoredPosition = Vector2.zero;
-            UiKit.Column(c, 28, new RectOffset(64, 64, 72, 56), TextAnchor.MiddleCenter);
-            var fit = c.gameObject.AddComponent<ContentSizeFitter>();
-            fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            _dialogText = UiKit.Label(c, "", 48, Theme.Ink, TextAlignmentOptions.Center, bold: true);
-            UiKit.Spacer(c, 12);
-            _dialogConfirm = UiKit.Button(c, "", ButtonStyle.Primary, () =>
+            // Confirmation bottom sheet over a dim layer.
+            _sheet = UiKit.Stretch(UiKit.Rect("Sheet", overlayParent));
+            RoundedRect dim = UiKit.Dim(_sheet);
+            dim.gameObject.AddComponent<Button>().onClick.AddListener(Dismiss);
+            _sheetCard = BottomSheet(_sheet);
+            _sheetText = UiKit.Text(_sheetCard, "", TextRole.Body);
+            _sheetText.fontSize = 18;
+            _sheetActions = UiKit.Rect("Actions", _sheetCard);
+            UiKit.Column(_sheetActions, Ui.RowGap);
+            _sheet.gameObject.AddComponent<CanvasGroup>();
+            _sheet.gameObject.SetActive(false);
+        }
+
+        /// <summary>A card pinned to the bottom (radius 22) that grows with its content.</summary>
+        public static RectTransform BottomSheet(RectTransform parent)
+        {
+            RectTransform card = UiKit.Surface(parent, "Card", SurfaceKind.Raised, Ui.SheetRadius).rectTransform;
+            card.anchorMin = new Vector2(0, 0);
+            card.anchorMax = new Vector2(1, 0);
+            card.pivot = new Vector2(0.5f, 0);
+            card.sizeDelta = new Vector2(-2 * 8f, 300);
+            card.anchoredPosition = new Vector2(0, 8f);
+            UiKit.Column(card, 16, new RectOffset(20, 20, 24, 24 + 20), TextAnchor.UpperCenter);
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return card;
+        }
+
+        /// <summary>Slides a bottom sheet up from below the screen.</summary>
+        public static void Rise(RectTransform sheet, float restY = 8f)
+        {
+            if (Look.ReduceMotion)
             {
-                _dialog.gameObject.SetActive(false);
-                _onConfirm?.Invoke();
+                sheet.anchoredPosition = new Vector2(0f, restY);
+                return;
+            }
+            Tween.Run(sheet, 0.32f, t =>
+            {
+                if (sheet != null) sheet.anchoredPosition = new Vector2(0f, Mathf.Lerp(restY - 420f, restY, Tween.EaseOutCubic(t)));
             });
-            UiKit.Button(c, "", ButtonStyle.Ghost, () => _dialog.gameObject.SetActive(false), 120);
-            _dialog.gameObject.SetActive(false);
         }
 
         public void Show(UiScreen screen, bool remember = true)
@@ -231,30 +274,42 @@ namespace StackIt.UI
 
         public void Toast(string text, float seconds = 2.4f)
         {
-            _toast.text = text;
+            _toastText.text = text;
+            _toast.SetAsLastSibling();
             _toastGroup.alpha = 0f;
-            var rt = (RectTransform)_toastGroup.transform;
+            float restY = _toast.anchoredPosition.y;
             Tween.Run(_toastGroup, seconds, t =>
             {
                 float shown = seconds * t;
-                float inK = Tween.EaseOutCubic(Mathf.Clamp01(shown / 0.25f));
+                float inK = Tween.EaseOutCubic(Mathf.Clamp01(shown / 0.22f));
                 _toastGroup.alpha = t < 0.85f ? inK : 1f - (t - 0.85f) / 0.15f;
-                rt.anchoredPosition = new Vector2(0f, Mathf.Lerp(30f, 0f, inK));
-            });
+                _toast.anchoredPosition = new Vector2(0f, restY + (Look.ReduceMotion ? 0f : Mathf.Lerp(12f, 0f, inK)));
+            }, () => _toast.anchoredPosition = new Vector2(0f, restY));
         }
 
-        public void Confirm(string text, string confirmLabel, Action onConfirm)
+        /// <summary>
+        /// Confirmation sheet: the message, one confirming action (danger-coloured for destructive
+        /// actions) and "Cancel".
+        /// </summary>
+        public void Confirm(string text, string confirmLabel, Action onConfirm, bool destructive = false)
         {
-            _dialogText.text = text;
-            UiKit.SetText(_dialogConfirm, confirmLabel);
-            _dialog.GetComponentsInChildren<Button>(true)[1].GetComponentInChildren<TextMeshProUGUI>().text = L.T("common.cancel");
+            _sheetText.text = text;
+            UiKit.Clear(_sheetActions);
+            UiKit.Primary(_sheetActions, confirmLabel, destructive ? Icons.Delete : Icons.Check, () =>
+            {
+                Dismiss();
+                _onConfirm?.Invoke();
+            }, kind: destructive ? ButtonKind.Danger : ButtonKind.Primary);
+            UiKit.CenteredPill(_sheetActions, L.T("common.cancel"), Icons.Close, Dismiss);
             _onConfirm = onConfirm;
-            _dialog.gameObject.SetActive(true);
-            _dialog.SetAsLastSibling();
-            var group = _dialog.GetComponent<CanvasGroup>();
-            if (group == null) group = _dialog.gameObject.AddComponent<CanvasGroup>();
+            _sheet.gameObject.SetActive(true);
+            _sheet.SetAsLastSibling();
+            var group = _sheet.GetComponent<CanvasGroup>();
             group.alpha = 0f;
             Tween.Fade(group, 1f, 0.2f);
+            Rise(_sheetCard);
         }
+
+        private void Dismiss() => _sheet.gameObject.SetActive(false);
     }
 }

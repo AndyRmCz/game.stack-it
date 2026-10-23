@@ -29,6 +29,8 @@ namespace StackIt.Services
     {
         private const string SoundKey = "stackit.sound";
         private const string HapticsKey = "stackit.haptics";
+        private const string MusicKey = "stackit.music";
+        private const string ReduceMotionKey = "stackit.reduce_motion";
         private const string LanguageKey = "stackit.language";
         private const string SessionsKey = "stackit.sessions";
         private const string ProfileKey = "stackit.profile_cache";
@@ -52,6 +54,19 @@ namespace StackIt.Services
         {
             get => _store.GetString(HapticsKey) != "0";
             set => _store.SetString(HapticsKey, value ? "1" : "0");
+        }
+
+        public bool MusicOn
+        {
+            get => _store.GetString(MusicKey) != "0";
+            set => _store.SetString(MusicKey, value ? "1" : "0");
+        }
+
+        /// <summary>No breathing, shake, glow pulses or slow motion (simple fades stay).</summary>
+        public bool ReduceMotion
+        {
+            get => _store.GetString(ReduceMotionKey) == "1";
+            set => _store.SetString(ReduceMotionKey, value ? "1" : "0");
         }
 
         /// <summary>"en" / "es", or null to follow the device language.</summary>
