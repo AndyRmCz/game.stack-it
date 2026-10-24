@@ -381,17 +381,18 @@ namespace StackIt.Client
         }
 
         /// <summary>Median frame rate.</summary>
-        public float MedianFps => Fps(0.5f);
+        public float MedianFps => Fps(50);
 
         /// <summary>The frame rate of the slowest 5 % of frames (stutter).</summary>
-        public float P5Fps => Fps(0.95f);
+        public float P5Fps => Fps(95);
 
-        private float Fps(float frameTimeQuantile)
+        private float Fps(int frameTimePercentile)
         {
             if (_frames.Count == 0) return 0f;
             var sorted = new List<float>(_frames);
             sorted.Sort();
-            int i = Math.Min(sorted.Count - 1, (int)(frameTimeQuantile * sorted.Count));
+            // Integer maths: (int)(0.95f * 100) is 94 on runtimes that keep extra float precision (Unity's), 95 on others.
+            int i = Math.Min(sorted.Count - 1, frameTimePercentile * sorted.Count / 100);
             return (float)Math.Round(1f / sorted[i], 1);
         }
     }

@@ -646,6 +646,122 @@ MonoBehaviour:
     m_Localized: Retry
     m_Metadata:
       m_Items: []
+  - m_Id: 971717211054080
+    m_Localized: '{0} mm from perfect'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717605318656
+    m_Localized: Missed by {0} mm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717605318657
+    m_Localized: Daily
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717609512960
+    m_Localized: "Daily Tower #{0} \xB7 friends"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717609512961
+    m_Localized: Copy result
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717609512962
+    m_Localized: 'Result copied: paste it in a chat'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717609512963
+    m_Localized: The Daily Tower needs a connection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717609512964
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707264
+    m_Localized: Classic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707265
+    m_Localized: Synthwave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707266
+    m_Localized: Lo-fi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707267
+    m_Localized: Reggaeton
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707268
+    m_Localized: K-pop style
+    m_Metadata:
+      m_Items: []
+  - m_Id: 971717613707269
+    m_Localized: Metal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 972280086650880
+    m_Localized: TikTok
+    m_Metadata:
+      m_Items: []
+  - m_Id: 972280111816704
+    m_Localized: Instagram Stories
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667878752256
+    m_Localized: Daily missions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306688
+    m_Localized: New missions every day at 00:00 UTC
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306689
+    m_Localized: '{0} / {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306690
+    m_Localized: Claim {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306691
+    m_Localized: Daily chest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306692
+    m_Localized: Finish all three missions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306693
+    m_Localized: Play {0} runs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306694
+    m_Localized: Land {0} perfect drops
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306695
+    m_Localized: Stack {0} blocks in one run
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306696
+    m_Localized: Get {0} perfects in a row
+    m_Metadata:
+      m_Items: []
+  - m_Id: 974667912306697
+    m_Localized: Play the Daily Tower
+    m_Metadata:
+      m_Items: []
+  - m_Id: 979366900129792
+    m_Localized: Play Daily #{0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 979367210508288
+    m_Localized: Play
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

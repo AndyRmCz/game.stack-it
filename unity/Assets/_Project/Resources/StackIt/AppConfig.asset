@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce902cc264d8aaa4ca3dffda152c28df, type: 3}
   m_Name: AppConfig
   m_EditorClassIdentifier: StackIt.Runtime::StackIt.Bootstrap.AppConfig
-  apiBaseUrl:  http://localhost:8010
+  apiBaseUrl:  http://192.168.1.16:8000
   bundleId: com.stackit.game
   urlScheme: stackit
   iosAppStoreUrl: 
