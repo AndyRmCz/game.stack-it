@@ -38,6 +38,9 @@ namespace StackIt.Services
 
         public ITokenProvider Tokens { get; set; }
 
+        /// <summary>Every request that ends in an error, with its path (for telemetry).</summary>
+        public event Action<string, ApiException> Failed;
+
         public ApiClient(string baseUrl, RetryPolicy retry = null)
         {
             _baseUrl = baseUrl.TrimEnd('/');
@@ -86,7 +89,9 @@ namespace StackIt.Services
                         await Delay(_retry.DelaySeconds(attempt));
                         continue;
                     }
-                    throw ToException(request, networkError);
+                    ApiException error = ToException(request, networkError);
+                    Failed?.Invoke(path, error);
+                    throw error;
                 }
             }
         }

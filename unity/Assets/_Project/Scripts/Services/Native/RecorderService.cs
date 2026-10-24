@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Threading.Tasks;
+using StackIt.Client;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -35,6 +36,8 @@ namespace StackIt.Services.Native
         private bool _recording;
         private bool _encoderReady;
         private double _startTime;
+        private double _endTime = -1;
+        private readonly ClipMoments _moments = new ClipMoments();
         private double _lastPts;
         private IntPtr _androidClass = IntPtr.Zero;
         private IntPtr _androidAppend = IntPtr.Zero;
@@ -51,6 +54,8 @@ namespace StackIt.Services.Native
             if (!_encoderReady) return;
             _recording = true;
             _startTime = Time.realtimeSinceStartupAsDouble;
+            _endTime = -1;
+            _moments.Clear();
             _lastPts = 0;
             StopAllCoroutines();
             StartCoroutine(CaptureLoop());
@@ -58,19 +63,27 @@ namespace StackIt.Services.Native
 
         public void EndRun()
         {
+            if (_recording) _endTime = Time.realtimeSinceStartupAsDouble;
             _recording = false; // the buffer is kept until the next BeginRun or export
+        }
+
+        public void Highlight(float weight)
+        {
+            if (_recording) _moments.Mark(Time.realtimeSinceStartupAsDouble, weight);
         }
 
         public async Task<string> ExportClipAsync(EndCard card)
         {
             if (!IsSupported || !_encoderReady) return null;
-            _recording = false;
+            EndRun();
+            double end = _endTime >= 0 ? _endTime : Time.realtimeSinceStartupAsDouble;
             await AppendEndCard(card);
 
             string path = Path.Combine(Application.temporaryCachePath, $"stackit-{DateTime.UtcNow:yyyyMMdd-HHmmss}.mp4");
             Task<string> done = NativeCallbacks.Instance.Expect("export");
-            // Native side keeps whole GOPs: the clip starts at the first keyframe inside the window.
-            double seconds = ClipSeconds + EndCardFrames / (double)Fps;
+            // From just before the best moment (H3). Native side keeps whole GOPs: the clip starts at
+            // the first keyframe inside the window.
+            double seconds = _moments.Seconds(end, ClipSeconds) + EndCardFrames / (double)Fps;
             if (Application.platform == RuntimePlatform.IPhonePlayer) IosNative._StackItRecExport(path, seconds);
             else AndroidNative.CallStatic("VideoRecorder", "export", path, seconds);
 

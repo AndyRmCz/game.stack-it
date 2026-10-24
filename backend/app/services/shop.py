@@ -74,6 +74,8 @@ class ShopService:
             user = await self._user(user_id)
             if skin.kind == "block":
                 user.equipped_block_skin = skin.id
+            elif skin.kind == "music":
+                user.equipped_music = skin.id
             else:
                 user.equipped_theme = skin.id
             await self._session.flush()
@@ -89,7 +91,7 @@ class ShopService:
         user = await self._user(user_id)
         owned = await self._skins.owned_ids(user_id)
         wallet = await self._wallets.get(user_id)
-        equipped = {user.equipped_block_skin, user.equipped_theme}
+        equipped = {user.equipped_block_skin, user.equipped_theme, user.equipped_music}
         items = [
             ShopItem(skin, skin.is_default or skin.id in owned, skin.id in equipped)
             for skin in await self._skins.catalog()

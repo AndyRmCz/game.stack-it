@@ -147,3 +147,63 @@ judgment call is logged here. Supersedes the colour, font and UI-scale rows of t
 | App icons generated from the tokens (`scripts/generate_app_icons.py`); Neon is the store icon | An alternate Pop app icon needs native code on both platforms (iOS alternate icons, Android activity aliases): not simple, left out. |
 | Music generated in code (`MusicPlan` + `MusicService`), G pentatonic like the perfect chime | Sped-up recordings change pitch; a scheduled sequencer changes tempo cleanly, and chimes land in key. |
 | Reduce motion also skips the perfect-drop exposure/chromatic pulse | It is a flash; the spec's list (breathing, shake, glow pulses, slow motion) reads as "no movement or pulsing". |
+
+## Monetization
+
+| Decision | Reasoning |
+|---|---|
+| **Income comes from ads only. No real-money purchases, ever**: no IAP, coin packs, subscriptions or paid "remove ads" | Product decision (2026-10-23). Everything in the shop is bought with coins earned by playing. |
+| Shop prices: earnable, "not too accessible but not too expensive" | Items should feel earned (a goal across several sessions) but never out of reach for a regular player. Calibrated with the run model and, after launch, with the wallet ledger (PLAN.md, "Measurement findings"). |
+
+## Soundtracks
+
+| Decision | Reasoning |
+|---|---|
+| Shop soundtracks are **built in code** like the default music: synthesized instruments, our own scores. No AI-generated or licensed audio. | Owner, 2026-10-24, to avoid legal risk: there are no service terms or training-data lawsuits involved, and nobody else can claim the music. It also keeps the tempo rising with the tower, the chime in key, and the download size near zero. Realistic instruments are best-effort; a stylized sound is acceptable (PLAN.md, "Soundtracks plan"). |
+| Every style in G major or E minor | The perfect chime climbs G pentatonic, which fits both keys. |
+| Synthesis in plain C# (`StackIt.Client.Music`), rendered off the main thread; `MusicService` only creates the clips and schedules notes | Testable under .NET; an offline renderer and a WAV preview tool hear exactly what the game plays; switching styles causes no hitch. |
+| `VoicePool` (a free voice first, else the one ending soonest) replaces strict rotation, Classic included | The renderer found rotation cutting audible pad notes (8 in 4 bars of Classic at full intensity); now none in any style. The pool stays at 24 voices: 24 music + 8 effects = Unity's 32 real voices. |
+| Genre styles start a run with their beat; bass at 10 blocks, full drive at 25 | Many runs end before 25 blocks, and a bought genre should be heard at once. Classic keeps 10 / 25 / 40. |
+| A per-style `Level`, matched to Classic on phone-speaker loudness (bass below ~120 Hz ignored) | Switching soundtracks shouldn't jump in volume; raw loudness overrates the 808 and sub basses that phones can't play. |
+| Effects baked into the clips, no Unity reverb or chorus filters | The WAV previews then match the game exactly. |
+| Shop ids `music_*` | `classic` and `synthwave` were already block-skin and theme ids (one `skins` table, one id space). |
+| The shop's listen button plays even with music switched off | The player asked to hear it; it ends after 10 s or on leaving the shop. |
+| "Try for one run": a rewarded ad, then a run starts at once with that soundtrack | The ad is the player's choice (ads-only money rule) and the reward is used straight away. |
+| No soundtrack list in Settings; equip in the shop | Same as skins and themes; Settings keeps the on/off switch. |
+| Provisional prices: lo-fi 600, synthwave 800, reggaeton 1,000, K-pop style 1,000, metal 1,200 | Mid-to-upper shop range, a sink for engaged players (PLAN.md findings ▸ E). To revisit with real coin data. |
+
+## Juice and near misses (H6 + H4)
+
+| Decision | Reasoning |
+|---|---|
+| "Almost perfect" gets a banner and a light tap, no slow motion | Slowing the screen mid-run while the next block is already moving would feel wrong (the simulation runs on real time). |
+| "Missed by X mm" is a toast, not a banner | The game-over sheet replaces the HUD right away; a toast stays on top of it. |
+| Collapse only when the run is really over (`GameController.Finish`) | While Continue is on offer the tower must stay intact. |
+| Fanfares stay in G pentatonic | Same rule as the chime and the music: never a clashing note. |
+
+## Daily Tower, sharing and missions
+
+| Decision | Reasoning |
+|---|---|
+| The daily seed is an HMAC of the UTC date with the server's JWT secret | Same for everyone, not guessable before the day, no table needed. |
+| The daily board is friends only | Owner, 2026-10-24: no strangers' names, same as the other boards. |
+| Daily runs pay coins like any run; unlimited attempts, the best counts | Wordle-style comparability without punishing practice; normal runs are unlimited anyway. |
+| "Copy result" adds a duel link only for verified runs | Same rule as the Challenge button; an offline result is still copied. |
+| H3 uses the recorder's existing "last N seconds" export | Starting on the best moment needed no native change; the run's banners caption the moment. |
+| H5 without SDKs: TikTok by package intent (Android), Instagram Stories by its official intent / URL scheme; fall back to the sheet | Works with no keys and never strands the player. Share Kit (hashtag, green screen) needs TikTok registration first. |
+| Missions computed from the day's verified runs; claims are ledger entries keyed `mission:<day>:<slot>` | No new table or migration; a claim can't pay twice, even when retried. |
+| Mission rewards 20 / 30 / 45 + a 50-coin chest | At most 145 a day: a real boost for casual players (~120 a day today) without doubling engaged players' income. Provisional. |
+| Mascot drawn with the block shader and look tokens | Matches every look and skin; no art pipeline yet. |
+
+## Measurement (telemetry)
+
+| Decision | Reasoning |
+|---|---|
+| First-party telemetry (`POST /v1/events` into Postgres), no analytics SDK | Joins with runs, wallet and challenges by `user_id`; no new third party or install size; we own the definitions (PLAN.md, "Measurement findings" ▸ H). |
+| Event allow-list in `shared/telemetry/events.json`, enforced by the server | Unknown events or props are rejected and counted, so client bugs surface instead of polluting the data. Tests keep the backend copy and the C# names in sync. |
+| Event ids generated on the device; insert `ON CONFLICT DO NOTHING` | A batch re-sent after a timeout or a crash is stored once. |
+| `occurred_at` = client time within 7 days back / 5 minutes ahead, else server time | Offline-queued events keep their real day; broken or forged clocks can't move data around. |
+| Session = foreground until background; back within 30 s continues it; full-screen ads never end it | Matches the usual definition; an Android ad pauses the app and would otherwise split sessions. |
+| Revenue from AdMob `OnAdPaid` (impression-level, estimated) | Revenue per player and per placement in our own data; AdMob's console stays the payout source of truth. |
+| Metric views in a separate `metrics` schema, applied by `scripts/metrics.py`, not by migrations | They are reports, not app schema: change them freely without a deploy or an Alembic revision. |
+| Removed `com.unity.purchasing` and `com.unity.analytics` | No real-money purchases ever (Monetization); Unity IAP added the Play `BILLING` permission and billing library to the APK. |

@@ -22,6 +22,7 @@ namespace StackIt.Services
         private AudioClip _reward;
         private AudioClip _perfect;
         private AudioClip _record;
+        private AudioClip[] _fanfares;
 
         public bool Enabled { get; set; } = true;
 
@@ -39,6 +40,12 @@ namespace StackIt.Services
             _reward = Load("reward");
             _perfect = Synth("perfect", 1.1f, t => Marimba(t, BaseNote) * 0.5f);
             _record = Synth("record", 1.4f, t => Arpeggio(t) * 0.45f);
+            _fanfares = new[]
+            {
+                Synth("fanfare_1", 1.6f, t => Fanfare(t, 1) * 0.4f),
+                Synth("fanfare_2", 1.8f, t => Fanfare(t, 2) * 0.36f),
+                Synth("fanfare_3", 2.0f, t => Fanfare(t, 3) * 0.32f),
+            };
         }
 
         public void Place() => Play(_lands[Random.Range(0, _lands.Length)], Random.Range(0.94f, 1.06f), 0.6f);
@@ -49,6 +56,9 @@ namespace StackIt.Services
         public void Click() => Play(_tap, Random.Range(0.97f, 1.03f), 0.45f);
         public void Reward() => Play(_reward, 1f, 0.7f);
         public void Record() => Play(_record, 1f, 0.7f);
+
+        /// <summary>A perfect-streak milestone: tier 1 (5 in a row), 2 (10) or 3 (20 and every 10 after).</summary>
+        public void Fanfare(int tier) => Play(_fanfares[Mathf.Clamp(tier, 1, 3) - 1], 1f, 0.75f);
 
         private void Play(AudioClip clip, float pitch, float volume)
         {
@@ -86,6 +96,27 @@ namespace StackIt.Services
             float bright = 0.35f * Mathf.Sin(2 * Mathf.PI * freq * 3.98f * t) * Mathf.Exp(-t * 28f);
             float air = 0.12f * Mathf.Sin(2 * Mathf.PI * freq * 2f * t) * Mathf.Exp(-t * 9f);
             return (body + bright + air) * attack;
+        }
+
+        /// <summary>
+        /// A quick rising run up G pentatonic that lands on a held chord: longer and higher with
+        /// each tier, so a 20-streak sounds bigger than a 5. Always in the chime's key.
+        /// </summary>
+        private static float Fanfare(float t, int tier)
+        {
+            int[] run = { 0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24 };
+            int notes = 3 + 2 * tier;
+            float sum = 0f;
+            for (int i = 0; i < notes; i++)
+            {
+                float start = i * 0.055f;
+                if (t >= start) sum += Marimba(t - start, BaseNote * Mathf.Pow(2f, run[i] / 12f)) * 0.5f;
+            }
+            float chordAt = notes * 0.055f;
+            if (t >= chordAt)
+                foreach (int note in new[] { 0, 4, 7, 12 }) // G major, held
+                    sum += Marimba(t - chordAt, BaseNote * Mathf.Pow(2f, (note + (tier == 3 ? 12 : 0)) / 12f)) * 0.35f;
+            return sum;
         }
 
         /// <summary>Four rising pentatonic notes, let ring.</summary>

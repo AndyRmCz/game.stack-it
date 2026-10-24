@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using StackIt.Client;
 using StackIt.Client.Theming;
 using StackIt.Services;
 using UnityEngine;
@@ -65,8 +66,57 @@ namespace StackIt.Game
             _haptics.Play(combo >= 5 ? HapticKind.Medium : HapticKind.Light);
             Ring(top, size, _accent, 0.9f, 1.28f + Mathf.Min(combo, 8) * 0.03f);
             if (combo >= 3) Ring(top, size, _accent, 0.5f, 1.6f, 0.12f);
-            if (!ReduceMotion) _post.Pulse(Mathf.Min(0.25f + combo * 0.08f, 1f));
+            if (!ReduceMotion)
+            {
+                _post.Pulse(Mathf.Min(0.25f + combo * 0.08f, 1f));
+                _rig.Punch(0.025f + Mathf.Min(combo, 8) * 0.004f);
+            }
             Dust(top, size, Color.Lerp(color, Color.white, 0.6f), 12 + Mathf.Min(combo, 8) * 2, 0.9f);
+
+            int fanfare = Feel.StreakFanfare(combo);
+            if (fanfare == 0) return;
+            // A streak milestone (5, 10, 20…): a fanfare, a wide second-colour burst and a firm buzz.
+            _audio.Fanfare(fanfare);
+            _haptics.Play(HapticKind.Success);
+            Ring(top, size, _accent2, 1f, 1.9f + 0.3f * fanfare, 0.05f);
+            Ring(top, size, _accent, 0.7f, 2.4f + 0.3f * fanfare, 0.18f);
+            Dust(top, size, Color.Lerp(_accent2, Color.white, 0.4f), 20 + 12 * fanfare, 1.3f);
+            if (!ReduceMotion) _rig.Punch(0.06f + 0.02f * fanfare);
+        }
+
+        /// <summary>
+        /// A razor-thin drop. A miss that only just cleared the tower gets a beat of slow motion
+        /// while the block falls; "almost perfect" only a light tap (slowing play would feel wrong).
+        /// </summary>
+        public void NearMiss(NearMiss near)
+        {
+            if (near.Kind == NearMissKind.AlmostPerfect)
+            {
+                _haptics.Play(HapticKind.Light);
+                return;
+            }
+            _haptics.Play(HapticKind.Medium);
+            if (ReduceMotion) return;
+            if (_slowMo != null) StopCoroutine(_slowMo);
+            _slowMo = StartCoroutine(SlowMotion(0.3f, 0.7f));
+        }
+
+        /// <summary>A new record: confetti in the look's two accents and white, bursting from the top.</summary>
+        public void Confetti(Vector3 top)
+        {
+            if (ReduceMotion) return;
+            Color[] colors = { _accent, _accent2, Color.white };
+            var p = new ParticleSystem.EmitParams { applyShapeToPosition = false };
+            for (int i = 0; i < 70; i++)
+            {
+                Vector2 spread = Random.insideUnitCircle * 1.6f;
+                p.position = top + new Vector3(spread.x * 0.3f, 0.3f, spread.y * 0.3f);
+                p.velocity = new Vector3(spread.x, Random.Range(3f, 5.5f), spread.y);
+                p.startColor = colors[i % colors.Length];
+                p.startSize = Random.Range(0.08f, 0.16f);
+                p.startLifetime = Random.Range(1.2f, 1.8f);
+                _dust.Emit(p, 1);
+            }
         }
 
         public void Missed()

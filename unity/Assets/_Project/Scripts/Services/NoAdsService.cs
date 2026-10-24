@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using StackIt.Client;
 using UnityEngine;
 
 namespace StackIt.Services
@@ -20,8 +21,18 @@ namespace StackIt.Services
             return Task.CompletedTask;
         }
 
-        public Task<bool> ShowRewardedAsync() => Task.FromResult(Application.isEditor);
-        public Task ShowInterstitialAsync() => Task.CompletedTask;
+        public event Action<AdEvent> AdEvent;
+
+        public Task<bool> ShowRewardedAsync(string placement)
+        {
+            if (!Application.isEditor) return Task.FromResult(false);
+            // The editor's instant "ad" goes through telemetry like a real one, so the pipeline can be tested.
+            foreach (string name in new[] { TelemetryEvents.AdShown, TelemetryEvents.AdRewarded, TelemetryEvents.AdClosed })
+                AdEvent?.Invoke(new AdEvent(name, AdFormats.Rewarded, placement));
+            return Task.FromResult(true);
+        }
+
+        public Task ShowInterstitialAsync(string placement) => Task.CompletedTask;
         public void ShowBanner() { }
         public void HideBanner() { }
         public void ShowPrivacyOptions() { }

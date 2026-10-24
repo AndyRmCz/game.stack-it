@@ -1,26 +1,42 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using StackIt.Client;
+using StackIt.Client.Music;
 using UnityEngine;
 
 namespace StackIt.Services
 {
     /// <summary>
-    /// Generated music (no audio files): plays <see cref="MusicPlan"/> with instruments synthesized
-    /// at start-up (marimba, pad, bass, shaker, kick, tick). Notes are scheduled a little ahead on the
-    /// audio clock, one 16th-note step at a time, so the tempo can change smoothly without changing
-    /// pitch: calm on Home, building as the tower grows and the block narrows, slowing and fading
-    /// out at game over.
+    /// Generated music (no audio files): plays a <see cref="MusicStyle"/> (Classic or a soundtrack
+    /// from the shop) whose instruments are synthesized in plain C#. A new style's instruments are
+    /// rendered off the main thread and take over at the next bar. Notes are scheduled a little
+    /// ahead on the audio clock, one 16th-note step at a time, so the tempo can change smoothly
+    /// without changing pitch: calm on Home, building as the tower grows and the block narrows,
+    /// slowing and fading out at game over. The shop can audition a style for a few seconds.
     /// </summary>
     public sealed class MusicService : MonoBehaviour
     {
-        private const int SampleRate = 44100;
-        private const float BaseNote = 392f; // G4: same key as the perfect chime
-        private const double Lookahead = 0.12;
-        private const int Voices = 24;
-        private const float Master = 0.55f;
+        private const float Master = MusicRenderer.Master;
+        private const double Lookahead = MusicRenderer.Lookahead;
+        private const int AuditionBlocks = 30; // a shop preview plays the style mid-run, with its beat and bass
 
         private AudioSource[] _voices;
-        private int _next;
-        private AudioClip _marimba, _pad, _bass, _shaker, _kick, _tick;
+        private VoicePool _pool;
+        private readonly List<Note> _notes = new List<Note>();
+
+        private MusicStyle _style;
+        private AudioClip[] _clips;
+        private MusicStyle _loading;              // being synthesized
+        private Task<float[][]> _render;
+        private MusicStyle _ready;                // synthesized, waiting for the next bar
+        private AudioClip[] _readyClips;
+        private bool _swapNow;
+
+        private string _equipped = MusicStyles.Default;
+        private string _audition;                 // the style being previewed, or null
+        private float _auditionSeconds;
+        private float _auditionEnds = float.MaxValue;
 
         private MusicMood _mood = MusicMood.Home;
         private int _blocks;
@@ -42,24 +58,66 @@ namespace StackIt.Services
             set
             {
                 _enabled = value;
-                if (!value) Stop();
+                if (!value && _audition == null) Stop();
             }
         }
 
+        /// <summary>The style the player has on (a preview or a one-run trial may be playing instead).</summary>
+        public string Equipped => _equipped;
+
+        /// <summary>The style playing now, or about to (once its instruments are synthesized).</summary>
+        public string StyleId => (_loading ?? _ready ?? _style).Id;
+
         private void Awake()
         {
-            _voices = new AudioSource[Voices];
+            _voices = new AudioSource[MusicRenderer.Voices];
             for (int i = 0; i < _voices.Length; i++)
             {
                 _voices[i] = gameObject.AddComponent<AudioSource>();
                 _voices[i].playOnAwake = false;
             }
-            _marimba = Synth("m_marimba", 1.0f, Marimba);
-            _pad = Synth("m_pad", 3.8f, Pad);
-            _bass = Synth("m_bass", 0.7f, Bass);
-            _shaker = Synth("m_shaker", 0.09f, Shaker);
-            _kick = Synth("m_kick", 0.32f, Kick);
-            _tick = Synth("m_tick", 0.04f, Tick);
+            _pool = new VoicePool(_voices.Length);
+            _style = new ClassicStyle(); // small: synthesized right away, so music can start at once
+            _clips = Clips(_style, Render(_style));
+        }
+
+        private void OnDestroy() => Release(_clips);
+
+        /// <summary>The player's soundtrack. Takes over at the next bar once its instruments are ready.</summary>
+        public void Equip(string id)
+        {
+            _equipped = MusicStyles.Create(id).Id;
+            if (_audition == null) Load(_equipped);
+        }
+
+        /// <summary>Plays another style instead of the equipped one (a one-run trial); null goes back.</summary>
+        public void Override(string id)
+        {
+            if (_audition == null) Load(id ?? _equipped);
+        }
+
+        /// <summary>A shop preview: the style mid-run for <paramref name="seconds"/>, then back to what was playing.</summary>
+        public void Audition(string id, float seconds)
+        {
+            _audition = MusicStyles.Create(id).Id;
+            _auditionSeconds = seconds;
+            _auditionEnds = float.MaxValue; // the clock starts when the style actually plays
+            _swapNow = true;
+            Load(_audition);
+            if (!_playing) Begin(MusicMood.Home, 0.6f, force: true);
+            _targetVolume = 1f;
+        }
+
+        /// <summary>Ends a preview early (leaving the shop).</summary>
+        public void EndAudition()
+        {
+            if (_audition == null) return;
+            _audition = null;
+            _auditionEnds = float.MaxValue;
+            _swapNow = true;
+            Load(_equipped);
+            if (!_enabled) Stop();
+            else _targetVolume = _mood == MusicMood.Home ? 0.6f : 1f;
         }
 
         /// <summary>Home and the menus: the calm loop.</summary>
@@ -100,11 +158,12 @@ namespace StackIt.Services
         {
             _playing = false;
             foreach (AudioSource v in _voices) v.Stop();
+            _pool.Clear();
         }
 
-        private void Begin(MusicMood mood, float volume)
+        private void Begin(MusicMood mood, float volume, bool force = false)
         {
-            if (!_enabled) return;
+            if (!_enabled && !force) return;
             _mood = mood;
             _winding = false;
             _targetVolume = volume;
@@ -112,18 +171,97 @@ namespace StackIt.Services
             if (_playing) return; // keep the beat running; tempo and layers follow on the next step
             _playing = true;
             _volume = 0f;
-            _bpm = MusicPlan.Tempo(mood, _blocks, _width);
+            _bpm = _style.Tempo(mood, _blocks, _width);
             _step = 0;
             _bar = 0;
             _nextStep = AudioSettings.dspTime + 0.1;
         }
 
+        // --- styles ------------------------------------------------------------------------------
+
+        private void Load(string id)
+        {
+            MusicStyle target = _loading ?? _ready ?? _style;
+            if (target.Id == id) return;
+            if (_ready != null)
+            {
+                Release(_readyClips);
+                _ready = null;
+                _readyClips = null;
+            }
+            if (_style.Id == id)
+            {
+                _loading = null;
+                _render = null;
+                return;
+            }
+            MusicStyle style = MusicStyles.Create(id);
+            _loading = style;
+            _render = Task.Run(() => Render(style));
+        }
+
+        private static float[][] Render(MusicStyle style) => style.Instruments.Select(i => i.Render()).ToArray();
+
+        private static AudioClip[] Clips(MusicStyle style, float[][] data)
+        {
+            var clips = new AudioClip[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                clips[i] = AudioClip.Create(style.Instruments[i].Name, data[i].Length, 1, Dsp.SampleRate, false);
+                clips[i].SetData(data[i], 0);
+            }
+            return clips;
+        }
+
+        private static void Release(AudioClip[] clips)
+        {
+            if (clips == null) return;
+            foreach (AudioClip clip in clips) Destroy(clip, 6f); // after any note still ringing on it
+        }
+
+        /// <summary>Collects a finished render; the new style starts at the next bar (or now, for a preview).</summary>
+        private void PollRender()
+        {
+            if (_render == null || !_render.IsCompleted) return;
+            Task<float[][]> render = _render;
+            MusicStyle style = _loading;
+            _render = null;
+            _loading = null;
+            if (render.IsFaulted)
+            {
+                Debug.LogException(render.Exception);
+                return;
+            }
+            _ready = style;
+            _readyClips = Clips(style, render.Result);
+        }
+
+        private void Swap()
+        {
+            Release(_clips);
+            _style = _ready;
+            _clips = _readyClips;
+            _ready = null;
+            _readyClips = null;
+            _swapNow = false;
+            _step = 0;
+            _bar = 0;
+            if (_audition != null && _style.Id == _audition) _auditionEnds = Time.unscaledTime + _auditionSeconds;
+        }
+
+        // --- playback ----------------------------------------------------------------------------
+
         private void Update()
         {
+            PollRender();
+            if (_ready != null && (!_playing || _swapNow)) Swap();
+            if (_audition != null && Time.unscaledTime >= _auditionEnds) EndAudition();
             if (!_playing) return;
+
+            MusicState s = Current();
             float dt = Time.unscaledDeltaTime;
             _volume = Mathf.MoveTowards(_volume, _targetVolume, dt * _fadeSpeed);
-            float target = _winding ? 56f : MusicPlan.Tempo(_mood, _blocks, _width);
+            float target = _winding ? _style.EndBpm : _style.Tempo(s.Mood, s.Blocks, s.Width);
             _bpm = Mathf.MoveTowards(_bpm, target, dt * (_winding ? 22f : 6f)); // ease, never jump
             if (_winding && _volume <= 0.001f)
             {
@@ -132,9 +270,10 @@ namespace StackIt.Services
             }
             while (_nextStep < AudioSettings.dspTime + Lookahead)
             {
+                if (_step == 0 && _ready != null) Swap(); // a new soundtrack starts on a bar line
                 PlayStep(_nextStep);
                 _nextStep += 60.0 / _bpm / 4.0;
-                if (++_step == MusicPlan.StepsPerBar)
+                if (++_step == MusicStyle.StepsPerBar)
                 {
                     _step = 0;
                     _bar++;
@@ -142,89 +281,34 @@ namespace StackIt.Services
             }
         }
 
+        private MusicState Current() =>
+            _audition != null && _style.Id == _audition && !_winding
+                ? new MusicState(MusicMood.Run, AuditionBlocks, 1f)
+                : new MusicState(_mood, _blocks, _width);
+
         private void PlayStep(double at)
         {
-            MusicLayers layers = MusicPlan.Layers(_mood, _blocks, _width);
-            float v = _volume * Master;
-            if (_step == 0 && layers.Pad)
-                foreach (int note in MusicPlan.Pad(_bar)) Schedule(_pad, note, 0.16f * v, at);
-            int? arp = layers.Arp ? MusicPlan.Arp(_mood, _bar, _step) : null;
-            if (arp != null) Schedule(_marimba, arp.Value, (_step % 4 == 0 ? 0.26f : 0.18f) * v, at);
-            int? bass = layers.Bass ? MusicPlan.Bass(_bar, _step) : null;
-            if (bass != null) Schedule(_bass, bass.Value + 24, 0.32f * v, at); // the clip is G2
-            if (layers.Kick && MusicPlan.Kick(_step)) Schedule(_kick, 0, 0.42f * v, at);
-            if (layers.Shaker && MusicPlan.Shaker(_step)) Schedule(_shaker, 0, (_step % 4 == 3 ? 0.1f : 0.06f) * v, at);
-            if (layers.Tick) Schedule(_tick, 0, (_step % 4 == 0 ? 0.07f : 0.04f) * v, at);
+            MusicState s = Current();
+            MusicLayers layers = _style.Layers(s.Mood, s.Blocks, s.Width);
+            float v = _volume * Master * _style.Level(s.Mood);
+            double stepSeconds = 60.0 / _bpm / 4.0;
+            _notes.Clear();
+            _style.Notes(s.Mood, layers, _bar, _step, _notes);
+            foreach (Note note in _notes) Schedule(note, note.Volume * v, at + note.Delay * stepSeconds);
         }
 
-        private void Schedule(AudioClip clip, int semitones, float volume, double at)
+        private void Schedule(Note note, float volume, double at)
         {
             if (volume <= 0.0001f) return;
-            AudioSource voice = _voices[_next];
-            _next = (_next + 1) % _voices.Length;
+            AudioClip clip = _clips[note.Instrument];
+            float pitch = Dsp.Ratio(note.Semitones);
+            int index = _pool.Take(AudioSettings.dspTime, at + clip.length / pitch);
+            AudioSource voice = _voices[index];
             voice.clip = clip;
-            voice.pitch = Mathf.Pow(2f, semitones / 12f);
+            voice.pitch = pitch;
             voice.volume = volume;
+            voice.panStereo = note.Pan;
             voice.PlayScheduled(at);
         }
-
-        // --- instruments (one note each at G4, or G2 for the bass; pitched by the voice) ---------
-
-        private delegate float Wave(float t);
-
-        private static AudioClip Synth(string name, float seconds, Wave wave)
-        {
-            int count = Mathf.CeilToInt(seconds * SampleRate);
-            var data = new float[count];
-            for (int i = 0; i < count; i++) data[i] = Mathf.Clamp(wave(i / (float)SampleRate), -1f, 1f);
-            AudioClip clip = AudioClip.Create(name, count, 1, SampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static float Sin(float hz, float t) => Mathf.Sin(2f * Mathf.PI * hz * t);
-
-        /// <summary>Soft mallet: fundamental plus a bright fourth partial that dies fast.</summary>
-        private static float Marimba(float t)
-        {
-            float attack = Mathf.Clamp01(t / 0.004f);
-            return attack * (Sin(BaseNote, t) * Mathf.Exp(-t * 5f) + 0.25f * Sin(BaseNote * 4f, t) * Mathf.Exp(-t * 22f)) * 0.8f;
-        }
-
-        /// <summary>Warm pad: slow swell, a gentle chorus of three detuned sines and an octave.</summary>
-        private static float Pad(float t)
-        {
-            float env = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((3.8f - t) / 1.4f);
-            float tone = Sin(BaseNote * 0.5f, t) + 0.6f * Sin(BaseNote * 0.5f * 1.004f, t) + 0.6f * Sin(BaseNote * 0.5f * 0.996f, t)
-                + 0.25f * Sin(BaseNote, t);
-            return env * tone * 0.3f;
-        }
-
-        /// <summary>Round plucked bass (G2).</summary>
-        private static float Bass(float t)
-        {
-            float hz = BaseNote / 4f;
-            float env = Mathf.Clamp01(t / 0.006f) * Mathf.Exp(-t * 4f);
-            return env * (Sin(hz, t) + 0.15f * Sin(hz * 3f, t)) * 0.8f;
-        }
-
-        private static readonly System.Random Noise = new System.Random(7);
-
-        /// <summary>Short airy noise burst.</summary>
-        private static float Shaker(float t)
-        {
-            float env = Mathf.Clamp01(t / 0.01f) * Mathf.Exp(-t * 45f);
-            return env * ((float)Noise.NextDouble() * 2f - 1f) * 0.5f;
-        }
-
-        /// <summary>Soft thump: a sine sweeping down.</summary>
-        private static float Kick(float t)
-        {
-            float hz = Mathf.Lerp(130f, 45f, Mathf.Clamp01(t / 0.12f));
-            return Mathf.Sin(2f * Mathf.PI * hz * t) * Mathf.Exp(-t * 14f);
-        }
-
-        /// <summary>Tiny high click for tension.</summary>
-        private static float Tick(float t) => Sin(2400f, t) * Mathf.Exp(-t * 160f) * 0.6f;
     }
 }

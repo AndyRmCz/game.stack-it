@@ -31,6 +31,33 @@ extern "C" void _StackItShare(const char* text, const char* url, const char* fil
     });
 }
 
+// Instagram's official "Sharing to Stories" (H5): the clip goes to the pasteboard as the story's
+// background video, then Instagram opens. Needs the Facebook App ID registered for this app. If
+// Instagram can't be opened, falls back to the share sheet.
+extern "C" void _StackItShareInstagramStory(const char* facebookAppId, const char* text, const char* url, const char* filePath)
+{
+    NSString* appId = StackItString(facebookAppId);
+    NSString* path = StackItString(filePath);
+    NSData* video = path.length > 0 ? [NSData dataWithContentsOfFile:path] : nil;
+    if (appId.length == 0 || video == nil)
+    {
+        _StackItShare(text, url, filePath);
+        return;
+    }
+    // Copied now: the C strings are only valid during this call.
+    NSString* fallbackText = StackItString(text);
+    NSString* fallbackUrl = StackItString(url);
+    NSURL* open = [NSURL URLWithString:[@"instagram-stories://share?source_application=" stringByAppendingString:appId]];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSDictionary* item = @{ @"com.instagram.sharedSticker.backgroundVideo": video };
+        NSDictionary* options = @{ UIPasteboardOptionExpirationDate: [NSDate dateWithTimeIntervalSinceNow:300] };
+        [[UIPasteboard generalPasteboard] setItems:@[ item ] options:options];
+        [[UIApplication sharedApplication] openURL:open options:@{} completionHandler:^(BOOL success) {
+            if (!success) _StackItShare(fallbackText.UTF8String, fallbackUrl.UTF8String, path.UTF8String);
+        }];
+    });
+}
+
 // kind: 0 light, 1 medium, 2 heavy, 3 success (HapticKind in C#).
 extern "C" void _StackItHaptic(int kind)
 {

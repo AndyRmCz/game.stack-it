@@ -80,7 +80,7 @@ async def remove_friend(
 async def friends_leaderboard(
     user_id: UserIdDep,
     friends: FriendServiceDep,
-    period: Literal["all_time", "weekly"] = "all_time",
+    period: Literal["all_time", "weekly", "daily"] = "all_time",
 ) -> LeaderboardResponse:
     board = await friends.leaderboard(user_id, period)
     return LeaderboardResponse(

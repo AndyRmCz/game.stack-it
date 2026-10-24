@@ -19,6 +19,14 @@ PRIVACY: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
                 "challenges, and keep the economy fair. We do not sell personal data.",
             ),
             (
+                "Improving the game",
+                "The app records how it is used: sessions and their length, screens visited, runs, "
+                "rewarded offers, ads shown and their estimated revenue, frame rate, errors, and "
+                "your device's OS version, memory size and language. These events are tied to your "
+                "game account, never to your advertising ID, and we use them only to improve the "
+                "game and keep its balance fair.",
+            ),
+            (
                 "Advertising",
                 "The app shows ads through Google AdMob. Where required (EEA, UK, Switzerland) we "
                 "ask for consent before personalized ads; on iOS we ask for tracking permission. "
@@ -52,6 +60,14 @@ PRIVACY: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
                 "Para que el juego funcione: guardar tu progreso, verificar puntuaciones, mostrar "
                 "clasificaciones y retos de amigos y mantener una economía justa. No vendemos "
                 "datos personales.",
+            ),
+            (
+                "Mejorar el juego",
+                "La app registra cómo se usa: sesiones y su duración, pantallas visitadas, "
+                "partidas, ofertas con recompensa, anuncios mostrados y sus ingresos estimados, "
+                "fotogramas por segundo, errores, y la versión del sistema, la memoria y el idioma "
+                "de tu dispositivo. Estos eventos se asocian a tu cuenta del juego, nunca a tu ID de "
+                "publicidad, y solo los usamos para mejorar el juego y mantener su equilibrio.",
             ),
             (
                 "Publicidad",

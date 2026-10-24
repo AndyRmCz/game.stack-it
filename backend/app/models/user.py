@@ -25,6 +25,9 @@ class User(Base):
     friend_code: Mapped[str] = mapped_column(String(8), unique=True)
     equipped_block_skin: Mapped[str] = mapped_column(String(32), default="classic")
     equipped_theme: Mapped[str] = mapped_column(String(32), default="synthwave")
+    equipped_music: Mapped[str] = mapped_column(
+        String(32), default="music_classic", server_default="music_classic"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

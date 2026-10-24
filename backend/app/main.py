@@ -6,7 +6,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, economy, health, me, runs, social
+from app.api import auth, economy, health, me, missions, runs, social, telemetry
 from app.clients.identity import build_verifiers
 from app.core.config import get_settings
 from app.core.db import get_engine
@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
     install_request_logging(app)
 
     v1 = APIRouter(prefix="/v1")
-    for module in (auth, me, runs, social, economy):
+    for module in (auth, me, runs, social, economy, missions, telemetry):
         v1.include_router(module.router)
     app.include_router(health.router)
     app.include_router(v1)

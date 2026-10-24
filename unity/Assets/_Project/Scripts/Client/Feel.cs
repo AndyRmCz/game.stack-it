@@ -21,6 +21,13 @@ namespace StackIt.Client
             return Math.Min(semitones, MaxSemitones);
         }
 
+        /// <summary>
+        /// The fanfare a perfect streak earns: tier 1 at 5 in a row, 2 at 10, 3 at 20 and every 10
+        /// after that; 0 for any other count.
+        /// </summary>
+        public static int StreakFanfare(int combo) =>
+            combo == 5 ? 1 : combo == 10 ? 2 : combo >= 20 && combo % 10 == 0 ? 3 : 0;
+
         /// <summary>Which pair of <paramref name="stops"/> brackets <paramref name="x"/>, and how far along (0..1).</summary>
         public static void Segment(IReadOnlyList<float> stops, float x, out int index, out float t)
         {

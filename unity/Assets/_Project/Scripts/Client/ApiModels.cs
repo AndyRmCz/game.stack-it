@@ -51,6 +51,7 @@ namespace StackIt.Client.Api
         public int Coins;
         public string EquippedBlockSkin;
         public string EquippedTheme;
+        public string EquippedMusic;
         public List<string> Providers = new List<string>();
     }
 
@@ -59,9 +60,48 @@ namespace StackIt.Client.Api
         public string DisplayName;
     }
 
+    /// <summary>One of the day's three missions (GET /v1/missions).</summary>
+    public sealed class Mission
+    {
+        public int Slot;
+        public string Kind;
+        public int Target;
+        public int Progress;
+        public int Reward;
+        public bool Claimed;
+
+        public bool Done => Progress >= Target;
+    }
+
+    public sealed class MissionChest
+    {
+        public int Reward;
+        public bool Ready;
+        public bool Claimed;
+    }
+
+    public sealed class MissionBoard
+    {
+        public const int ChestSlot = 3;
+
+        public string Day;
+        public List<Mission> Missions = new List<Mission>();
+        public MissionChest Chest;
+        public int? Balance;
+
+        /// <summary>Something is waiting to be claimed (the Home dot).</summary>
+        public bool Claimable => Missions.Exists(m => m.Done && !m.Claimed) || (Chest != null && Chest.Ready && !Chest.Claimed);
+    }
+
+    public sealed class ClaimMissionRequest
+    {
+        public int Slot;
+    }
+
     public sealed class StartRunRequest
     {
         public string ChallengeCode;
+        public bool Daily;
     }
 
     public sealed class Rival
@@ -80,6 +120,7 @@ namespace StackIt.Client.Api
         public bool ContinuesAllowed;
         public string ChallengeCode;
         public Rival Rival;
+        public int? DailyNumber;
     }
 
     public sealed class RunEvent
@@ -196,5 +237,11 @@ namespace StackIt.Client.Api
         public int NextReward;
         public int? ClaimedAmount;
         public int? Balance;
+    }
+
+    public sealed class TelemetryBatchResponse
+    {
+        public int Accepted;
+        public int Rejected;
     }
 }

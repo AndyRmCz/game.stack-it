@@ -13,12 +13,15 @@ from app.core.security import decode_access_token
 from app.repositories.economy import SkinRepository, StreakRepository, WalletRepository
 from app.repositories.runs import RunRepository
 from app.repositories.social import ChallengeRepository, FriendRepository
+from app.repositories.telemetry import TelemetryRepository
 from app.repositories.users import IdentityRepository, RefreshTokenRepository, UserRepository
 from app.services.auth import AuthService
+from app.services.missions import MissionService
 from app.services.profile import ProfileService
 from app.services.runs import RunService
 from app.services.shop import DailyRewardService, ShopService
 from app.services.social import ChallengeService, FriendService
+from app.services.telemetry import TelemetryService
 from app.services.wallet import WalletLedger, WalletService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
@@ -133,6 +136,14 @@ def daily_service(session: SessionDep) -> DailyRewardService:
     return DailyRewardService(session, StreakRepository(session), _ledger(session))
 
 
+def mission_service(session: SessionDep) -> MissionService:
+    return MissionService(session, RunRepository(session), _ledger(session))
+
+
+def telemetry_service(session: SessionDep) -> TelemetryService:
+    return TelemetryService(session, TelemetryRepository(session))
+
+
 AuthServiceDep = Annotated[AuthService, Depends(auth_service)]
 ProfileServiceDep = Annotated[ProfileService, Depends(profile_service)]
 RunServiceDep = Annotated[RunService, Depends(run_service)]
@@ -141,3 +152,5 @@ FriendServiceDep = Annotated[FriendService, Depends(friend_service)]
 WalletServiceDep = Annotated[WalletService, Depends(wallet_service)]
 ShopServiceDep = Annotated[ShopService, Depends(shop_service)]
 DailyServiceDep = Annotated[DailyRewardService, Depends(daily_service)]
+TelemetryServiceDep = Annotated[TelemetryService, Depends(telemetry_service)]
+MissionServiceDep = Annotated[MissionService, Depends(mission_service)]

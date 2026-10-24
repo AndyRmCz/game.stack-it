@@ -23,6 +23,7 @@ namespace StackIt.Bootstrap
     public sealed class App : MonoBehaviour, IGameFlow
     {
         private const float SplashMinSeconds = 1.1f;
+        private const float MusicPreviewSeconds = 10f;
         private const float LookFadeSeconds = 0.3f;
 
         private AppConfig _config;
@@ -43,11 +44,13 @@ namespace StackIt.Bootstrap
         private UnityLocalizer _localizer;
         private DeepLinkService _deepLinks;
         private AdPolicy _adPolicy;
+        private TelemetryService _telemetry;
 
         private CameraRig _rig;
         private SkyBackdrop _sky;
         private StackView _view;
         private HypeFx _fx;
+        private Mascot _mascot;
         private UrpPostFx _postFx;
         private GameController _game;
 
@@ -68,6 +71,9 @@ namespace StackIt.Bootstrap
         private Task _finishing = Task.CompletedTask;
         private bool _lastRunWasRecord;
         private bool _starting;
+        private bool _runOpen;
+        private string _trialMusic; // a soundtrack unlocked for the next run by a rewarded ad
+        private bool _continueOffered;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -104,14 +110,25 @@ namespace StackIt.Bootstrap
             _auth = new AuthService(client, _store, new NativeSignInService(_config.googleWebClientId, _config.googleIosClientId));
             _api = new GameApi(client, new OfflineRunQueue(_store), _save);
             _api.ProfileChanged += _ => ApplyLook(_theme.Palette);
+            _telemetry = gameObject.AddComponent<TelemetryService>();
+            _telemetry.Init(_api, _store, () => _auth.IsSignedIn, SessionProps);
+            client.Failed += (path, e) =>
+            {
+                if (path.StartsWith("/v1/events")) return; // never report the reporter
+                _telemetry.Track(TelemetryEvents.ApiError, ("endpoint", TelemetryText.PathTemplate(path)), ("status", e.Status),
+                    ("code", e.Code));
+            };
 
             _ads = _adsConfig.adsEnabled ? AdsServiceRegistry.Create() : new NoAdsService();
-            _share = new NativeShareService();
+            _ads.AdEvent += _telemetry.OnAdEvent;
+            _share = new NativeShareService(_config.facebookAppId);
             _haptics = new NativeHaptics { Enabled = _save.HapticsOn };
             _audio = gameObject.AddComponent<AudioService>();
             _audio.Enabled = _save.SoundOn;
             _music = gameObject.AddComponent<MusicService>();
             _music.Enabled = _save.MusicOn;
+            _music.Equip(_api.Profile?.EquippedMusic); // the cached profile, until the server's arrives
+            _api.ProfileChanged += p => _music.Equip(p?.EquippedMusic);
             _recorder = gameObject.AddComponent<RecorderService>();
             _recorder.EndCardFactory = card => new EndCardRenderer(card);
             _adPolicy = new AdPolicy(_adsConfig.interstitialMinRuns, _adsConfig.interstitialMinSeconds);
@@ -128,13 +145,14 @@ namespace StackIt.Bootstrap
             float splashUntil = Time.realtimeSinceStartup + SplashMinSeconds;
 
             _deepLinks = new DeepLinkService(_config.apiBaseUrl, _config.urlScheme);
-            _deepLinks.ChallengeReceived += OpenChallenge;
+            _deepLinks.ChallengeReceived += code => OpenChallenge(code, "link");
 
             _signedIn = SignInAndSync();
             // Home once signed in (or offline), but never before the splash has had its moment.
             await Task.WhenAny(_signedIn, Task.Delay(2500));
             while (Time.realtimeSinceStartup < splashUntil) await Task.Yield();
             _router.Reset(_home);
+            _telemetry.MarkLaunched(Time.realtimeSinceStartup);
             _music.Home();
             _deepLinks.Start(firstLaunch: _save.IsFirstSession);
             await _signedIn;
@@ -202,6 +220,8 @@ namespace StackIt.Bootstrap
             DontDestroyOnLoad(world);
             _view = world.AddComponent<StackView>();
             _fx = world.AddComponent<HypeFx>();
+            _mascot = world.AddComponent<Mascot>();
+            _mascot.ReduceMotion = _save.ReduceMotion;
             _fx.Init(_rig, _postFx, _haptics, _audio);
             _fx.ReduceMotion = _save.ReduceMotion;
             RivalGhostView ghost = RivalGhostView.Create(world.transform);
@@ -212,7 +232,16 @@ namespace StackIt.Bootstrap
             {
                 float width = Mathf.Min(step.Block.Width, step.Block.Depth) / (float)SimConstants.BlockSize;
                 _music.Progress(step.N, width);
+                _mascot.Placed(step.Perfect, step.Combo, step.N, width);
+                // Clip highlights (H3): a perfect streak counts more the longer it gets.
+                if (step.Perfect && step.Combo >= 5) _recorder.Highlight(ClipMoments.StreakWeight * step.Combo / 5f);
             };
+            _game.RivalProgress += e =>
+            {
+                if (e == RivalEvent.Passed) _recorder.Highlight(ClipMoments.RivalWeight);
+            };
+            _game.NearMissed += near => _recorder.Highlight(
+                near.Kind == NearMissKind.AlmostSaved ? ClipMoments.AlmostSavedWeight : ClipMoments.AlmostPerfectWeight);
 
             _view.ResetStack(new StackSim(0).Top);
             ApplyLook(_theme.Palette);
@@ -225,6 +254,7 @@ namespace StackIt.Bootstrap
             _canvas = UiKit.CreateCanvas("UI", 10);
             _overlay = UiKit.CreateCanvas("Overlay", 100);
             _router = new UiRouter(_overlay.transform, _ads);
+            _router.Shown += screen => _telemetry.Track(TelemetryEvents.ScreenView, ("screen", screen.GetType().Name));
             var ctx = new UiContext
             {
                 Config = _config,
@@ -243,6 +273,7 @@ namespace StackIt.Bootstrap
                 Game = _game,
                 Flow = this,
                 Router = _router,
+                Telemetry = _telemetry,
             };
             Transform root = _canvas.transform;
             _splash = new SplashScreen(ctx, root);
@@ -257,6 +288,7 @@ namespace StackIt.Bootstrap
             _home.Shop = new ShopScreen(ctx, root);
             _home.Settings = new SettingsScreen(ctx, root);
             _home.Daily = new DailyRewardScreen(ctx, root);
+            _home.Missions = new MissionsScreen(ctx, root);
             _home.CodeEntry = _codeEntry;
         }
 
@@ -281,6 +313,7 @@ namespace StackIt.Bootstrap
             _postFx.SetLook(look.Number(T.BloomIntensity), look.Number(T.BloomThreshold), look.Number(T.BloomScatter),
                 look.Number(T.ChromaticPulse));
             _fx.SetLook(look);
+            _mascot.SetLook(look);
             _game.Ghost.SetColor(Palette.ToColor(look.Color(T.Accent2)), look.Number(T.BlockEmission) + 0.3f);
         }
 
@@ -307,6 +340,7 @@ namespace StackIt.Bootstrap
             var group = cover.AddComponent<CanvasGroup>();
 
             _theme.Set(look);
+            _telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "look"), ("value", look.ToString()));
             _haptics.Play(HapticKind.Light);
             Tween.Fade(group, 0f, LookFadeSeconds, () =>
             {
@@ -318,17 +352,44 @@ namespace StackIt.Bootstrap
         public void SetReduceMotion(bool on)
         {
             _save.ReduceMotion = on;
+            _telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "reduce_motion"), ("value", on));
             Look.ReduceMotion = on;
             _fx.ReduceMotion = on;
+            _mascot.ReduceMotion = on;
         }
 
         public void SetMusic(bool on)
         {
             _save.MusicOn = on;
+            _telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "music"), ("value", on));
             _music.Enabled = on;
             if (!on) return;
             if (_game.Phase == RunPhase.Playing) _music.StartRun();
             else _music.Home();
+        }
+
+        public void PreviewMusic(string styleId)
+        {
+            _music.Audition(styleId, MusicPreviewSeconds);
+            _telemetry.Track(TelemetryEvents.MusicPreview, ("item_id", styleId), ("seconds", MusicPreviewSeconds));
+        }
+
+        public void EndMusicPreview() => _music.EndAudition();
+
+        /// <summary>Watch a rewarded ad, then play one run with a soundtrack the player doesn't own.</summary>
+        public async void TryMusic(string styleId)
+        {
+            _telemetry.Track(TelemetryEvents.OfferAccepted, ("placement", AdPlacements.MusicTrial));
+            _music.EndAudition();
+            bool rewarded = await ShowRewarded(AdPlacements.MusicTrial);
+            _adPolicy.RecordRewardedShown(Time.realtimeSinceStartup);
+            if (!rewarded)
+            {
+                _router.Toast(L.T("flow.no_ad"));
+                return;
+            }
+            _trialMusic = styleId;
+            PlayNormal();
         }
 
         // --- game flow (IGameFlow) ---------------------------------------------------------------
@@ -420,8 +481,62 @@ namespace StackIt.Bootstrap
             }
         }
 
-        public async void OpenChallenge(string code)
+        public async void PlayDaily()
         {
+            if (_starting) return;
+            _starting = true;
+            try
+            {
+                await EndPendingRun();
+                await _signedIn;
+                StartRunResponse run = await _api.StartDailyRunAsync();
+                StartRun(new RunSetup
+                {
+                    Seed = (uint)run.Seed,
+                    RunId = run.RunId,
+                    ContinuesAllowed = run.ContinuesAllowed,
+                    PersonalBest = BestScore(),
+                    DailyNumber = run.DailyNumber ?? DailyTower.Number(System.DateTime.UtcNow),
+                });
+            }
+            catch (ApiException e)
+            {
+                _router.Toast(e.IsOffline ? L.T("flow.daily_offline") : Errors.Describe(e));
+            }
+            finally
+            {
+                _starting = false;
+            }
+        }
+
+        /// <summary>
+        /// The emoji result (H2) on the clipboard, for WhatsApp and other chats where a video is
+        /// heavy. A verified run also gets its duel link, like the Challenge button.
+        /// </summary>
+        public async void CopyResult()
+        {
+            await EndPendingRun();
+            _telemetry.Track(TelemetryEvents.ShareTap, ("source", "copy_result"));
+            string text = ResultText.Build(_game.Setup?.DailyNumber ?? 0, _game.Score, _game.Outcomes);
+            if (_lastResult != null && _lastResult.Status == "verified")
+            {
+                try
+                {
+                    ChallengeInfo challenge = await _api.CreateChallengeAsync(_lastResult.RunId);
+                    text += '\n' + challenge.Url;
+                }
+                catch (ApiException)
+                {
+                    // Offline or refused: the result alone is still worth sharing.
+                }
+            }
+            GUIUtility.systemCopyBuffer = text;
+            _router.Toast(L.T("flow.result_copied"));
+        }
+
+        public async void OpenChallenge(string code, string via)
+        {
+            _telemetry.Track(TelemetryEvents.ChallengeOpened, ("via", via));
             try
             {
                 await _signedIn;
@@ -448,8 +563,14 @@ namespace StackIt.Bootstrap
             _view.SetAttract(false);
             _rig.SetHome(false);
             _game.Begin(setup);
+            _runOpen = true;
+            _telemetry.RunStarted(setup.RunId, setup.ChallengeCode != null);
             _router.Reset(_hud);
             _recorder.BeginRun();
+            _mascot.ResetMood();
+            // A soundtrack tried with a rewarded ad lasts one run.
+            _music.Override(_trialMusic);
+            _trialMusic = null;
             _music.StartRun();
         }
 
@@ -471,6 +592,7 @@ namespace StackIt.Bootstrap
         /// <summary>From the pause menu: abandon this run (unsubmitted) and start a fresh one.</summary>
         public void Restart()
         {
+            TrackRunEnd("restart");
             _game.Resume();
             _game.Idle();
             _recorder.EndRun();
@@ -484,6 +606,8 @@ namespace StackIt.Bootstrap
             {
                 _gameOver.ShowContinueOffer(_game.Score, _game.IsNewRecord, _game.Setup.PersonalBest);
                 _router.Show(_gameOver, remember: false);
+                _continueOffered = true;
+                _telemetry.Track(TelemetryEvents.OfferShown, ("placement", AdPlacements.Continue));
                 _music.GameOver();
             }
             else
@@ -494,7 +618,9 @@ namespace StackIt.Bootstrap
 
         public async void ContinueWithAd()
         {
-            bool rewarded = await _ads.ShowRewardedAsync();
+            _continueOffered = false;
+            _telemetry.Track(TelemetryEvents.OfferAccepted, ("placement", AdPlacements.Continue));
+            bool rewarded = await ShowRewarded(AdPlacements.Continue);
             _adPolicy.RecordRewardedShown(Time.realtimeSinceStartup);
             if (rewarded && _game.Continue())
             {
@@ -518,9 +644,16 @@ namespace StackIt.Bootstrap
         private async Task FinishRun()
         {
             if (!_game.Finish()) return;
+            if (_continueOffered)
+            {
+                _continueOffered = false;
+                _telemetry.Track(TelemetryEvents.OfferDeclined, ("placement", AdPlacements.Continue));
+            }
+            TrackRunEnd("miss");
             _recorder.EndRun();
             _adPolicy.RecordRunEnded();
             _music.GameOver();
+            _mascot.GameOver();
 
             RunSetup setup = _game.Setup;
             int score = _game.Score;
@@ -536,7 +669,11 @@ namespace StackIt.Bootstrap
             try
             {
                 _lastResult = await _api.SubmitRunAsync(setup.RunId, _game.Events, score);
-                _gameOver.ShowServerResult(_lastResult, _ads.RewardedReady);
+                bool rewardedReady = _ads.RewardedReady;
+                _gameOver.ShowServerResult(_lastResult, rewardedReady);
+                // Same rule as the results screen's "double coins" button.
+                if (_lastResult.Status == "verified" && rewardedReady && _lastResult.CoinsEarned > 0 && !_lastResult.CoinsDoubled)
+                    _telemetry.Track(TelemetryEvents.OfferShown, ("placement", AdPlacements.DoubleCoins));
             }
             catch (ApiException e)
             {
@@ -547,7 +684,8 @@ namespace StackIt.Bootstrap
         public async void DoubleCoins()
         {
             if (_lastResult == null) return;
-            bool rewarded = await _ads.ShowRewardedAsync();
+            _telemetry.Track(TelemetryEvents.OfferAccepted, ("placement", AdPlacements.DoubleCoins));
+            bool rewarded = await ShowRewarded(AdPlacements.DoubleCoins);
             _adPolicy.RecordRewardedShown(Time.realtimeSinceStartup);
             if (!rewarded)
             {
@@ -567,9 +705,13 @@ namespace StackIt.Bootstrap
         }
 
         /// <summary>The viral loop: duel link + auto-recorded clip with an end card, via the share sheet.</summary>
-        public async void ShareChallenge()
+        public void ShareChallenge() => ShareChallengeTo(ShareTarget.System);
+
+        public async void ShareChallengeTo(ShareTarget target)
         {
             await EndPendingRun(); // pressed while "Continue" was still on offer: the run ends here
+            string source = target == ShareTarget.TikTok ? "tiktok" : target == ShareTarget.InstagramStory ? "instagram" : "end_card";
+            _telemetry.Track(TelemetryEvents.ShareTap, ("source", source));
             if (_lastResult == null || _lastResult.Status != "verified")
             {
                 _router.Toast(L.T("flow.share_needs_verified"));
@@ -581,8 +723,11 @@ namespace StackIt.Bootstrap
                 ChallengeInfo challenge = await _api.CreateChallengeAsync(_lastResult.RunId);
                 string clip = null;
                 if (_recorder.IsSupported)
+                {
                     clip = await _recorder.ExportClipAsync(new EndCard(challenge.Score, L.T("share.headline"), challenge.Code));
-                _share.Share(L.T("share.text", challenge.Score, challenge.Code), challenge.Url, clip);
+                    _telemetry.Track(TelemetryEvents.ClipExported, ("ok", clip != null));
+                }
+                _share.ShareTo(target, L.T("share.text", challenge.Score, challenge.Code), challenge.Url, clip);
             }
             catch (ApiException e)
             {
@@ -598,6 +743,7 @@ namespace StackIt.Bootstrap
         {
             await EndPendingRun();
             await MaybeInterstitial();
+            TrackRunEnd("quit"); // left from the pause menu mid-run (a finished run was already reported)
             // A clean cut to the base while Home fades in (the tower is gone).
             _game.Resume();
             _game.Idle();
@@ -610,6 +756,8 @@ namespace StackIt.Bootstrap
             _sky.SetHeight(0);
             _game.Ghost.Hide();
             _router.Reset(_home);
+            _music.Override(null); // a trial soundtrack ends with its run
+            _mascot.ResetMood();
             _music.Home();
             if (_auth.IsSignedIn) _ = RefreshFriends();
         }
@@ -640,9 +788,47 @@ namespace StackIt.Bootstrap
         {
             if (_router.Current != _gameOver) return; // only between runs, never from menus
             if (!_adPolicy.ShouldShowInterstitial(_save.IsFirstSession, _lastRunWasRecord, Time.realtimeSinceStartup)) return;
-            await _ads.ShowInterstitialAsync();
+            _telemetry.InFullScreenAd = true;
+            try
+            {
+                await _ads.ShowInterstitialAsync(AdPlacements.BetweenRuns);
+            }
+            finally
+            {
+                _telemetry.InFullScreenAd = false;
+            }
             _adPolicy.RecordInterstitialShown(Time.realtimeSinceStartup);
         }
+
+        /// <summary>A rewarded ad; the app pause it causes isn't "leaving the app" for session telemetry.</summary>
+        private async Task<bool> ShowRewarded(string placement)
+        {
+            _telemetry.InFullScreenAd = true;
+            try
+            {
+                return await _ads.ShowRewardedAsync(placement);
+            }
+            finally
+            {
+                _telemetry.InFullScreenAd = false;
+            }
+        }
+
+        private void TrackRunEnd(string reason)
+        {
+            if (!_runOpen) return;
+            _runOpen = false;
+            _telemetry.Track(TelemetryEvents.RunEnd, ("run_id", _game.Setup?.RunId), ("end_reason", reason), ("score", _game.Score),
+                ("placed", _game.Height), ("continues", _game.ContinuesUsed), ("music", _music.StyleId));
+        }
+
+        private (string Key, object Value)[] SessionProps() => new (string Key, object Value)[]
+        {
+            ("os", SystemInfo.operatingSystem),
+            ("device_ram_mb", SystemInfo.systemMemorySize),
+            ("language", _localizer?.Language),
+            ("look", _theme.Current.ToString()),
+        };
 
         private int BestScore() => Mathf.Max(_api.Profile?.BestScore ?? 0, _save.LocalBest);
 

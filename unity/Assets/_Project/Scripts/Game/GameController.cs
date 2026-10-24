@@ -17,6 +17,7 @@ namespace StackIt.Game
         public int RivalHeight;
         public int RivalScore;
         public int PersonalBest;
+        public int DailyNumber; // 0 = not a Daily Tower run
     }
 
     public enum RunPhase
@@ -38,6 +39,7 @@ namespace StackIt.Game
         private const int MaxCatchUpTicks = 8;
 
         private readonly List<InputEvent> _events = new List<InputEvent>();
+        private readonly List<BlockOutcome> _outcomes = new List<BlockOutcome>();
         private StackView _view;
         private HypeFx _fx;
         private CameraRig _rig;
@@ -51,9 +53,13 @@ namespace StackIt.Game
         public RunPhase Phase { get; private set; }
         public int Score => _sim?.Score ?? 0;
         public int Height => _sim?.Placed ?? 0;
+        public int ContinuesUsed => _sim?.ContinuesUsed ?? 0;
         public int Combo => _sim?.Combo ?? 0;
         public bool IsNewRecord => Score > (Setup?.PersonalBest ?? 0) && Score > 0;
         public IReadOnlyList<InputEvent> Events => _events;
+
+        /// <summary>How each block of this run landed, for the shareable result.</summary>
+        public IReadOnlyList<BlockOutcome> Outcomes => _outcomes;
         public bool CanContinue => Phase == RunPhase.AwaitingContinue && _sim.CanContinue;
 
         /// <summary>Paused runs freeze the simulation (no ticks pass, so the replay is unaffected) and ignore taps.</summary>
@@ -63,6 +69,9 @@ namespace StackIt.Game
         public event Action<Step> Placed;
         public event Action<RivalEvent> RivalProgress;
         public event Action Missed;
+
+        /// <summary>A razor-thin drop: just outside perfect, or a miss that only just cleared the tower.</summary>
+        public event Action<NearMiss> NearMissed;
 
         public void Init(StackView view, HypeFx fx, CameraRig rig, SkyBackdrop sky, RivalGhostView ghost)
         {
@@ -79,6 +88,7 @@ namespace StackIt.Game
             Setup = setup;
             _sim = new StackSim(setup.Seed, setup.ContinuesAllowed);
             _events.Clear();
+            _outcomes.Clear();
             _accumulator = 0f;
             _rival = new RivalTracker(setup.RivalHeight);
             _view.ResetStack(_sim.Top);
@@ -98,9 +108,17 @@ namespace StackIt.Game
             if (_sim.Tick < _sim.EarliestTapTick) return;
 
             Block previousTop = _sim.Top;
+            int span = previousTop.Hi(_sim.Moving.Axis) - previousTop.Lo(_sim.Moving.Axis);
+            int tolerance = SimConstants.PerfectToleranceFor(_sim.Moving.Speed);
             var input = new InputEvent(_sim.Tick, InputType.Tap);
             Step step = _sim.Apply(input);
             _events.Add(input);
+            NearMiss near = NearMiss.Classify(step.Kind == StepKind.Miss, step.Perfect, step.Offset, span, tolerance);
+            if (near.Kind != NearMissKind.None)
+            {
+                _fx.NearMiss(near);
+                NearMissed?.Invoke(near);
+            }
 
             if (step.Kind == StepKind.Miss)
             {
@@ -113,6 +131,7 @@ namespace StackIt.Game
                 return;
             }
 
+            _outcomes.Add(ResultText.Classify(step.Perfect, span, step.Block.Hi(step.Axis) - step.Block.Lo(step.Axis)));
             Vector3 top = _view.Place(step, previousTop);
             var size = new Vector3(step.Block.Width * StackView.UnitsToWorld, StackView.BlockHeight, step.Block.Depth * StackView.UnitsToWorld);
             Color color = _view.ColorFor(step.N);
@@ -165,6 +184,8 @@ namespace StackIt.Game
             if (Phase != RunPhase.AwaitingContinue) return false;
             Phase = RunPhase.Finished;
             if (IsNewRecord && Setup.ContinuesAllowed && _sim.ContinuesUsed == 0) _fx.NewRecord();
+            if (IsNewRecord) _fx.Confetti(_view.TopCenter);
+            if (!_fx.ReduceMotion) _view.Collapse(); // the run is really over: the top of the tower topples
             return true;
         }
 

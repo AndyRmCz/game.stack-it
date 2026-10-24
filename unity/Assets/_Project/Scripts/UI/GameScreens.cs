@@ -71,7 +71,8 @@ namespace StackIt.UI
         private readonly RoundedRect _friendsDot;
         private readonly RoundedRect _shopDot;
 
-        public UiScreen Friends, Leaderboard, Shop, Settings, Daily, CodeEntry;
+        public UiScreen Friends, Leaderboard, Shop, Settings, Daily, CodeEntry, Missions;
+        private readonly RoundedRect _missionsDot;
 
         public HomeScreen(UiContext ctx, Transform parent, bool reserveBanner) : base(ctx, parent, "Home", ScreenBackground.None)
         {
@@ -80,6 +81,10 @@ namespace StackIt.UI
             Button gift = UiKit.IconButton(top, Icons.Gift, () => Ctx.Router.Show(Daily));
             UiKit.Pin((RectTransform)gift.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), Vector2.zero);
             _giftDot = UiKit.Dot(gift.transform);
+            Button missions = UiKit.IconButton(top, Icons.Bolt, () => Ctx.Router.Show(Missions));
+            UiKit.Pin((RectTransform)missions.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton),
+                new Vector2(Ui.IconButton + 10f, 0f));
+            _missionsDot = UiKit.Dot(missions.transform);
             _coins = UiKit.CoinPill(top);
             var coins = (RectTransform)_coins.transform.parent;
             coins.anchorMin = coins.anchorMax = coins.pivot = new Vector2(1, 0.5f);
@@ -142,6 +147,21 @@ namespace StackIt.UI
             UiKit.ShowDot(_friendsDot, Ctx.Pending.Any);
             RefreshDaily();
             RefreshShop();
+            RefreshMissions();
+        }
+
+        /// <summary>The missions dot: a finished mission or the chest is waiting to be claimed.</summary>
+        private async void RefreshMissions()
+        {
+            try
+            {
+                MissionBoard board = await Ctx.Api.MissionsAsync();
+                UiKit.ShowDot(_missionsDot, board.Claimable);
+            }
+            catch (StackIt.Services.ApiException)
+            {
+                UiKit.ShowDot(_missionsDot, false); // offline: no dot
+            }
         }
 
         private async void RefreshDaily()
@@ -233,6 +253,7 @@ namespace StackIt.UI
 
             ctx.Game.Placed += OnPlaced;
             ctx.Game.RivalProgress += OnRival;
+            ctx.Game.NearMissed += OnNearMiss;
         }
 
         private void OnTap() => Ctx.Game.Tap();
@@ -269,7 +290,21 @@ namespace StackIt.UI
         private void OnRival(RivalEvent e)
         {
             string name = Ctx.Game.Setup?.RivalName ?? "";
-            _bannerText.text = e == RivalEvent.Passed ? L.T("hud.passed", name) : L.T("hud.almost", name);
+            ShowBanner(e == RivalEvent.Passed ? L.T("hud.passed", name) : L.T("hud.almost", name));
+            if (e == RivalEvent.Passed) _rival.Show(null, 0, 0);
+        }
+
+        /// <summary>"0.4 mm from perfect" on the banner; "Missed by 0.4 mm" as a toast, which stays over the results.</summary>
+        private void OnNearMiss(NearMiss near)
+        {
+            string mm = near.Millimetres.ToString("0.0");
+            if (near.Kind == NearMissKind.AlmostPerfect) ShowBanner(L.T("hud.almost_perfect", mm));
+            else Ctx.Router.Toast(L.T("hud.missed_by", mm));
+        }
+
+        private void ShowBanner(string text)
+        {
+            _bannerText.text = text;
             _banner.gameObject.SetActive(true);
             if (!Look.ReduceMotion) Tween.Punch(_banner, 0.2f, 0.4f);
             var group = _banner.GetComponent<CanvasGroup>();
@@ -277,7 +312,6 @@ namespace StackIt.UI
             group.alpha = 1f;
             Tween.Run(group, 2.4f, t => group.alpha = t < 0.75f ? 1f : 1f - (t - 0.75f) / 0.25f,
                 () => { if (_banner != null) _banner.gameObject.SetActive(false); });
-            if (e == RivalEvent.Passed) _rival.Show(null, 0, 0);
         }
 
         private sealed class TapForwarder : MonoBehaviour, IPointerDownHandler
@@ -463,6 +497,19 @@ namespace StackIt.UI
             HorizontalLayoutGroup moreRow = UiKit.Row(more, 10);
             moreRow.childForceExpandWidth = false;
             _double = UiKit.Pill(more, L.T("over.double_short"), Icons.VideoAd, () => Ctx.Flow.DoubleCoins());
+            // Straight into TikTok or Instagram Stories (H5); phones only, where clips are recorded.
+            if (Application.isMobilePlatform)
+            {
+                RectTransform apps = UiKit.Rect("ShareTo", _sheet);
+                UiKit.Size(apps, height: Ui.PillHeight);
+                HorizontalLayoutGroup appsRow = UiKit.Row(apps, 10);
+                appsRow.childAlignment = TextAnchor.MiddleCenter;
+                appsRow.childForceExpandWidth = false;
+                UiKit.Pill(apps, L.T("over.tiktok"), Icons.Share, () => Ctx.Flow.ShareChallengeTo(StackIt.Services.ShareTarget.TikTok));
+                UiKit.Pill(apps, L.T("over.stories"), Icons.Share, () => Ctx.Flow.ShareChallengeTo(StackIt.Services.ShareTarget.InstagramStory));
+            }
+            // The spoiler-free emoji result for chats (H2).
+            UiKit.CenteredPill(_sheet, L.T("over.copy_result"), Icons.Copy, () => Ctx.Flow.CopyResult());
         }
 
         /// <summary>Centres a hugging child on its own line of the sheet's column.</summary>
@@ -687,7 +734,7 @@ namespace StackIt.UI
                 Ctx.Router.Toast(L.T("code.invalid"));
                 return;
             }
-            Ctx.Flow.OpenChallenge(code);
+            Ctx.Flow.OpenChallenge(code, "code");
         }
     }
 }

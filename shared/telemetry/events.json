@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "events": {
+    "session_start": ["session_index", "first_session", "cold_start", "launch_ms", "os", "device_ram_mb", "language", "look"],
+    "session_end": ["duration_s", "runs", "ads", "ended_by"],
+    "screen_view": ["screen"],
+    "run_start": ["run_id", "duel", "offline"],
+    "run_end": ["run_id", "end_reason", "score", "placed", "continues", "music"],
+    "offer_shown": ["placement"],
+    "offer_accepted": ["placement"],
+    "offer_declined": ["placement"],
+    "ad_requested": ["format"],
+    "ad_loaded": ["format", "latency_ms"],
+    "ad_load_failed": ["format", "error_code"],
+    "ad_shown": ["format", "placement"],
+    "ad_show_failed": ["format", "placement", "error_code"],
+    "ad_clicked": ["format", "placement"],
+    "ad_rewarded": ["format", "placement"],
+    "ad_closed": ["format", "placement"],
+    "ad_paid": ["format", "placement", "value_micros", "currency", "precision", "ad_source"],
+    "shop_view": ["balance"],
+    "item_preview": ["item_id", "price", "balance", "owned"],
+    "item_unaffordable_tap": ["item_id", "price", "balance"],
+    "music_preview": ["item_id", "seconds"],
+    "mission_claimed": ["slot", "kind"],
+    "share_tap": ["source"],
+    "clip_exported": ["seconds", "ok"],
+    "challenge_opened": ["via"],
+    "setting_changed": ["setting", "value"],
+    "perf_sample": ["fps_median", "fps_p5", "seconds"],
+    "api_error": ["endpoint", "status", "code"]
+  }
+}

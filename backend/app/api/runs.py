@@ -13,6 +13,7 @@ from app.api.schemas import (
     SubmitRunResponse,
 )
 from app.core.rate_limit import rate_limit
+from app.domain.daily import daily_number
 from app.domain.sim import InputEvent
 from app.services.runs import Rival
 
@@ -32,7 +33,7 @@ def _rival(rival: Rival) -> RivalBody:
 async def start_run(
     body: StartRunRequest, user_id: UserIdDep, runs: RunServiceDep
 ) -> StartRunResponse:
-    started = await runs.start(user_id, body.challenge_code)
+    started = await runs.start(user_id, body.challenge_code, daily=body.daily)
     return StartRunResponse(
         run_id=started.run.id,
         seed=started.run.seed,
@@ -40,6 +41,7 @@ async def start_run(
         continues_allowed=started.run.continues_allowed,
         challenge_code=started.challenge_code,
         rival=_rival(started.rival) if started.rival else None,
+        daily_number=daily_number(started.run.daily_date) if started.run.daily_date else None,
     )
 
 

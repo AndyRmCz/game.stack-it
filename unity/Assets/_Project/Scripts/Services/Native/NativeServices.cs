@@ -29,6 +29,33 @@ namespace StackIt.Services.Native
 
     public sealed class NativeShareService : IShareService
     {
+        private readonly string _facebookAppId;
+
+        public NativeShareService(string facebookAppId = "") => _facebookAppId = facebookAppId ?? "";
+
+        public void ShareTo(ShareTarget target, string text, string url, string videoPath)
+        {
+            string message = text + "\n" + url;
+            switch (target)
+            {
+                case ShareTarget.TikTok when Application.platform == RuntimePlatform.Android:
+                    using (AndroidJavaObject activity = AndroidNative.Activity())
+                        AndroidNative.CallStatic("ShareBridge", "shareToTikTok", activity, message, videoPath ?? "");
+                    return;
+                case ShareTarget.InstagramStory when Application.platform == RuntimePlatform.Android:
+                    using (AndroidJavaObject activity = AndroidNative.Activity())
+                        AndroidNative.CallStatic("ShareBridge", "shareToInstagramStory", activity, _facebookAppId, message, videoPath ?? "");
+                    return;
+                case ShareTarget.InstagramStory when Application.platform == RuntimePlatform.IPhonePlayer:
+                    IosNative._StackItShareInstagramStory(_facebookAppId, text, url, videoPath ?? "");
+                    return;
+                default:
+                    // TikTok on iOS needs its Share Kit SDK (not added yet): the sheet lists TikTok anyway.
+                    Share(text, url, videoPath);
+                    return;
+            }
+        }
+
         public void Share(string text, string url, string videoPath)
         {
             switch (Application.platform)

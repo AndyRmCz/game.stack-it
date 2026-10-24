@@ -74,6 +74,55 @@ async def test_equip_requires_ownership(client: AsyncClient, db_session: AsyncSe
     assert (await client.get("/v1/me", headers=h)).json()["equipped_block_skin"] == "magma"
 
 
+MUSIC_IDS = [
+    "music_classic",
+    "music_synthwave",
+    "music_lofi",
+    "music_reggaeton",
+    "music_kpop",
+    "music_metal",
+]
+
+
+async def test_shop_sells_soundtracks_and_classic_is_free_and_equipped(
+    client: AsyncClient,
+) -> None:
+    player = await guest(client)
+
+    shop = (await client.get("/v1/shop", headers=player.headers)).json()
+    profile = (await client.get("/v1/me", headers=player.headers)).json()
+
+    music = [i for i in shop["items"] if i["kind"] == "music"]
+    assert [i["skin_id"] for i in music] == MUSIC_IDS  # same ids and order as MusicStyles.Ids
+    classic = music[0]
+    assert classic["price"] == 0
+    assert classic["owned"] is True
+    assert classic["equipped"] is True
+    assert all(i["price"] > 0 and not i["owned"] for i in music[1:])
+    assert profile["equipped_music"] == "music_classic"
+
+
+async def test_equipping_a_soundtrack_keeps_skin_and_theme(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    player = await guest(client)
+    await _fund(db_session, player, 5000)
+    h = player.headers
+
+    locked = await client.post("/v1/skins/equip", json={"skin_id": "music_lofi"}, headers=h)
+    await client.post("/v1/shop/purchase", json={"skin_id": "music_lofi"}, headers=h | _key("l"))
+    equipped = await client.post("/v1/skins/equip", json={"skin_id": "music_lofi"}, headers=h)
+
+    assert locked.status_code == 409
+    assert equipped.status_code == 200
+    on = {i["skin_id"] for i in equipped.json()["items"] if i["equipped"]}
+    assert on == {"classic", "synthwave", "music_lofi"}
+    profile = (await client.get("/v1/me", headers=h)).json()
+    assert profile["equipped_music"] == "music_lofi"
+    assert profile["equipped_block_skin"] == "classic"
+    assert profile["equipped_theme"] == "synthwave"
+
+
 async def test_daily_reward_once_per_day_and_idempotent(client: AsyncClient) -> None:
     player = await guest(client)
     h = player.headers

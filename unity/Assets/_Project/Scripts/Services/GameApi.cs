@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StackIt.Client;
 using StackIt.Client.Api;
 using StackIt.Core.Simulation;
@@ -96,6 +97,10 @@ namespace StackIt.Services
 
         public Task<StartRunResponse> StartChallengeRunAsync(string code) => StartAsync(code);
 
+        /// <summary>A run on today's Daily Tower: the same seed for every player.</summary>
+        public Task<StartRunResponse> StartDailyRunAsync() =>
+            _api.Post<StartRunResponse>("/v1/runs", new StartRunRequest { Daily = true });
+
         private Task<StartRunResponse> StartAsync(string challengeCode) =>
             _api.Post<StartRunResponse>("/v1/runs", new StartRunRequest { ChallengeCode = challengeCode });
 
@@ -181,6 +186,23 @@ namespace StackIt.Services
         public Task<ChallengeInfo> GetChallengeAsync(string code) =>
             _api.Get<ChallengeInfo>("/v1/challenges/" + Uri.EscapeDataString(code));
 
+        // --- telemetry ---------------------------------------------------------------------------
+
+        /// <summary>Sends events already serialized as JSON objects (TelemetryService builds them).</summary>
+        public Task<TelemetryBatchResponse> SendEventsAsync(string appVersion, string platform, IEnumerable<string> events)
+        {
+            var body = new TelemetryBatchBody { AppVersion = appVersion, Platform = platform, Events = new List<JRaw>() };
+            foreach (string json in events) body.Events.Add(new JRaw(json));
+            return _api.Post<TelemetryBatchResponse>("/v1/events", body);
+        }
+
+        private sealed class TelemetryBatchBody
+        {
+            public string AppVersion;
+            public string Platform;
+            public List<JRaw> Events;
+        }
+
         public Task<List<Friend>> FriendsAsync() => _api.Get<List<Friend>>("/v1/friends");
 
         public Task<Friend> AddFriendAsync(string code) =>
@@ -188,8 +210,9 @@ namespace StackIt.Services
 
         public Task RemoveFriendAsync(string userId) => _api.Delete("/v1/friends/" + userId);
 
-        public Task<Leaderboard> LeaderboardAsync(bool weekly) =>
-            _api.Get<Leaderboard>("/v1/leaderboards/friends?period=" + (weekly ? "weekly" : "all_time"));
+        /// <param name="period">"weekly", "all_time" or "daily" (today's Daily Tower).</param>
+        public Task<Leaderboard> LeaderboardAsync(string period) =>
+            _api.Get<Leaderboard>("/v1/leaderboards/friends?period=" + period);
 
         // --- economy -----------------------------------------------------------------------------
 
@@ -207,6 +230,16 @@ namespace StackIt.Services
             Shop shop = await _api.Post<Shop>("/v1/skins/equip", new SkinRequest { SkinId = skinId });
             await RefreshProfileAsync();
             return shop;
+        }
+
+        public Task<MissionBoard> MissionsAsync() => _api.Get<MissionBoard>("/v1/missions");
+
+        /// <summary>Claims a finished mission (slot 0-2) or the chest (3). Claiming twice pays once.</summary>
+        public async Task<MissionBoard> ClaimMissionAsync(int slot)
+        {
+            MissionBoard missions = await _api.Post<MissionBoard>("/v1/missions/claim", new ClaimMissionRequest { Slot = slot });
+            if (missions.Balance.HasValue) SetCoins(missions.Balance.Value);
+            return missions;
         }
 
         public Task<DailyStatus> DailyAsync() => _api.Get<DailyStatus>("/v1/daily");

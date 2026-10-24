@@ -1,6 +1,6 @@
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Literal
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -139,11 +139,18 @@ class FriendService:
                 raise NotFound("friend_not_found")
 
     async def leaderboard(
-        self, user_id: uuid.UUID, period: Literal["all_time", "weekly"]
+        self, user_id: uuid.UUID, period: Literal["all_time", "weekly", "daily"]
     ) -> Leaderboard:
-        since = week_start(self._clock()) if period == "weekly" else None
-        async with self._session.begin():
-            rows = await self._friends.leaderboard(user_id, since)
+        now = self._clock()
+        if period == "daily":
+            # The Daily Tower: today's (UTC) daily runs only; `since` is the day's start.
+            since = datetime.combine(now.date(), time(), tzinfo=UTC)
+            async with self._session.begin():
+                rows = await self._friends.leaderboard(user_id, None, daily=now.date())
+        else:
+            since = week_start(now) if period == "weekly" else None
+            async with self._session.begin():
+                rows = await self._friends.leaderboard(user_id, since)
         entries, rank, previous = [], 0, None
         for i, row in enumerate(rows, start=1):
             if row.best_score != previous:  # ties share a rank

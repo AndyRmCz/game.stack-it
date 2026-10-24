@@ -2,11 +2,12 @@
 
 import uuid
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.domain.sim import MAX_RUN_TICKS
+from app.domain.telemetry import MAX_BATCH, MAX_PROPS
 
 
 class ErrorBody(BaseModel):
@@ -50,6 +51,7 @@ class ProfileResponse(BaseModel):
     coins: int
     equipped_block_skin: str
     equipped_theme: str
+    equipped_music: str
     providers: list[str]
 
 
@@ -70,6 +72,7 @@ class RenameRequest(BaseModel):
 
 class StartRunRequest(BaseModel):
     challenge_code: str | None = Field(default=None, max_length=10)
+    daily: bool = False
 
 
 class RivalBody(BaseModel):
@@ -86,6 +89,7 @@ class StartRunResponse(BaseModel):
     continues_allowed: bool
     challenge_code: str | None
     rival: RivalBody | None
+    daily_number: int | None = None
 
 
 class RunEvent(BaseModel):
@@ -161,7 +165,7 @@ class LeaderboardEntryBody(BaseModel):
 
 
 class LeaderboardResponse(BaseModel):
-    period: Literal["all_time", "weekly"]
+    period: Literal["all_time", "weekly", "daily"]
     since: datetime | None
     entries: list[LeaderboardEntryBody]
 
@@ -184,7 +188,7 @@ class WalletResponse(BaseModel):
 
 class ShopItemBody(BaseModel):
     skin_id: str
-    kind: Literal["block", "theme"]
+    kind: Literal["block", "theme", "music"]
     price: int
     owned: bool
     equipped: bool
@@ -206,3 +210,55 @@ class DailyResponse(BaseModel):
     next_reward: int
     claimed_amount: int | None
     balance: int | None
+
+
+# --- telemetry ---------------------------------------------------------------------------------
+
+
+class TelemetryEventBody(BaseModel):
+    id: uuid.UUID
+    name: str = Field(min_length=1, max_length=40)
+    session_id: uuid.UUID
+    at: datetime
+    # Values are checked against the event list in app.domain.telemetry.
+    props: dict[str, Any] = Field(default_factory=dict, max_length=MAX_PROPS)
+
+
+class TelemetryBatchRequest(BaseModel):
+    app_version: str = Field(min_length=1, max_length=32)
+    platform: str = Field(min_length=1, max_length=16)
+    events: list[TelemetryEventBody] = Field(min_length=1, max_length=MAX_BATCH)
+
+
+class TelemetryBatchResponse(BaseModel):
+    accepted: int
+    rejected: int
+
+
+# --- missions ----------------------------------------------------------------------------------
+
+
+class MissionBody(BaseModel):
+    slot: int
+    kind: str
+    target: int
+    progress: int
+    reward: int
+    claimed: bool
+
+
+class ChestBody(BaseModel):
+    reward: int
+    ready: bool
+    claimed: bool
+
+
+class MissionsResponse(BaseModel):
+    day: date
+    missions: list[MissionBody]
+    chest: ChestBody
+    balance: int | None = None
+
+
+class ClaimMissionRequest(BaseModel):
+    slot: int = Field(ge=0, le=3)

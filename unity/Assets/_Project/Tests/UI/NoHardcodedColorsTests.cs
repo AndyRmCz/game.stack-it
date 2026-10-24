@@ -42,11 +42,14 @@ namespace StackIt.Tests
             public void PlayNormal() { }
             public void PlayAgainst(string rivalName, int rivalScore, int rivalHeight) { }
             public void PlayChallenge(string code) { }
-            public void OpenChallenge(string code) { }
+            public void PlayDaily() { }
+            public void CopyResult() { }
+            public void OpenChallenge(string code, string via) { }
             public void ContinueWithAd() { }
             public void DeclineContinue() { }
             public void DoubleCoins() { }
             public void ShareChallenge() { }
+            public void ShareChallengeTo(ShareTarget target) { }
             public void Pause() { }
             public void Resume() { }
             public void Restart() { }
@@ -55,6 +58,9 @@ namespace StackIt.Tests
             public void SetLook(ThemeId look) { }
             public void SetReduceMotion(bool on) { }
             public void SetMusic(bool on) { }
+            public void PreviewMusic(string styleId) { }
+            public void EndMusicPreview() { }
+            public void TryMusic(string styleId) { }
         }
 
         private readonly List<GameObject> _created = new List<GameObject>();

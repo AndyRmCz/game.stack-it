@@ -50,6 +50,7 @@ unity/Assets/AddressableAssetsData/*/*.bin*
 unity/Assets/Plugins/Android/*.keystore
 unity/DotNetTests/**/bin/
 unity/DotNetTests/**/obj/
+unity/DotNetTests/MusicPreview/out/
 unity/TestResults*.xml
 # Baked TMP font atlases: generated from Assets/_Project/Fonts by AutoSetup / Setup Project.
 unity/Assets/_Project/Resources/StackIt/Fonts/

@@ -29,6 +29,12 @@ namespace StackIt.Bootstrap
         [Tooltip("Google OAuth iOS client ID (GIDClientID).")]
         public string googleIosClientId = "";
 
+        [Tooltip("Facebook App ID: required by Instagram's 'Sharing to Stories'. Empty = Stories uses the share sheet.")]
+        public string facebookAppId = "";
+
+        [Tooltip("TikTok developer client key, for TikTok's Share Kit SDK (auto hashtag, green screen). Not used until the SDK is added; see SETUP.md.")]
+        public string tiktokClientKey = "";
+
         public static AppConfig Load()
         {
             var config = Resources.Load<AppConfig>(ResourcePath);

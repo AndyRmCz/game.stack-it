@@ -16,6 +16,28 @@ hud.rival,"Beat @{0} · {1}","Supera a @{0} · {1}"
 hud.perfect,Perfect,Perfecto
 hud.perfect_combo,Perfect ×{0},Perfecto ×{0}
 hud.passed,You passed @{0}!,¡Superaste a @{0}!
+hud.almost_perfect,{0} mm from perfect,A {0} mm de perfecto
+hud.missed_by,Missed by {0} mm,Fallaste por {0} mm
+ranks.daily,Daily,Diaria
+ranks.daily_title,Daily Tower #{0} · friends,Torre diaria #{0} · amigos
+ranks.play_daily,Play Daily #{0},Jugar diaria #{0}
+missions.play,Play,Jugar
+over.copy_result,Copy result,Copiar resultado
+missions.title,Daily missions,Misiones diarias
+missions.note,New missions every day at 00:00 UTC,Misiones nuevas cada día a las 00:00 UTC
+missions.progress,{0} / {1},{0} / {1}
+missions.claim,Claim {0},Cobrar {0}
+missions.chest,Daily chest,Cofre diario
+missions.chest_note,Finish all three missions,Termina las tres misiones
+mission.runs,Play {0} runs,Juega {0} partidas
+mission.perfects,Land {0} perfect drops,Logra {0} caídas perfectas
+mission.reach,Stack {0} blocks in one run,Apila {0} bloques en una partida
+mission.combo,Get {0} perfects in a row,Logra {0} perfectos seguidos
+mission.daily,Play the Daily Tower,Juega la torre diaria
+over.tiktok,TikTok,TikTok
+over.stories,Instagram Stories,Historias de Instagram
+flow.result_copied,Result copied: paste it in a chat,Resultado copiado: pégalo en un chat
+flow.daily_offline,The Daily Tower needs a connection,La torre diaria necesita conexión
 hud.almost,@{0} is right above you,@{0} está justo encima
 pause.title,Paused,En pausa
 pause.resume,Resume,Seguir
@@ -85,6 +107,7 @@ ranks.resets_in,Resets in {0},Se reinicia en {0}
 shop.title,Shop,Tienda
 shop.blocks,Blocks,Bloques
 shop.themes,Themes,Temas
+shop.music,Music,Música
 shop.balance,{0} coins,{0} monedas
 shop.buy,{0} coins,{0} monedas
 shop.equip,Equip,Equipar
@@ -102,6 +125,12 @@ skin.midnight,Midnight,Medianoche
 skin.sunset,Sunset,Atardecer
 skin.vapor,Vapor,Vapor
 skin.matrix,Matrix,Matrix
+skin.music_classic,Classic,Clásica
+skin.music_synthwave,Synthwave,Synthwave
+skin.music_lofi,Lo-fi,Lo-fi
+skin.music_reggaeton,Reggaeton,Reguetón
+skin.music_kpop,K-pop style,Estilo K-pop
+skin.music_metal,Metal,Metal
 # Daily reward
 daily.title,Daily gift,Regalo diario
 daily.rule,Come back every day: the gift grows until day 7. Miss a day and it starts over.,Vuelve cada día: el regalo crece hasta el día 7. Si fallas un día empieza de nuevo.

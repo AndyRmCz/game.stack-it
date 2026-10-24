@@ -65,9 +65,14 @@ async def backdate_run(db: AsyncSession, run_id: str, minutes: int = 10) -> None
 
 
 async def verified_run(
-    client: AsyncClient, db: AsyncSession, player: Player, perfect: int = 3, sliced: int = 3
+    client: AsyncClient,
+    db: AsyncSession,
+    player: Player,
+    perfect: int = 3,
+    sliced: int = 3,
+    start_body: dict | None = None,
 ) -> dict:
-    start = (await client.post("/v1/runs", json={}, headers=player.headers)).json()
+    start = (await client.post("/v1/runs", json=start_body or {}, headers=player.headers)).json()
     events, score = play(start["seed"], perfect, sliced)
     await backdate_run(db, start["run_id"])
     response = await client.post(

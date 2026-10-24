@@ -1,6 +1,6 @@
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import and_, delete, exists, func, literal, select, union_all
 from sqlalchemy.dialects.postgresql import distinct_on, insert
@@ -70,13 +70,20 @@ class FriendRepository:
         )
         return [ScoreRow(r.id, r.display_name, r.best, r.placed) for r in rows]
 
-    async def leaderboard(self, user_id: uuid.UUID, since: datetime | None) -> list[ScoreRow]:
-        """Best verified score per member (the user + friends) with at least one verified run."""
+    async def leaderboard(
+        self, user_id: uuid.UUID, since: datetime | None, daily: date | None = None
+    ) -> list[ScoreRow]:
+        """Best verified score per member (the user + friends) with at least one verified run.
+
+        With `daily`, only that day's Daily Tower runs count.
+        """
         members = union_all(self._friend_ids(user_id), select(literal(user_id).label("id")))
         members = members.subquery()
         conditions = [Run.status == "verified", Run.user_id.in_(select(members.c.id))]
         if since is not None:
             conditions.append(Run.finished_at >= since)
+        if daily is not None:
+            conditions.append(Run.daily_date == daily)
         rows = await self._session.execute(
             select(User.id, User.display_name, func.max(Run.verified_score).label("best"))
             .join(Run, Run.user_id == User.id)

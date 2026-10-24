@@ -54,7 +54,7 @@ class WalletTransaction(Base):
 class Skin(Base):
     __tablename__ = "skins"
     __table_args__ = (
-        CheckConstraint("kind IN ('block', 'theme')", name="kind_known"),
+        CheckConstraint("kind IN ('block', 'theme', 'music')", name="kind_known"),
         CheckConstraint("price >= 0", name="price_non_negative"),
     )
 

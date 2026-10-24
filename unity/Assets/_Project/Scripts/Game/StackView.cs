@@ -23,6 +23,7 @@ namespace StackIt.Game
         private const float Bevel = 0.05f;
         private const int VisibleBlocks = 70;
         private const float DebrisLifetime = 2.5f;
+        private const int CollapseBlocks = 8;
         private const float FadeFrom = 8f;   // blocks below the top
         private const float FadeTo = 36f;
         private const float FadeMax = 0.55f;
@@ -155,6 +156,26 @@ namespace StackIt.Game
             RefreshAtmosphere();
             TopCenter = block.transform.localPosition;
             return TopCenter;
+        }
+
+        /// <summary>
+        /// Game over for real (no continue coming): the top of the tower topples. Each of the top
+        /// blocks gets a physics body and a nudge, the highest first, so they tumble off one after
+        /// another. <see cref="ResetStack"/> clears them with the rest of the tower.
+        /// </summary>
+        public void Collapse()
+        {
+            int count = Mathf.Min(CollapseBlocks, _placed.Count);
+            float side = Random.value < 0.5f ? -1f : 1f;
+            for (int i = 0; i < count; i++)
+            {
+                Transform block = _placed[_placed.Count - 1 - i];
+                var body = block.gameObject.AddComponent<Rigidbody>();
+                body.mass = 0.5f;
+                float push = side * (1.6f - i * 0.12f);
+                body.linearVelocity = new Vector3(push, 0.6f, push * 0.4f);
+                body.angularVelocity = new Vector3(Random.Range(-1f, 1f), Random.Range(-0.5f, 0.5f), -side * (2f + Random.value));
+            }
         }
 
         /// <summary>The whole moving block falls: the run is over (or waiting for a continue).</summary>
@@ -342,9 +363,12 @@ namespace StackIt.Game
             if (box != null) box.size = new Vector3(width, height, depth);
         }
 
-        private static Mesh BuildMesh(float hx, float hy, float hz)
+        private static Mesh BuildMesh(float hx, float hy, float hz) => BuildMesh(hx, hy, hz, Bevel);
+
+        /// <summary>A bevelled box mesh (half sizes), painted by the block shader's face normals. The mascot uses it too.</summary>
+        internal static Mesh BuildMesh(float hx, float hy, float hz, float bevel)
         {
-            MeshData data = ChamferBox.Build(hx, hy, hz, Bevel);
+            MeshData data = ChamferBox.Build(hx, hy, hz, bevel);
             var vertices = new Vector3[data.VertexCount];
             var normals = new Vector3[data.VertexCount];
             for (int i = 0; i < data.VertexCount; i++)

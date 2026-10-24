@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -33,6 +34,14 @@ class Run(Base):
             text("verified_score DESC"),
             postgresql_where=text("status = 'verified'"),
         ),
+        # The Daily Tower board: best verified score per user on a given day.
+        Index(
+            "ix_runs_verified_daily_user",
+            "daily_date",
+            "user_id",
+            postgresql_include=["verified_score"],
+            postgresql_where=text("status = 'verified' AND daily_date IS NOT NULL"),
+        ),
         Index(
             "ix_runs_verified_user_finished",
             "user_id",
@@ -48,6 +57,8 @@ class Run(Base):
         ForeignKey("challenges.id", ondelete="SET NULL", use_alter=True)
     )
     seed: Mapped[int] = mapped_column(BigInteger)
+    # Set on Daily Tower runs: the UTC day whose seed this run plays.
+    daily_date: Mapped[date | None] = mapped_column(Date)
     sim_version: Mapped[int] = mapped_column(SmallInteger)
     continues_allowed: Mapped[bool]
     status: Mapped[str] = mapped_column(String(16), default="started")

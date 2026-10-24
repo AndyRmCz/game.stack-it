@@ -17,11 +17,18 @@ namespace StackIt.UI
         void PlayNormal();
         void PlayAgainst(string rivalName, int rivalScore, int rivalHeight);
         void PlayChallenge(string code);
-        void OpenChallenge(string code);
+        /// <summary>Today's Daily Tower.</summary>
+        void PlayDaily();
+        /// <summary>Copies the last run's emoji result (and a duel link, if verified) for chats.</summary>
+        void CopyResult();
+        /// <param name="via">Where it came from, for telemetry: "link", "code" or "friends".</param>
+        void OpenChallenge(string code, string via);
         void ContinueWithAd();
         void DeclineContinue();
         void DoubleCoins();
         void ShareChallenge();
+        /// <summary>The challenge clip straight into TikTok or Instagram Stories (H5).</summary>
+        void ShareChallengeTo(ShareTarget target);
         void Pause();
         void Resume();
         void Restart();
@@ -30,6 +37,11 @@ namespace StackIt.UI
         void SetLook(ThemeId look);
         void SetReduceMotion(bool on);
         void SetMusic(bool on);
+        /// <summary>Plays a soundtrack from the shop for a few seconds.</summary>
+        void PreviewMusic(string styleId);
+        void EndMusicPreview();
+        /// <summary>A rewarded ad, then one run with a soundtrack the player doesn't own.</summary>
+        void TryMusic(string styleId);
     }
 
     /// <summary>What a screen may use. Built once by the App.</summary>
@@ -51,6 +63,7 @@ namespace StackIt.UI
         public GameController Game;
         public IGameFlow Flow;
         public UiRouter Router;
+        public ITelemetry Telemetry = NullTelemetry.Instance;
     }
 
     public enum ScreenBackground
@@ -178,6 +191,9 @@ namespace StackIt.UI
 
         public UiScreen Current { get; private set; }
 
+        /// <summary>A screen came to the front (telemetry's screen_view).</summary>
+        public event Action<UiScreen> Shown;
+
         public UiRouter(Transform overlayParent, IAdsService ads)
         {
             _ads = ads;
@@ -248,6 +264,7 @@ namespace StackIt.UI
             }
             Current = screen;
             screen.Show();
+            Shown?.Invoke(screen);
             if (screen.AllowsBanner) _ads.ShowBanner();
             else _ads.HideBanner();
         }
@@ -268,6 +285,7 @@ namespace StackIt.UI
             Current?.Hide();
             Current = previous;
             previous.Show();
+            Shown?.Invoke(previous);
             if (previous.AllowsBanner) _ads.ShowBanner();
             else _ads.HideBanner();
         }

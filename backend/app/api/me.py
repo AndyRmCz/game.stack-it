@@ -16,6 +16,7 @@ def _profile(p: Profile) -> ProfileResponse:
         coins=p.coins,
         equipped_block_skin=p.user.equipped_block_skin,
         equipped_theme=p.user.equipped_theme,
+        equipped_music=p.user.equipped_music,
         providers=p.providers,
     )
 

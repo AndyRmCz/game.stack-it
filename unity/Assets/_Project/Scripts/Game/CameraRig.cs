@@ -12,6 +12,7 @@ namespace StackIt.Game
         private const float Distance = 30f;
         private const float FollowSpeed = 4f;
         private const float FramingSpeed = 2.2f;
+        private const float PunchDecay = 14f;
         private const float MinOrthoSize = 6.5f;
         private const float HalfWidthNeeded = 3.9f; // moving block travel, projected on screen
         private static readonly Quaternion View = Quaternion.Euler(30f, 45f, 0f);
@@ -21,6 +22,7 @@ namespace StackIt.Game
         private float _targetY;
         private float _y;
         private float _shake;
+        private float _punch;
         private float _seed;
         private float _zoomTarget;
         private float _zoom;
@@ -50,6 +52,9 @@ namespace StackIt.Game
         }
 
         public void Shake(float amount) => _shake = Mathf.Max(_shake, amount);
+
+        /// <summary>A quick zoom in that eases back (a perfect drop): <paramref name="amount"/> is the fraction of the view.</summary>
+        public void Punch(float amount) => _punch = Mathf.Max(_punch, amount);
 
         /// <summary>0 = gameplay framing, 1 = pulled back to show the whole tower (game over).</summary>
         public void SetZoomOut(float amount, bool snap = false)
@@ -89,7 +94,8 @@ namespace StackIt.Game
             size = Mathf.Lerp(size, homeSize, _home);
             focusY = Mathf.Lerp(focusY, heroCentre - 0.16f * homeSize, _home);
 
-            Camera.orthographicSize = size;
+            _punch *= Mathf.Exp(-PunchDecay * dt);
+            Camera.orthographicSize = size * (1f - _punch);
             Vector3 position = new Vector3(0f, focusY, 0f) - View * Vector3.forward * Distance;
 
             if (_shake > 0.001f)

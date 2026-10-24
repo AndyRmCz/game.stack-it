@@ -13,21 +13,77 @@ namespace StackIt.Services
         Task InitializeAsync();
 
         /// <summary>Shows a rewarded ad; true only if the user earned the reward.</summary>
-        Task<bool> ShowRewardedAsync();
+        Task<bool> ShowRewardedAsync(string placement);
 
-        Task ShowInterstitialAsync();
+        Task ShowInterstitialAsync(string placement);
         void ShowBanner();
         void HideBanner();
 
         /// <summary>Re-opens the consent form (Settings ▸ Privacy choices), when required in the region.</summary>
         void ShowPrivacyOptions();
         bool PrivacyOptionsRequired { get; }
+
+        /// <summary>Ad lifecycle for telemetry (requested, loaded, shown, paid…), on the main thread.</summary>
+        event Action<AdEvent> AdEvent;
+    }
+
+    /// <summary>One step of an ad's life. <see cref="Name"/> is a <c>TelemetryEvents.Ad*</c> name.</summary>
+    public readonly struct AdEvent
+    {
+        public readonly string Name;
+        public readonly string Format;
+        public readonly string Placement;
+        public readonly int? ErrorCode;
+        public readonly long? LatencyMs;
+        public readonly long? ValueMicros;
+        public readonly string Currency;
+        public readonly string Precision;
+        public readonly string Source;
+
+        public AdEvent(string name, string format, string placement = null, int? errorCode = null, long? latencyMs = null,
+            long? valueMicros = null, string currency = null, string precision = null, string source = null)
+        {
+            Name = name;
+            Format = format;
+            Placement = placement;
+            ErrorCode = errorCode;
+            LatencyMs = latencyMs;
+            ValueMicros = valueMicros;
+            Currency = currency;
+            Precision = precision;
+            Source = source;
+        }
+    }
+
+    /// <summary>Product telemetry (docs/PLAN.md, "Measurement findings"). Names: <c>TelemetryEvents</c>.</summary>
+    public interface ITelemetry
+    {
+        void Track(string name, params (string Key, object Value)[] props);
+    }
+
+    /// <summary>Drops every event (tests, screens built without the app).</summary>
+    public sealed class NullTelemetry : ITelemetry
+    {
+        public static readonly NullTelemetry Instance = new NullTelemetry();
+
+        public void Track(string name, params (string Key, object Value)[] props) { }
+    }
+
+    /// <summary>Where a clip goes: the system sheet, or straight into one app (H5).</summary>
+    public enum ShareTarget
+    {
+        System,
+        TikTok,
+        InstagramStory,
     }
 
     public interface IShareService
     {
         /// <summary>Opens the native share sheet with text + link and, if given, an MP4 file.</summary>
         void Share(string text, string url, string videoPath);
+
+        /// <summary>Shares straight into one app; falls back to the sheet when that isn't possible.</summary>
+        void ShareTo(ShareTarget target, string text, string url, string videoPath);
     }
 
     public interface IRecorderService
@@ -36,7 +92,10 @@ namespace StackIt.Services
         void BeginRun();
         void EndRun();
 
-        /// <summary>Encodes the last ~15 s plus an end card. Returns the MP4 path, or null.</summary>
+        /// <summary>Marks a highlight now (see ClipMoments weights): the clip will start just before the best one.</summary>
+        void Highlight(float weight);
+
+        /// <summary>Encodes from just before the run's best moment (at most the last ~15 s) plus an end card. Returns the MP4 path, or null.</summary>
         Task<string> ExportClipAsync(EndCard card);
     }
 

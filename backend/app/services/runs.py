@@ -7,8 +7,9 @@ from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.core.errors import Conflict, Gone, NotFound
+from app.core.errors import BadRequest, Conflict, Gone, NotFound
 from app.domain.anticheat import assess_run
+from app.domain.daily import daily_seed
 from app.domain.economy import coins_for_run
 from app.domain.sim import SIM_VERSION, InputEvent
 from app.models import Challenge, ChallengeAttempt, Run, User
@@ -75,15 +76,27 @@ class RunService:
         self._ledger = ledger
         self._clock = clock
 
-    async def start(self, user_id: uuid.UUID, challenge_code: str | None = None) -> StartedRun:
+    async def start(
+        self, user_id: uuid.UUID, challenge_code: str | None = None, daily: bool = False
+    ) -> StartedRun:
+        if daily and challenge_code:
+            raise BadRequest("daily_and_challenge")
+        today = self._clock().date()
         async with self._session.begin():
             challenge = None
             if challenge_code:
                 challenge = await self._open_challenge(normalize_code(challenge_code), user_id)
+            if challenge:
+                seed = challenge.seed
+            elif daily:
+                seed = daily_seed(self._settings.jwt_secret, today)
+            else:
+                seed = secrets.randbits(32)
             run = Run(
                 user_id=user_id,
                 challenge_id=challenge.id if challenge else None,
-                seed=challenge.seed if challenge else secrets.randbits(32),
+                seed=seed,
+                daily_date=today if daily else None,
                 sim_version=SIM_VERSION,
                 # Duels stay fair: nobody can buy a second life in a challenge.
                 continues_allowed=challenge is None,

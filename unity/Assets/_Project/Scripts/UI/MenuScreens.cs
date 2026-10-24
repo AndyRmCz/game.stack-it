@@ -108,7 +108,7 @@ namespace StackIt.UI
                 UiKit.Grow(UiKit.OneLine(UiKit.Text(row, L.T("friends.pending_row", c.CreatorName, c.Score), TextRole.Body, T.TextPrimary,
                     TextAlignmentOptions.Left), 12f));
                 string code = c.Code;
-                ChipButton(row, L.T("friends.play"), Icons.Play, () => Ctx.Flow.OpenChallenge(code));
+                ChipButton(row, L.T("friends.play"), Icons.Play, () => Ctx.Flow.OpenChallenge(code, "friends"));
             }
         }
 
@@ -173,6 +173,7 @@ namespace StackIt.UI
         {
             string code = Ctx.Api.Profile?.FriendCode;
             if (code == null) return;
+            Ctx.Telemetry.Track(TelemetryEvents.ShareTap, ("source", "friends"));
             Ctx.Share.Share(L.T("friends.share_text", code), Ctx.Config.apiBaseUrl, null);
         }
     }
@@ -182,15 +183,18 @@ namespace StackIt.UI
         private readonly RectTransform _list;
         private readonly RectTransform _mine;
         private readonly TextMeshProUGUI _countdown;
+        private static readonly string[] Periods = { "weekly", "all_time", "daily" };
+
         private readonly Action<int> _selectTab;
-        private bool _showWeekly = true;
+        private string _period = "weekly";
 
         public LeaderboardScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Leaderboard", ScreenBackground.Gradient)
         {
             Header(L.T("ranks.title"), () => Ctx.Router.Back());
             RectTransform body = Body();
             UiKit.Column(body, Ui.RowGap);
-            _selectTab = UiKit.Segmented(body, new[] { L.T("ranks.weekly"), L.T("ranks.all_time") }, i => Select(i == 0));
+            _selectTab = UiKit.Segmented(body, new[] { L.T("ranks.weekly"), L.T("ranks.all_time"), L.T("ranks.daily") },
+                i => Select(Periods[i]));
             _countdown = UiKit.Text(body, "", TextRole.Overline, T.TextSecondary);
             UiKit.Size(_countdown.rectTransform, height: 18);
             _list = UiKit.ScrollList(body, Ui.RowGap);
@@ -199,34 +203,41 @@ namespace StackIt.UI
             UiKit.Column(_mine, 0);
         }
 
-        protected override void OnShow() => Select(_showWeekly);
+        protected override void OnShow() => Select(_period);
 
-        private void Select(bool weekly)
+        private void Select(string period)
         {
-            _showWeekly = weekly;
-            _selectTab(weekly ? 0 : 1);
-            _countdown.gameObject.SetActive(weekly);
-            Load(weekly);
+            _period = period;
+            _selectTab(Array.IndexOf(Periods, period));
+            _countdown.gameObject.SetActive(period != "all_time");
+            Load(period);
         }
 
-        private async void Load(bool weekly)
+        private async void Load(string period)
         {
+            bool weekly = period == "weekly";
             UiKit.Clear(_list);
             UiKit.Clear(_mine);
             Leaderboard board;
             try
             {
-                board = await Ctx.Api.LeaderboardAsync(weekly);
+                board = await Ctx.Api.LeaderboardAsync(period);
             }
             catch (ApiException e)
             {
-                States.Failed(_list, e, () => Load(weekly));
+                States.Failed(_list, e, () => Load(period));
                 return;
             }
-            if (weekly != _showWeekly) return; // switched tabs meanwhile
+            if (period != _period) return; // switched tabs meanwhile
+            if (period == "daily")
+            {
+                int today = DailyTower.Number(DateTime.UtcNow);
+                _countdown.text = L.T("ranks.daily_title", today);
+                UiKit.CenteredPill(_list, L.T("ranks.play_daily", today), Icons.Play, () => Ctx.Flow.PlayDaily());
+            }
             if (weekly && DateTime.TryParse(board.Since, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out DateTime since))
                 _countdown.text = L.T("ranks.resets_in", WeeklyReset.Short(WeeklyReset.Remaining(since, DateTime.UtcNow)));
-            if (board.Entries.Count <= 1)
+            if (board.Entries.Count <= 1 && period != "daily")
                 States.Show(_list, Icons.Trophy, L.T("ranks.empty"), L.T("friends.invite"), Icons.Share, () => Ctx.Router.Back());
             foreach (LeaderboardEntry entry in board.Entries)
             {
@@ -262,11 +273,14 @@ namespace StackIt.UI
 
     public sealed class ShopScreen : UiScreen
     {
+        private static readonly string[] Kinds = { "block", "theme", "music" };
+
         private readonly RectTransform _grid;
         private readonly TextMeshProUGUI _balance;
         private readonly Action<int> _selectTab;
         private string _kind = "block";
         private Shop _shop;
+        private bool _trialOffered; // offer_shown once per visit, not per render
 
         public ShopScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Shop", ScreenBackground.Gradient)
         {
@@ -277,7 +291,7 @@ namespace StackIt.UI
 
             RectTransform body = Body();
             UiKit.Column(body, Ui.RowGap);
-            _selectTab = UiKit.Segmented(body, new[] { L.T("shop.blocks"), L.T("shop.themes") }, i => Select(i == 0 ? "block" : "theme"));
+            _selectTab = UiKit.Segmented(body, new[] { L.T("shop.blocks"), L.T("shop.themes"), L.T("shop.music") }, i => Select(Kinds[i]));
             _grid = UiKit.ScrollList(body, Ui.RowGap);
             UiKit.Size((RectTransform)_grid.parent, height: 300).flexibleHeight = 1;
         }
@@ -288,7 +302,13 @@ namespace StackIt.UI
             foreach (ShopItem item in shop.Items) yield return (item.SkinId, item.Price, item.Owned);
         }
 
-        protected override void OnShow() => Reload();
+        protected override void OnShow()
+        {
+            _trialOffered = false;
+            Reload();
+        }
+
+        protected override void OnHide() => Ctx.Flow.EndMusicPreview();
 
         private async void Reload()
         {
@@ -303,6 +323,7 @@ namespace StackIt.UI
                 return;
             }
             Ctx.Seen.MarkSeen(Entries(_shop), _shop.Balance);
+            Ctx.Telemetry.Track(TelemetryEvents.ShopView, ("balance", _shop.Balance));
             Render();
         }
 
@@ -314,7 +335,7 @@ namespace StackIt.UI
 
         private void Render()
         {
-            _selectTab(_kind == "block" ? 0 : 1);
+            _selectTab(Array.IndexOf(Kinds, _kind));
             if (_shop == null) return;
             _balance.text = _shop.Balance.ToString("N0");
             UiKit.Clear(_grid);
@@ -344,7 +365,8 @@ namespace StackIt.UI
             tap.transition = Selectable.Transition.None;
             tap.onClick.AddListener(() => OnItem(item, card));
 
-            Preview(card, item);
+            if (item.Kind == "music") MusicPreview(card, item);
+            else Preview(card, item);
             TextMeshProUGUI name = UiKit.Text(card, L.T("skin." + item.SkinId), TextRole.Body, T.TextPrimary);
             UiKit.OneLine(name, 12f);
             UiKit.Size(name.rectTransform, height: 22);
@@ -423,6 +445,27 @@ namespace StackIt.UI
             holder.gameObject.AddComponent<TowerSlide>().Tower = tower;
         }
 
+        /// <summary>A soundtrack: its note icon, a listen button and, if not owned, "try it for a run" with an ad.</summary>
+        private void MusicPreview(RectTransform card, ShopItem item)
+        {
+            RectTransform frame = UiKit.Surface(card, "Stage", SurfaceKind.Sunken, 14f).rectTransform;
+            UiKit.Size(frame, height: 130);
+            UiKit.Column(frame, 10, new RectOffset(8, 8, 12, 12), TextAnchor.MiddleCenter);
+            UiKit.Size(UiKit.Icon(frame, Icons.Music, 40f, T.Accent).rectTransform, height: 44);
+
+            RectTransform buttons = UiKit.Rect("Buttons", frame);
+            UiKit.Size(buttons, height: 48);
+            HorizontalLayoutGroup row = UiKit.Row(buttons, 12);
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childForceExpandWidth = false;
+            UiKit.IconButton(buttons, Icons.Play, () => Ctx.Flow.PreviewMusic(item.SkinId));
+            if (item.Owned || Ctx.Ads == null || !Ctx.Ads.RewardedReady) return;
+            UiKit.IconButton(buttons, Icons.VideoAd, () => Ctx.Flow.TryMusic(item.SkinId));
+            if (_trialOffered) return;
+            _trialOffered = true;
+            Ctx.Telemetry.Track(TelemetryEvents.OfferShown, ("placement", AdPlacements.MusicTrial));
+        }
+
         private void OnItem(ShopItem item, RectTransform card)
         {
             if (item.Equipped) return;
@@ -433,11 +476,15 @@ namespace StackIt.UI
             }
             if (_shop.Balance < item.Price)
             {
+                Ctx.Telemetry.Track(TelemetryEvents.ItemUnaffordableTap, ("item_id", item.SkinId), ("price", item.Price),
+                    ("balance", _shop.Balance));
                 Shake(card);
                 Ctx.Haptics.Play(HapticKind.Medium);
                 Ctx.Router.Toast(L.T("error.insufficient_funds"));
                 return;
             }
+            Ctx.Telemetry.Track(TelemetryEvents.ItemPreview, ("item_id", item.SkinId), ("price", item.Price),
+                ("balance", _shop.Balance), ("owned", false));
             Ctx.Router.Confirm(L.T("shop.confirm", L.T("skin." + item.SkinId), item.Price), L.T("shop.buy", item.Price),
                 () => Guard(Buy(item.SkinId)));
         }
@@ -463,6 +510,90 @@ namespace StackIt.UI
         private async System.Threading.Tasks.Task Equip(string skinId)
         {
             _shop = await Ctx.Api.EquipAsync(skinId);
+            Render();
+        }
+    }
+
+    /// <summary>
+    /// The day's three missions (easy, medium, hard) and the chest for finishing all three.
+    /// Progress comes from the server (the day's verified runs); "Claim" pays coins once.
+    /// </summary>
+    public sealed class MissionsScreen : UiScreen
+    {
+        private readonly RectTransform _list;
+        private MissionBoard _missions;
+
+        public MissionsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Missions", ScreenBackground.Gradient)
+        {
+            Header(L.T("missions.title"), () => Ctx.Router.Back());
+            RectTransform body = Body();
+            UiKit.Column(body, Ui.RowGap);
+            TextMeshProUGUI note = UiKit.Text(body, L.T("missions.note"), TextRole.Caption, T.TextSecondary);
+            UiKit.Size(note.rectTransform, height: 18);
+            _list = UiKit.ScrollList(body, Ui.RowGap);
+            UiKit.Size((RectTransform)_list.parent, height: 300).flexibleHeight = 1;
+        }
+
+        protected override void OnShow() => Reload();
+
+        private async void Reload()
+        {
+            try
+            {
+                _missions = await Ctx.Api.MissionsAsync();
+            }
+            catch (ApiException e)
+            {
+                UiKit.Clear(_list);
+                States.Failed(_list, e, Reload);
+                return;
+            }
+            Render();
+        }
+
+        private void Render()
+        {
+            UiKit.Clear(_list);
+            foreach (Mission m in _missions.Missions)
+                Row(L.T("mission." + m.Kind, m.Target), L.T("missions.progress", m.Progress, m.Target), m.Reward, m.Done, m.Claimed, m.Slot,
+                    m.Kind == "daily" ? (Action)(() => Ctx.Flow.PlayDaily()) : null);
+            MissionChest chest = _missions.Chest;
+            if (chest != null)
+                Row(L.T("missions.chest"), L.T("missions.chest_note"), chest.Reward, chest.Ready, chest.Claimed, MissionBoard.ChestSlot);
+        }
+
+        private void Row(string title, string detail, int reward, bool done, bool claimed, int slot, Action play = null)
+        {
+            RectTransform card = UiKit.Card(_list, "Mission" + slot);
+            UiKit.Size(card, height: 76);
+            HorizontalLayoutGroup row = UiKit.Row(card, 12);
+            row.padding = new RectOffset(16, 12, 10, 10);
+            row.childAlignment = TextAnchor.MiddleLeft;
+            row.childForceExpandWidth = false;
+
+            RectTransform text = UiKit.Rect("Text", card);
+            UiKit.Column(text, 2, null, TextAnchor.MiddleLeft);
+            text.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+            UiKit.Size(UiKit.OneLine(UiKit.Text(text, title, TextRole.Body, T.TextPrimary, TextAlignmentOptions.Left), 12f).rectTransform, height: 24);
+            UiKit.Size(UiKit.Text(text, detail, TextRole.Caption, T.TextSecondary, TextAlignmentOptions.Left).rectTransform, height: 18);
+
+            if (claimed)
+                UiKit.Icon(card, Icons.Check, 26f, T.Accent);
+            else if (done)
+                UiKit.Pill(card, L.T("missions.claim", reward), Icons.Coin, () => Guard(Claim(slot)));
+            else if (play != null)
+                UiKit.Pill(card, L.T("missions.play"), Icons.Play, () => play());
+            else
+                UiKit.Chip(card, "+" + reward, T.SurfaceSunken, T.TextSecondary, 30f, Icons.Coin);
+        }
+
+        private async System.Threading.Tasks.Task Claim(int slot)
+        {
+            _missions = await Ctx.Api.ClaimMissionAsync(slot);
+            Ctx.Audio.Reward();
+            Ctx.Haptics.Play(HapticKind.Success);
+            Ctx.Telemetry.Track(TelemetryEvents.MissionClaimed, ("slot", slot),
+                ("kind", slot == MissionBoard.ChestSlot ? "chest" : _missions.Missions[slot].Kind));
             Render();
         }
     }
@@ -641,9 +772,9 @@ namespace StackIt.UI
 
             RectTransform prefs = Group(body);
             UiKit.Toggle(prefs, Icons.Motion, L.T("settings.reduce_motion"), ctx.Save.ReduceMotion, on => ctx.Flow.SetReduceMotion(on));
-            UiKit.Toggle(prefs, Icons.Sound, L.T("settings.sound"), ctx.Save.SoundOn, on => { ctx.Save.SoundOn = on; ctx.Audio.Enabled = on; });
+            UiKit.Toggle(prefs, Icons.Sound, L.T("settings.sound"), ctx.Save.SoundOn, on => { ctx.Save.SoundOn = on; ctx.Audio.Enabled = on; ctx.Telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "sound"), ("value", on)); });
             UiKit.Toggle(prefs, Icons.Music, L.T("settings.music"), ctx.Save.MusicOn, on => ctx.Flow.SetMusic(on));
-            UiKit.Toggle(prefs, Icons.Haptics, L.T("settings.haptics"), ctx.Save.HapticsOn, on => { ctx.Save.HapticsOn = on; ctx.Haptics.Enabled = on; });
+            UiKit.Toggle(prefs, Icons.Haptics, L.T("settings.haptics"), ctx.Save.HapticsOn, on => { ctx.Save.HapticsOn = on; ctx.Haptics.Enabled = on; ctx.Telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "haptics"), ("value", on)); });
 
             Overline(body, L.T("settings.language"));
             Action<int> lang = UiKit.Segmented(body, new[] { "English", "Español" }, i => SetLanguage(i == 0 ? "en" : "es"));
@@ -843,6 +974,7 @@ namespace StackIt.UI
         {
             if (code == Ctx.Localizer.Language) return;
             Ctx.Save.Language = code;
+            Ctx.Telemetry.Track(TelemetryEvents.SettingChanged, ("setting", "language"), ("value", code));
             Ctx.Localizer.SetLanguage(code); // the App rebuilds the UI on Changed
         }
     }

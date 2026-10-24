@@ -64,6 +64,7 @@ namespace StackIt.Services.Native
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")] public static extern void _StackItHaptic(int kind);
         [DllImport("__Internal")] public static extern void _StackItShare(string text, string url, string filePath);
+        [DllImport("__Internal")] public static extern void _StackItShareInstagramStory(string facebookAppId, string text, string url, string filePath);
         [DllImport("__Internal")] [return: MarshalAs(UnmanagedType.I1)] public static extern bool _StackItRecStart(int width, int height, int fps, int bitrate, int keepSeconds);
         [DllImport("__Internal")] public static extern void _StackItRecAppend(IntPtr bgra, int length, int bytesPerRow, double seconds);
         [DllImport("__Internal")] public static extern void _StackItRecExport(string path, double lastSeconds);
@@ -74,6 +75,7 @@ namespace StackIt.Services.Native
 #else
         public static void _StackItHaptic(int kind) { }
         public static void _StackItShare(string text, string url, string filePath) { }
+        public static void _StackItShareInstagramStory(string facebookAppId, string text, string url, string filePath) { }
         public static bool _StackItRecStart(int width, int height, int fps, int bitrate, int keepSeconds) => false;
         public static void _StackItRecAppend(IntPtr bgra, int length, int bytesPerRow, double seconds) { }
         public static void _StackItRecExport(string path, double lastSeconds) { }
