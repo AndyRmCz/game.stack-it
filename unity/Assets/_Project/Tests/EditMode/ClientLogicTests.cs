@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using StackIt.Client;
+using StackIt.Client.Api;
 using StackIt.Core;
 
 namespace StackIt.Tests
@@ -91,6 +92,25 @@ namespace StackIt.Tests
             for (int i = 0; i < 5; i++) p.RecordRunEnded();
             p.RecordRewardedShown(1000);
             Assert.IsFalse(p.ShouldShowInterstitial(false, false, 1030));
+        }
+
+        [Test]
+        public void DoubleCoinsOfferedOnlyForVerifiedRunsWithCoinsAndAnAd()
+        {
+            var verified = new SubmitRunResponse { Status = "verified", CoinsEarned = 12 };
+            Assert.IsTrue(AdPolicy.OffersDoubleCoins(verified, rewardedReady: true));
+            Assert.IsFalse(AdPolicy.OffersDoubleCoins(verified, rewardedReady: false), "no ad loaded");
+            Assert.IsFalse(AdPolicy.OffersDoubleCoins(new SubmitRunResponse { Status = "rejected", CoinsEarned = 12 }, true));
+            Assert.IsFalse(AdPolicy.OffersDoubleCoins(new SubmitRunResponse { Status = "verified" }, true), "no coins");
+            Assert.IsFalse(AdPolicy.OffersDoubleCoins(new SubmitRunResponse { Status = "verified", CoinsEarned = 12, CoinsDoubled = true }, true));
+        }
+
+        [Test]
+        public void NoDoubleCoinsOfferForARunQueuedOffline()
+        {
+            // An offline submit is queued and has no result yet (null): this used to throw and
+            // leave every later Play press failing.
+            Assert.IsFalse(AdPolicy.OffersDoubleCoins(null, rewardedReady: true));
         }
     }
 

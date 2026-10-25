@@ -3,12 +3,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.stackit.nativeplugin.manifest">
     <application>
         <activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true">
-            <!-- App Links: https://localhost/c/CODE opens the app (verified via /.well-known/assetlinks.json). -->
+            <!-- App Links: https://192.168.1.16/c/CODE opens the app (verified via /.well-known/assetlinks.json). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="localhost" android:pathPrefix="/c/" />
+                <data android:scheme="https" android:host="192.168.1.16" android:pathPrefix="/c/" />
             </intent-filter>
             <!-- "Open in app" button on the landing page: stackit://c/CODE -->
             <intent-filter>

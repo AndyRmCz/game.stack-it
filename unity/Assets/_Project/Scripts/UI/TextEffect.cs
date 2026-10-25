@@ -8,6 +8,7 @@ namespace StackIt.UI
     {
         Shadow,   // soft drop shadow (white numbers over the game)
         LogoGlow, // text.logoGlow around the logo and the HUD score (Neon; none in Pop)
+        ArcadeGold, // arcade.*: gold gradient letters, dark outline, hard drop shadow (near-miss callout)
     }
 
     /// <summary>
@@ -15,6 +16,8 @@ namespace StackIt.UI
     /// Start: screens are built under an inactive root, and until TMP's Awake has loaded the font
     /// material, touching material properties throws. Each label using this gets its own material
     /// instance, so it is kept to a few large labels. (The only file that touches TMP materials.)
+    /// The shader compiles these keywords only for combinations a built material uses: the
+    /// materials in Resources/StackIt/TextVariants keep them in the player build.
     /// </summary>
     [RequireComponent(typeof(TextMeshProUGUI))]
     public sealed class TextEffect : Themed
@@ -24,6 +27,8 @@ namespace StackIt.UI
         private Color _color;
         private float _softness;
         private float _offset;
+        private Color _outline;
+        private float _outlineWidth;
         private bool _started;
 
         public static TextEffect Add(TextMeshProUGUI label, TextEffectKind kind)
@@ -36,11 +41,26 @@ namespace StackIt.UI
 
         public override void Apply(ThemePalette p)
         {
+            _outlineWidth = 0f;
             if (Kind == TextEffectKind.Shadow)
             {
                 _color = new Color(0f, 0f, 0f, 0.28f);
                 _softness = 0.55f;
                 _offset = -0.6f;
+            }
+            else if (Kind == TextEffectKind.ArcadeGold)
+            {
+                // Vertex colours: TMP multiplies the gradient by the label's colour, so that stays white.
+                var label = GetComponent<TextMeshProUGUI>();
+                Color top = Look.ToColor(p.Color(T.ArcadeGoldTop)), bottom = Look.ToColor(p.Color(T.ArcadeGoldBottom));
+                label.color = Color.white;
+                label.enableVertexGradient = true;
+                label.colorGradient = new VertexGradient(top, top, bottom, bottom);
+                _outline = Look.ToColor(p.Color(T.ArcadeOutline));
+                _outlineWidth = 0.28f;
+                _color = Look.ToColor(p.Color(T.ArcadeShadow));
+                _softness = 0f; // a hard, printed-looking shadow
+                _offset = -0.9f;
             }
             else
             {
@@ -62,6 +82,12 @@ namespace StackIt.UI
         {
             var label = GetComponent<TextMeshProUGUI>();
             Material material = label.fontMaterial; // per-label instance
+            if (_outlineWidth > 0f)
+            {
+                material.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                material.SetColor(ShaderUtilities.ID_OutlineColor, _outline);
+                material.SetFloat(ShaderUtilities.ID_OutlineWidth, _outlineWidth);
+            }
             if (_color.a <= 0f)
             {
                 material.DisableKeyword(ShaderUtilities.Keyword_Underlay);
@@ -73,8 +99,10 @@ namespace StackIt.UI
                 material.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, _offset);
                 material.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
                 material.SetFloat(ShaderUtilities.ID_UnderlaySoftness, _softness);
-                material.SetFloat(ShaderUtilities.ID_UnderlayDilate, Kind == TextEffectKind.LogoGlow ? 0.4f : 0f);
+                // Glow and arcade shadow spread past the letters (the arcade one covers the outline).
+                material.SetFloat(ShaderUtilities.ID_UnderlayDilate, Kind == TextEffectKind.Shadow ? 0f : Kind == TextEffectKind.LogoGlow ? 0.4f : _outlineWidth);
             }
+            ShaderUtilities.UpdateShaderRatios(material); // keeps outline + shadow inside the glyphs' padding
             label.UpdateMeshPadding();
         }
     }

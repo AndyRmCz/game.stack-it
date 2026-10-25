@@ -104,17 +104,16 @@ namespace StackIt.Services.Native
                 next = Math.Max(next + interval, now - interval);
 
                 ScreenCapture.CaptureScreenshotIntoRenderTexture(_screen);
-                BlitToVideo(_screen);
+                BlitToVideo(_screen, VideoSource.ScreenCapture);
                 double pts = now - _startTime;
                 AsyncGPUReadback.Request(_video, 0, ReadbackFormat, request => OnFrame(request, pts));
             }
         }
 
-        private void BlitToVideo(Texture source)
+        private void BlitToVideo(Texture source, VideoSource kind)
         {
             // Encoders want the top row first; readback returns rows in texture memory order.
-            bool flip = !SystemInfo.graphicsUVStartsAtTop;
-            if (invertFlip) flip = !flip;
+            bool flip = VideoOrientation.Flip(kind, SystemInfo.graphicsUVStartsAtTop, invertFlip);
             if (flip) Graphics.Blit(source, _video, new Vector2(1, -1), new Vector2(0, 1));
             else Graphics.Blit(source, _video);
         }
@@ -151,14 +150,15 @@ namespace StackIt.Services.Native
             if (EndCardFactory == null) return;
             using (IEndCardRenderer renderer = EndCardFactory(card))
             {
-                // Paced in real time: Android's surface encoder stamps frames on arrival.
+                // Paced in real time: Android's surface encoder stamps frames on arrival. Waiting
+                // before each frame also lets the card's canvas take its texture's size first.
                 for (int i = 0; i < EndCardFrames; i++)
                 {
-                    renderer.Render(_video, i / (float)EndCardFrames);
+                    await Task.Delay(1000 / Fps);
+                    BlitToVideo(renderer.Render(i / (float)EndCardFrames), VideoSource.Camera);
                     AsyncGPUReadbackRequest request = AsyncGPUReadback.Request(_video, 0, ReadbackFormat);
                     request.WaitForCompletion();
                     if (!request.hasError) Append(request.GetData<byte>(), _lastPts + 1.0 / Fps);
-                    await Task.Delay(1000 / Fps);
                 }
             }
         }
@@ -198,9 +198,10 @@ namespace StackIt.Services.Native
         }
     }
 
-    /// <summary>Draws the "Can you beat me?" card into the video target (implemented in UI).</summary>
+    /// <summary>Draws the "Can you beat me?" card at the video's size (implemented in UI).</summary>
     public interface IEndCardRenderer : IDisposable
     {
-        void Render(RenderTexture target, float progress);
+        /// <summary>Renders the card at <paramref name="progress"/> (0..1) and returns its texture.</summary>
+        Texture Render(float progress);
     }
 }

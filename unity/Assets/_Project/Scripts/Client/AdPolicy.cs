@@ -1,3 +1,5 @@
+using StackIt.Client.Api;
+
 namespace StackIt.Client
 {
     /// <summary>
@@ -29,6 +31,13 @@ namespace StackIt.Client
             if (_runsSinceLastAd < _minRunsBetween) return false;
             return nowSeconds - _lastAdAt >= _minSecondsBetween;
         }
+
+        /// <summary>
+        /// The results screen's "double coins" offer: a verified run that earned coins, not yet
+        /// doubled, with a rewarded ad loaded. No result yet (queued offline) means no offer.
+        /// </summary>
+        public static bool OffersDoubleCoins(SubmitRunResponse result, bool rewardedReady) =>
+            result != null && result.Status == "verified" && rewardedReady && result.CoinsEarned > 0 && !result.CoinsDoubled;
 
         private void ResetAt(double nowSeconds)
         {

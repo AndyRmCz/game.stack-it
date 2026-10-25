@@ -16,7 +16,7 @@ namespace StackIt.Services
         private readonly ApiClient _api;
         private readonly OfflineRunQueue _queue;
         private readonly SaveService _save;
-        private Task<StartRunResponse> _reserved;
+        private readonly RunReservation _reserved;
         private bool _flushing;
 
         public Profile Profile { get; private set; }
@@ -27,6 +27,7 @@ namespace StackIt.Services
             _api = api;
             _queue = queue;
             _save = save;
+            _reserved = new RunReservation(() => StartAsync(null));
             if (save.CachedProfileJson != null)
             {
                 try
@@ -73,15 +74,13 @@ namespace StackIt.Services
 
         /// <summary>
         /// Seed for the next normal run. A run is reserved one game ahead so pressing Play never
-        /// waits for the network.
+        /// waits for the network; without one, Play waits at most a moment (RunReservation).
         /// </summary>
         public async Task<StartRunResponse> TakeReservedRunAsync()
         {
-            Task<StartRunResponse> reserved = _reserved ?? StartAsync(null);
-            _reserved = null;
             try
             {
-                return await reserved;
+                return await _reserved.TakeAsync();
             }
             catch (ApiException)
             {
@@ -89,11 +88,7 @@ namespace StackIt.Services
             }
         }
 
-        public void ReserveNextRun()
-        {
-            _reserved = StartAsync(null);
-            _reserved.ContinueWith(t => { _ = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
-        }
+        public void ReserveNextRun() => _reserved.Reserve();
 
         public Task<StartRunResponse> StartChallengeRunAsync(string code) => StartAsync(code);
 

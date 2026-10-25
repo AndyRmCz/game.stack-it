@@ -48,6 +48,10 @@ namespace StackIt.Client.Theming
         public const string MedalSilver = "medal.silver";
         public const string MedalBronze = "medal.bronze";
         public const string MedalInk = "medal.ink";
+        public const string ArcadeGoldTop = "arcade.goldTop";
+        public const string ArcadeGoldBottom = "arcade.goldBottom";
+        public const string ArcadeOutline = "arcade.outline";
+        public const string ArcadeShadow = "arcade.shadow";
         public const string BlockBase = "block.base";
         public const string BlockMoving = "block.moving";
         public const string BlockGroundShadow = "block.groundShadow";

@@ -203,7 +203,8 @@ namespace StackIt.UI
     /// <summary>
     /// In-game HUD: the whole screen is the tap target. Pause (top-left), the score (top centre,
     /// glowing in Neon), the combo pill that punches in on each perfect, the rival's marker (an
-    /// accent2 line and a chip at the rival's height) and the "You passed" banner.
+    /// accent2 line and a chip at the rival's height), the "You passed" banner and the near-miss
+    /// callout: bare gold arcade lettering (no background) that slams in over the tower.
     /// </summary>
     public sealed class HudScreen : UiScreen
     {
@@ -211,6 +212,7 @@ namespace StackIt.UI
         private readonly TextMeshProUGUI _combo;
         private readonly RectTransform _banner;
         private readonly TextMeshProUGUI _bannerText;
+        private readonly TextMeshProUGUI _nearMiss;
         private readonly TextMeshProUGUI _hint;
         private readonly RivalMarker _rival;
 
@@ -248,6 +250,15 @@ namespace StackIt.UI
             UiKit.Stretch(_bannerText.rectTransform, 12, 0, 12, 0);
             UiKit.OneLine(_bannerText, 12f);
 
+            // No token: TextEffect paints the gold gradient, outline and shadow.
+            _nearMiss = UiKit.Text(Safe, "", TextRole.BigNumber, null, size: 34f);
+            _nearMiss.fontStyle = FontStyles.Italic; // not upper case: "mm" must stay a unit
+            _nearMiss.characterSpacing = 3f;
+            UiKit.Pin(_nearMiss.rectTransform, new Vector2(0.5f, 0.68f), new Vector2(360, 64), Vector2.zero);
+            _nearMiss.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            UiKit.OneLine(_nearMiss, 20f);
+            TextEffect.Add(_nearMiss, TextEffectKind.ArcadeGold);
+
             _hint = UiKit.Text(Safe, L.T("hud.tap_hint"), TextRole.Body, T.TextPrimary);
             UiKit.Band(_hint.rectTransform, 0.16f, 40);
 
@@ -264,6 +275,7 @@ namespace StackIt.UI
             _score.text = Ctx.Game.Score.ToString();
             _combo.transform.parent.gameObject.SetActive(false);
             _banner.gameObject.SetActive(false);
+            _nearMiss.gameObject.SetActive(false);
             _hint.gameObject.SetActive(Ctx.Game.Height == 0);
             bool rival = setup != null && setup.RivalHeight > 0 && Ctx.Game.Height < setup.RivalHeight;
             _rival.Show(rival ? setup.RivalName : null, setup?.RivalHeight ?? 0, setup?.RivalScore ?? 0);
@@ -294,12 +306,31 @@ namespace StackIt.UI
             if (e == RivalEvent.Passed) _rival.Show(null, 0, 0);
         }
 
-        /// <summary>"0.4 mm from perfect" on the banner; "Missed by 0.4 mm" as a toast, which stays over the results.</summary>
+        /// <summary>"0.4 mm from perfect" as the gold callout; "Missed by 0.4 mm" as a toast, which stays over the results.</summary>
         private void OnNearMiss(NearMiss near)
         {
             string mm = near.Millimetres.ToString("0.0");
-            if (near.Kind == NearMissKind.AlmostPerfect) ShowBanner(L.T("hud.almost_perfect", mm));
+            if (near.Kind == NearMissKind.AlmostPerfect) ShowNearMiss(L.T("hud.almost_perfect", $"<size=145%>{mm}</size>"));
             else Ctx.Router.Toast(L.T("hud.missed_by", mm));
+        }
+
+        /// <summary>Arcade timing: slams in oversized, settles with a bounce, holds, then floats up and fades.</summary>
+        private void ShowNearMiss(string text)
+        {
+            _nearMiss.text = text;
+            RectTransform rt = _nearMiss.rectTransform;
+            rt.gameObject.SetActive(true);
+            var group = rt.GetComponent<CanvasGroup>();
+            if (group == null) group = rt.gameObject.AddComponent<CanvasGroup>();
+            bool still = Look.ReduceMotion;
+            Tween.Run(group, 1.5f, t =>
+            {
+                float s = still ? 1f : Mathf.LerpUnclamped(1.9f, 1f, Tween.EaseOutBack(Mathf.Clamp01(t / 0.14f)));
+                float leave = Mathf.Clamp01((t - 0.72f) / 0.28f);
+                rt.localScale = new Vector3(s, s, 1f);
+                rt.anchoredPosition = new Vector2(0f, still ? 0f : 28f * leave);
+                group.alpha = 1f - leave;
+            }, () => { if (rt != null) rt.gameObject.SetActive(false); });
         }
 
         private void ShowBanner(string text)
@@ -585,7 +616,7 @@ namespace StackIt.UI
             _status.text = verified ? "" : L.T("over.not_verified");
             _best.text = L.T("over.best", result.BestScore);
             SetCoins(verified ? result.CoinsEarned * (result.CoinsDoubled ? 2 : 1) : 0);
-            _double.transform.parent.gameObject.SetActive(verified && rewardedReady && result.CoinsEarned > 0 && !result.CoinsDoubled);
+            _double.transform.parent.gameObject.SetActive(AdPolicy.OffersDoubleCoins(result, rewardedReady));
             _challenge.interactable = verified;
             if (result.Challenge != null) ShowDuel(result);
         }

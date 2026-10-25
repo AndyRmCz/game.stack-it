@@ -68,5 +68,27 @@ namespace StackIt.Tests
             }
             Assert.That(offenders, Is.Empty);
         }
+
+        [Test]
+        public void TextEffectShaderVariantsShipInTheBuild()
+        {
+            // TMP's mobile SDF shader compiles outline and underlay as shader_feature: a player
+            // build strips every keyword combination no built material uses, so TextEffect's
+            // runtime keywords would silently do nothing on the phone. A material in Resources
+            // with each combination keeps it.
+            const string mobileSdf = "guid: fe393ace9b354375a9cb14cdbbc28be4";
+            List<string> materials = Directory.GetFiles(TestPaths.ResourcesDir(), "*.mat", SearchOption.AllDirectories)
+                .Select(File.ReadAllText).Where(t => t.Contains(mobileSdf)).ToList();
+            foreach (string[] combo in new[] { new[] { "UNDERLAY_ON" }, new[] { "OUTLINE_ON", "UNDERLAY_ON" } })
+            {
+                bool shipped = materials.Any(t =>
+                {
+                    List<string> keywords = Regex.Matches(t, @"^\s*-\s*(\w+_ON)\s*$", RegexOptions.Multiline)
+                        .Cast<Match>().Select(m => m.Groups[1].Value).ToList();
+                    return keywords.OrderBy(k => k).SequenceEqual(combo);
+                });
+                Assert.IsTrue(shipped, "no material in Resources keeps " + string.Join(" + ", combo));
+            }
+        }
     }
 }

@@ -400,7 +400,7 @@ namespace StackIt.Bootstrap
             _starting = true;
             try
             {
-                await EndPendingRun();
+                _ = EndPendingRun(); // its submission (possibly a minute of retries offline) finishes in the background
                 await MaybeInterstitial();
                 StartRunResponse run = await _api.TakeReservedRunAsync();
                 int best = BestScore();
@@ -487,7 +487,7 @@ namespace StackIt.Bootstrap
             _starting = true;
             try
             {
-                await EndPendingRun();
+                _ = EndPendingRun();
                 await _signedIn;
                 StartRunResponse run = await _api.StartDailyRunAsync();
                 StartRun(new RunSetup
@@ -668,15 +668,17 @@ namespace StackIt.Bootstrap
 
             try
             {
-                _lastResult = await _api.SubmitRunAsync(setup.RunId, _game.Events, score);
+                SubmitRunResponse result = await _api.SubmitRunAsync(setup.RunId, _game.Events, score); // null: queued offline
+                if (_game.Setup != setup) return; // the next run already started
+                _lastResult = result;
                 bool rewardedReady = _ads.RewardedReady;
-                _gameOver.ShowServerResult(_lastResult, rewardedReady);
-                // Same rule as the results screen's "double coins" button.
-                if (_lastResult.Status == "verified" && rewardedReady && _lastResult.CoinsEarned > 0 && !_lastResult.CoinsDoubled)
+                _gameOver.ShowServerResult(result, rewardedReady);
+                if (AdPolicy.OffersDoubleCoins(result, rewardedReady))
                     _telemetry.Track(TelemetryEvents.OfferShown, ("placement", AdPlacements.DoubleCoins));
             }
             catch (ApiException e)
             {
+                if (_game.Setup != setup) return;
                 _gameOver.ShowServerResult(new SubmitRunResponse { Status = "rejected", Reason = e.Code }, false);
             }
         }
@@ -741,7 +743,7 @@ namespace StackIt.Bootstrap
 
         public async void GoHome()
         {
-            await EndPendingRun();
+            _ = EndPendingRun();
             await MaybeInterstitial();
             TrackRunEnd("quit"); // left from the pause menu mid-run (a finished run was already reported)
             // A clean cut to the base while Home fades in (the tower is gone).

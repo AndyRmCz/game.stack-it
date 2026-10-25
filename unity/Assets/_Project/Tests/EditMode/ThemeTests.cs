@@ -130,6 +130,16 @@ namespace StackIt.Tests
                     AtLeast(Large, t.Color(T.MedalInk), t.Color(medal), $"{t.Id} medal.ink on {medal}");
             }
         }
+
+        [Test]
+        public void ArcadeGoldLettersStandOutFromTheirOutline()
+        {
+            // The near-miss callout has no background: the outline is what separates the gold from
+            // any sky behind it.
+            foreach (ThemePalette t in Themes.Catalog.All)
+            foreach (string gold in new[] { T.ArcadeGoldTop, T.ArcadeGoldBottom })
+                AtLeast(Large, t.Color(gold), t.Color(T.ArcadeOutline), $"{t.Id} {gold} on arcade.outline");
+        }
     }
 
     public class HeightRampTests

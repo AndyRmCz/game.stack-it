@@ -9,9 +9,10 @@ namespace StackIt.UI
 {
     /// <summary>
     /// The clip's closing card in the player's current look: the logo, the big score, "Can you beat
-    /// me?" and the challenge code in a pill, drawn offscreen by its own camera straight into the
-    /// recorder's 720 × 1280 render texture (sizes are in pixels; the score is 220 px so it stays
-    /// readable in a phone feed). Never shown on the device screen.
+    /// me?" and the challenge code in a pill, drawn offscreen by its own camera into its own
+    /// 720 × 1280 texture, so the layout has the video's shape rather than the phone screen's
+    /// (sizes are in pixels; the score is 220 px so it stays readable in a phone feed). The
+    /// recorder copies it into the video the right way up. Never shown on the device screen.
     /// </summary>
     public sealed class EndCardRenderer : IEndCardRenderer
     {
@@ -19,6 +20,7 @@ namespace StackIt.UI
 
         private readonly GameObject _root;
         private readonly Camera _camera;
+        private readonly RenderTexture _target;
         private readonly RectTransform _score;
         private readonly CanvasGroup _group;
 
@@ -32,6 +34,8 @@ namespace StackIt.UI
             _camera.backgroundColor = Look.C(T.TextPrimary); // hidden behind the gradient
             _camera.cullingMask = 1 << Layer;
             _camera.orthographic = true;
+            _target = new RenderTexture(RecorderService.Width, RecorderService.Height, 24, RenderTextureFormat.ARGB32);
+            _camera.targetTexture = _target; // from the start: the canvas sizes itself to it
 
             var canvasGo = new GameObject("Canvas", typeof(RectTransform));
             canvasGo.layer = Layer;
@@ -44,10 +48,10 @@ namespace StackIt.UI
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(RecorderService.Width, RecorderService.Height);
-            _group = canvasGo.AddComponent<CanvasGroup>();
 
             UiKit.Background(canvasGo.transform, 0.5f);
             RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
+            _group = col.gameObject.AddComponent<CanvasGroup>(); // the content fades in over the background
             UiKit.Column(col, 22, null, TextAnchor.MiddleCenter);
             TextMeshProUGUI logo = UiKit.Text(col, "STACK IT", TextRole.Logo, size: 96f);
             UiKit.Size(logo.rectTransform, height: 110);
@@ -83,19 +87,24 @@ namespace StackIt.UI
             SetLayer(_root.transform);
         }
 
-        public void Render(RenderTexture target, float progress)
+        public Texture Render(float progress)
         {
             float pop = Mathf.Clamp01(progress * 4f);
             float s = Mathf.LerpUnclamped(0.6f, 1f, StackIt.Game.Tween.EaseOutBack(pop));
             _score.localScale = new Vector3(s, s, 1f);
             _group.alpha = Mathf.Clamp01(progress * 6f);
-            _camera.targetTexture = target;
             Canvas.ForceUpdateCanvases();
             _camera.Render();
-            _camera.targetTexture = null;
+            return _target;
         }
 
-        public void Dispose() => Object.Destroy(_root);
+        public void Dispose()
+        {
+            _camera.targetTexture = null;
+            _target.Release();
+            Object.Destroy(_target);
+            Object.Destroy(_root);
+        }
 
         private static void SetLayer(Transform t)
         {

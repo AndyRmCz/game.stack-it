@@ -48,6 +48,7 @@ Tests fail if either copy drifts (`ThemeTokenTests.TheUnityCopyMatchesTheSharedF
 | `overlay.dim` | ink 40% | black 55% | Behind pause, dialogs, sheets |
 | `toast.fill` / `toast.text` | ink / white | `#12303A` / `#F2FFFD` | Toasts |
 | `medal.gold/silver/bronze`, `medal.ink` | | | Top-3 leaderboard chips |
+| `arcade.goldTop` / `arcade.goldBottom`, `arcade.outline`, `arcade.shadow` | `#FFF3A6` → `#FFB321`, `#4A1600`, `#1F0800` 80% | same | Near-miss callout ("0.4 mm from perfect"): gold gradient letters, dark outline, hard drop shadow, no background |
 | `block.base`, `block.moving`, `block.ramp`, `block.groundShadow` | pink base, mint moving, pastel ramp | teal base, magenta moving, cyan→coral ramp | Gameplay blocks (exact face colours) |
 | `block.emission` | 0 | 0.35 | Emissive blocks for bloom |
 | `postFx.bloom*`, `postFx.chromaticPulse` | bloom off, 0.15 | bloom 1.2 / 0.9 / 0.7, 0.35 | URP volume |
