@@ -88,7 +88,7 @@ friends.empty,No friends yet. Send a challenge: whoever accepts becomes your fri
 friends.remove_confirm,Remove @{0} from your friends?,¿Quitar a @{0} de tus amigos?
 friends.remove,Remove,Quitar
 friends.added,@{0} is now your friend,@{0} ya es tu amigo
-friends.share_text,Add me on Stack IT! My friend code: {0},¡Agrégame en Stack IT! Mi código de amigo: {0}
+friends.share_text,Add me on Milli! My friend code: {0},¡Agrégame en Milli! Mi código de amigo: {0}
 friends.pending,Challenges waiting,Retos pendientes
 friends.pending_row,@{0} · {1} to beat,@{0} · supera {1}
 friends.play,Play,Jugar
@@ -172,7 +172,7 @@ settings.delete_yes,Delete forever,Eliminar para siempre
 common.cancel,Cancel,Cancelar
 common.retry,Retry,Reintentar
 # Sharing
-share.text,I stacked {0} in Stack IT. Can you beat me? Code {1},Apilé {0} en Stack IT. ¿Me superas? Código {1}
+share.text,I stacked {0} in Milli. Can you beat me? Code {1},Apilé {0} en Milli. ¿Me superas? Código {1}
 share.headline,Can you beat me?,¿Me superas?
 # App flow
 flow.challenge_offline,Challenges need a connection. Try again when you're online.,Los retos necesitan conexión. Inténtalo cuando tengas internet.

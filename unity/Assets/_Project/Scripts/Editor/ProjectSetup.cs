@@ -181,11 +181,11 @@ namespace StackIt.EditorTools
 
         private static void ApplyPlayerSettings(AppConfig config)
         {
-            PlayerSettings.productName = "Stack IT";
+            PlayerSettings.productName = "Milli";
             // The Neon icon is the store icon (backend/scripts/generate_app_icons.py draws both looks).
             var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/_Project/Art/Icons/AppIcon-Neon.png");
             if (icon != null) PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
-            PlayerSettings.companyName = "Stack IT";
+            PlayerSettings.companyName = "Milli";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, config.bundleId);
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, config.bundleId);
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;

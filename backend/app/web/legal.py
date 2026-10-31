@@ -95,7 +95,7 @@ TERMS: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
     "en": (
         "Terms of Use",
         [
-            ("The game", "Stack IT is provided as is, for personal entertainment."),
+            ("The game", "Milli is provided as is, for personal entertainment."),
             (
                 "Fair play",
                 "Scores are verified on our servers. Modified clients, automation or manipulated "
@@ -118,7 +118,7 @@ TERMS: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
     "es": (
         "Términos de uso",
         [
-            ("El juego", "Stack IT se ofrece tal cual, para entretenimiento personal."),
+            ("El juego", "Milli se ofrece tal cual, para entretenimiento personal."),
             (
                 "Juego limpio",
                 "Las puntuaciones se verifican en nuestros servidores. No se permiten clientes "
@@ -142,11 +142,11 @@ TERMS: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
 
 DELETION: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
     "en": (
-        "Delete your Stack IT account",
+        "Delete your Milli account",
         [
             (
                 "In the app",
-                "Open Stack IT → Settings → Delete account and confirm. Your account, scores, "
+                "Open Milli → Settings → Delete account and confirm. Your account, scores, "
                 "friends, coins and skins are removed from our servers immediately.",
             ),
             (
@@ -162,11 +162,11 @@ DELETION: dict[Lang, tuple[str, list[tuple[str, str]]]] = {
         ],
     ),
     "es": (
-        "Eliminar tu cuenta de Stack IT",
+        "Eliminar tu cuenta de Milli",
         [
             (
                 "Desde la app",
-                "Abre Stack IT → Ajustes → Eliminar cuenta y confirma. Tu cuenta, puntuaciones, "
+                "Abre Milli → Ajustes → Eliminar cuenta y confirma. Tu cuenta, puntuaciones, "
                 "amigos, monedas y aspectos se borran de nuestros servidores al instante.",
             ),
             (

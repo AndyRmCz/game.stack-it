@@ -20,7 +20,7 @@ namespace StackIt.EditorTools
     {
         private const string AndroidManifestPath = "Assets/Plugins/Android/StackItManifest.androidlib/AndroidManifest.xml";
         private const string TrackingUsage =
-            "Your data is used to show you ads that are more relevant to you. Ads keep Stack IT free.";
+            "Your data is used to show you ads that are more relevant to you. Ads keep Milli free.";
 
         public int callbackOrder => 0;
 

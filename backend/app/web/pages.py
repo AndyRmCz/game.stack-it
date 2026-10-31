@@ -191,7 +191,7 @@ def challenge_page(
 
     head = f"""<meta name="description" content="{e(description)}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Stack IT">
+<meta property="og:site_name" content="Milli">
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(description)}">
 <meta property="og:url" content="{e(page_url)}">
@@ -208,7 +208,7 @@ def challenge_page(
         f"{e(t(lang, 'open_app'))}</a>"
     )
     ios = f'<a class="pill" href="{e(ios_url)}">{e(t(lang, "app_store"))}</a>' if ios_url else ""
-    body = f"""<p class="logo">STACK IT</p>
+    body = f"""<p class="logo">milli</p>
 <p class="overline">{e(t(lang, "eyebrow"))}</p>
 <h1>{e(t(lang, "headline_pre", name=rival))}</h1>
 <p class="score">{score}</p>
@@ -226,7 +226,7 @@ def challenge_page(
 
 
 def not_found_page(lang: Lang, base_url: str, play_url: str) -> str:
-    body = f"""<p class="logo">STACK IT</p>
+    body = f"""<p class="logo">milli</p>
 <h1>{e(t(lang, "not_found_title"))}</h1>
 <p class="lede">{e(t(lang, "not_found_body"))}</p>
 <div class="actions">
@@ -237,5 +237,5 @@ def not_found_page(lang: Lang, base_url: str, play_url: str) -> str:
 
 def legal_page(lang: Lang, base_url: str, title: str, sections: list[tuple[str, str]]) -> str:
     parts = "".join(f"<h2>{e(h)}</h2><p>{e(p)}</p>" for h, p in sections)
-    body = f'<div class="prose"><p class="logo">STACK IT</p><h1>{e(title)}</h1>{parts}</div>'
-    return _shell(lang, f"{title} · Stack IT", body, base_url=base_url)
+    body = f'<div class="prose"><p class="logo">milli</p><h1>{e(title)}</h1>{parts}</div>'
+    return _shell(lang, f"{title} · Milli", body, base_url=base_url)

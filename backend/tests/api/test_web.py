@@ -41,7 +41,7 @@ async def test_landing_page_has_rich_preview_and_app_links(
     assert '<meta property="og:title" content="Can you beat Nova&#x27;s 48?">' in html
     assert f'<meta property="og:url" content="{base}/c/K7QX9PA">' in html
     assert f'content="{base}/og/K7QX9PA.png"' in html
-    assert 'href="stackit://c/K7QX9PA"' in html
+    assert 'href="milli://c/K7QX9PA"' in html
     # Play Store link carries the code through the Install Referrer for fresh installs.
     assert "referrer=challenge%3DK7QX9PA" in html
 

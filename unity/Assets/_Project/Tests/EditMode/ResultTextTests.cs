@@ -30,7 +30,7 @@ namespace StackIt.Tests
             var blocks = Enumerable.Repeat(P, 10).Concat(new[] { C, S }).ToList();
             string text = ResultText.Build(142, 87, blocks);
             string[] lines = text.Split('\n');
-            Assert.AreEqual("Stack IT · Daily #142 · 87", lines[0]);
+            Assert.AreEqual("Milli · Daily #142 · 87", lines[0]);
             Assert.AreEqual(string.Concat(Enumerable.Repeat(ResultText.Perfect, 10)), lines[1]);
             Assert.AreEqual(ResultText.Clean + ResultText.Sliced, lines[2]);
         }
@@ -40,7 +40,7 @@ namespace StackIt.Tests
         {
             string text = ResultText.Build(0, 300, Enumerable.Repeat(S, 75).ToList());
             string[] lines = text.Split('\n');
-            Assert.AreEqual("Stack IT · 300", lines[0]);
+            Assert.AreEqual("Milli · 300", lines[0]);
             Assert.AreEqual(1 + ResultText.MaxRows + 1, lines.Length);
             Assert.AreEqual("+15", lines.Last());
         }

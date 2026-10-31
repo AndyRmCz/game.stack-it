@@ -44,7 +44,7 @@ namespace StackIt.Client
         /// <param name="dailyNumber">The Daily Tower's number, or 0 for a normal run.</param>
         public static string Build(int dailyNumber, int score, IReadOnlyList<BlockOutcome> blocks)
         {
-            var text = new StringBuilder("Stack IT");
+            var text = new StringBuilder("Milli");
             if (dailyNumber > 0) text.Append(" · Daily #").Append(dailyNumber);
             text.Append(" · ").Append(score);
             int shown = Math.Min(blocks.Count, PerRow * MaxRows);

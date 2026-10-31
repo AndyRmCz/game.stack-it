@@ -232,7 +232,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8463048724
-    m_Localized: 'Add me on Stack IT! My friend code: {0}'
+    m_Localized: 'Add me on Milli! My friend code: {0}'
     m_Metadata:
       m_Items: []
   - m_Id: 8463048725
@@ -467,7 +467,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8467243033
-    m_Localized: I stacked {0} in Stack IT. Can you beat me? Code {1}
+    m_Localized: I stacked {0} in Milli. Can you beat me? Code {1}
     m_Metadata:
       m_Items: []
   - m_Id: 8467243034

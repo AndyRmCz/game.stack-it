@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level)
 
-    app = FastAPI(title="Stack IT API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Milli API", version="0.1.0", lifespan=lifespan)
     app.state.rate_limiter = RateLimiter()
     app.state.identity_verifiers = build_verifiers(
         settings.google_audiences, settings.apple_audiences

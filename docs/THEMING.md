@@ -1,6 +1,6 @@
 # Theming: Pop and Neon
 
-Stack IT has two looks, **Pop** (light pastel) and **Neon** (dark glow), switchable from
+Milli has two looks, **Pop** (light pastel) and **Neon** (dark glow), switchable from
 Settings ▸ Look and from the pause menu. Both share the same layout, shapes, type and motion;
 only colour, glow and lighting change. First launch uses Neon.
 

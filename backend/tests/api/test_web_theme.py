@@ -54,7 +54,7 @@ async def test_landing_page_primary_action_opens_the_app(
 
     html = (await client.get("/c/K7QX9PA")).text
 
-    assert 'class="btn btn-primary" href="stackit://c/K7QX9PA">Open in Stack IT</a>' in html
+    assert 'class="btn btn-primary" href="milli://c/K7QX9PA">Open in Milli</a>' in html
     assert html.count('class="btn btn-primary"') == 1  # one primary action per page
 
 

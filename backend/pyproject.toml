@@ -1,7 +1,7 @@
 [project]
 name = "stackit-backend"
 version = "0.1.0"
-description = "Stack IT game backend: auth, replay-verified runs, challenges, leaderboards, wallet."
+description = "Milli game backend: auth, replay-verified runs, challenges, leaderboards, wallet."
 authors = [
     { name = "Andy Ramos", email = "an.ramos0814@gmail.com" }
 ]

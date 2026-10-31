@@ -1,4 +1,4 @@
-# Stack IT
+# Milli
 
 Neon stack-and-snap mobile game (Unity 6, iOS + Android) with a FastAPI + PostgreSQL backend.
 Every run is re-simulated on the server from its seed and tap timings, so scores can't be forged.

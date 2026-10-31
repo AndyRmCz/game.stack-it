@@ -130,7 +130,7 @@ def render(score: int | None, lang: Lang) -> bytes:
     primary = _rgb("text.primary")
     secondary = _rgb("text.secondary")
     x = 640
-    _glowing_text(image, (x, 170), "STACK IT", _font("Fredoka-Bold.ttf", 64), primary)
+    _glowing_text(image, (x, 170), "milli", _font("Fredoka-Bold.ttf", 64), primary)
     if score is None:
         _glowing_text(
             image, (x, 360), t(lang, "og_generic"), _font("Fredoka-Bold.ttf", 76), primary

@@ -802,7 +802,7 @@ namespace StackIt.UI
             LinkRow(danger, Icons.Delete, L.T("settings.delete"), () =>
                 ctx.Router.Confirm(L.T("settings.delete_confirm"), L.T("settings.delete_yes"), () => ctx.Flow.DeleteAccount(), destructive: true),
                 T.Danger);
-            UiKit.Size(UiKit.Text(body, "Stack IT " + Application.version, TextRole.Caption, T.TextSecondary).rectTransform, height: 24);
+            UiKit.Size(UiKit.Text(body, "Milli " + Application.version, TextRole.Caption, T.TextSecondary).rectTransform, height: 24);
         }
 
         /// <summary>

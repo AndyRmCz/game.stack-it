@@ -34,7 +34,7 @@ namespace StackIt.UI
             themed.Blocks = 3;
             themed.WithMoving = false;
             themed.Refresh();
-            TextMeshProUGUI logo = UiKit.Text(column, "STACK IT", TextRole.Logo);
+            TextMeshProUGUI logo = UiKit.Text(column, "milli", TextRole.Logo);
             UiKit.Size(logo.rectTransform, height: 70);
             TextEffect.Add(logo, TextEffectKind.LogoGlow);
         }
@@ -94,7 +94,7 @@ namespace StackIt.UI
             RectTransform title = UiKit.Pin(UiKit.Rect("Title", Safe), new Vector2(0.5f, 1f), new Vector2(350, 110),
                 new Vector2(0, -(Ui.TopGap + Ui.IconButton + 40)));
             UiKit.Column(title, 6, null, TextAnchor.UpperCenter);
-            TextMeshProUGUI logo = UiKit.Text(title, "STACK IT", TextRole.Logo);
+            TextMeshProUGUI logo = UiKit.Text(title, "milli", TextRole.Logo);
             UiKit.Size(logo.rectTransform, height: 68);
             TextEffect.Add(logo, TextEffectKind.LogoGlow);
             _best = UiKit.Text(title, "", TextRole.Overline, T.TextSecondary);

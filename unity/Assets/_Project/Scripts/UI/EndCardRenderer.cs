@@ -53,7 +53,7 @@ namespace StackIt.UI
             RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
             _group = col.gameObject.AddComponent<CanvasGroup>(); // the content fades in over the background
             UiKit.Column(col, 22, null, TextAnchor.MiddleCenter);
-            TextMeshProUGUI logo = UiKit.Text(col, "STACK IT", TextRole.Logo, size: 96f);
+            TextMeshProUGUI logo = UiKit.Text(col, "milli", TextRole.Logo, size: 96f);
             UiKit.Size(logo.rectTransform, height: 110);
             TextEffect.Add(logo, TextEffectKind.LogoGlow);
             TextMeshProUGUI score = UiKit.Text(col, card.Score.ToString(), TextRole.BigNumber, T.TextPrimary, size: 220f);

@@ -8,10 +8,10 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "es": "¿Puedes superar los {score} de {name}?",
     },
     "og_description": {
-        "en": "Same blocks, same speed. Stack higher in Stack IT.",
-        "es": "Mismos bloques, misma velocidad. Apila más alto en Stack IT.",
+        "en": "Same blocks, same speed. Stack higher in Milli.",
+        "es": "Mismos bloques, misma velocidad. Apila más alto en Milli.",
     },
-    "eyebrow": {"en": "Stack IT · Challenge", "es": "Stack IT · Reto"},
+    "eyebrow": {"en": "Milli · Challenge", "es": "Milli · Reto"},
     "headline_pre": {"en": "{name} stacked", "es": "{name} apiló"},
     "headline_post": {"en": "Your turn.", "es": "Te toca."},
     "lede": {
@@ -20,7 +20,7 @@ STRINGS: dict[str, dict[Lang, str]] = {
     },
     "ghost": {"en": "@{name}", "es": "@{name}"},
     "tower_alt": {"en": "{name}'s tower, {n} blocks high", "es": "Torre de {name}, {n} bloques"},
-    "open_app": {"en": "Open in Stack IT", "es": "Abrir en Stack IT"},
+    "open_app": {"en": "Open in Milli", "es": "Abrir en Milli"},
     "score_to_beat": {"en": "Score to beat", "es": "Puntos a superar"},
     "og_beat": {"en": "Beat my score", "es": "Supera mi puntuación"},
     "og_generic": {"en": "Can you beat me?", "es": "¿Me superas?"},
@@ -39,7 +39,7 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "en": "Check the link or the code. If it was shared a while ago, it may have been removed.",
         "es": "Revisa el enlace o el código. Si se compartió hace tiempo, puede que ya no exista.",
     },
-    "get_game": {"en": "Get Stack IT", "es": "Descargar Stack IT"},
+    "get_game": {"en": "Get Milli", "es": "Descargar Milli"},
     "privacy": {"en": "Privacy", "es": "Privacidad"},
     "terms": {"en": "Terms", "es": "Términos"},
 }

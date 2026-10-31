@@ -15,10 +15,10 @@ namespace StackIt.Bootstrap
         public string apiBaseUrl = "http://localhost:8000";
 
         [Tooltip("Bundle ID / package name. Applied to Player Settings by Stack IT ▸ Setup Project.")]
-        public string bundleId = "com.stackit.game";
+        public string bundleId = "com.milli.game";
 
         [Tooltip("Custom URL scheme used by the landing page's 'Open in app' button.")]
-        public string urlScheme = "stackit";
+        public string urlScheme = "milli";
 
         public string iosAppStoreUrl = "";
         public string androidPlayStoreUrl = "";

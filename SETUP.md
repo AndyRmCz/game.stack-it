@@ -1,4 +1,4 @@
-# Stack IT — Setup Guide
+# Milli — Setup Guide
 
 From a fresh clone to both stores. Follow the sections in order the first time.
 Decisions behind the setup are in [docs/DECISIONS.md](docs/DECISIONS.md); what has and hasn't
@@ -10,7 +10,7 @@ Placeholders used below:
 |---|---|---|
 | `<BASE_URL>` | `https://stackit-production.up.railway.app` | `PUBLIC_BASE_URL` (server) + `AppConfig.apiBaseUrl` (Unity) |
 | `<HOST>` | `stackit-production.up.railway.app` | derived from `<BASE_URL>` |
-| `<BUNDLE_ID>` | `com.stackit.game` | `APP_BUNDLE_ID` (server) + `AppConfig.bundleId` (Unity) |
+| `<BUNDLE_ID>` | `com.milli.game` | `APP_BUNDLE_ID` (server) + `AppConfig.bundleId` (Unity) |
 
 ---
 
@@ -107,8 +107,8 @@ dotnet build unity/DotNetTests/CompileCheck/Editor -p:UnityEditorData="<Unity>/E
 | `DATABASE_URL` | yes | `${{Postgres.DATABASE_URL}}` | PostgreSQL connection. |
 | `PUBLIC_BASE_URL` | yes | `<BASE_URL>` | Every public link: challenge URLs, OG tags, well-known files. |
 | `JWT_SECRET` | yes | 48+ random chars: `python -c "import secrets; print(secrets.token_urlsafe(48))"` | Signs access tokens. Rotating it signs everybody out (refresh tokens keep working). |
-| `APP_BUNDLE_ID` | yes | `com.stackit.game` | Android package / iOS bundle ID in well-known files and store links. |
-| `APP_URL_SCHEME` | no | `stackit` | "Open in app" button on landing pages. |
+| `APP_BUNDLE_ID` | yes | `com.milli.game` | Android package / iOS bundle ID in well-known files and store links. |
+| `APP_URL_SCHEME` | no | `milli` | "Open in app" button on landing pages. |
 | `GOOGLE_CLIENT_IDS` | for Google sign-in | `123-web.apps.googleusercontent.com,123-ios.apps.googleusercontent.com` | Accepted `aud` of Google ID tokens (web client ID used by Android + iOS client ID). |
 | `APPLE_CLIENT_IDS` | no | defaults to `APP_BUNDLE_ID` | Accepted `aud` of Apple identity tokens. |
 | `APPLE_TEAM_ID` | for iOS links | `ABCDE12345` | `apple-app-site-association`. |
@@ -140,7 +140,7 @@ dotnet build unity/DotNetTests/CompileCheck/Editor -p:UnityEditorData="<Unity>/E
 
 In Google Cloud Console (one project for the app):
 
-1. *APIs & Services → OAuth consent screen*: External, app name "Stack IT", support email,
+1. *APIs & Services → OAuth consent screen*: External, app name "Milli", support email,
    privacy policy `<BASE_URL>/privacy`, terms `<BASE_URL>/terms`. Publish it.
 2. *Credentials → Create credentials → OAuth client ID*, three times:
    - **Web application** → this is the **server client ID**. Android's Credential Manager issues
@@ -535,7 +535,7 @@ Google Play takes **Android App Bundles** (`.aab`), not APKs.
 
 Play Console ▸ *Home* ▸ **Create app**:
 
-- **App name**: `Stack IT` (30 characters max; you can change it later).
+- **App name**: `Milli: Stack Tower Duel` (30 characters max; you can change it later).
 - **Default language**: English (United States). You add the Spanish listing later, under store
   listing translations.
 - **App or game**: *Game*.
@@ -543,8 +543,8 @@ Play Console ▸ *Home* ▸ **Create app**:
 - Tick the declarations (Developer Program Policies, US export laws) → **Create app**.
 
 You don't type the package name here. **Your first upload fixes it forever** (`<BUNDLE_ID>`,
-`com.stackit.game` by default). If Play says that name is already taken, choose another one, for
-example `com.<yourname>.stackit`:
+`com.milli.game` by default). If Play says that name is already taken, choose another one, for
+example `com.<yourname>.milli`:
 
 1. Set it in `AppConfig.asset` ▸ `bundleId` and in Railway ▸ `APP_BUNDLE_ID`.
 2. Run **Stack IT ▸ Setup Project**.
@@ -553,14 +553,14 @@ example `com.<yourname>.stackit`:
 ### 8.10 Dashboard: "Set up your app"
 
 The app's **Dashboard** lists every required task, and each opens its page. Most live under
-*Policy and programs ▸ App content* and *Grow users ▸ Store presence*. Answers for Stack IT:
+*Policy and programs ▸ App content* and *Grow users ▸ Store presence*. Answers for Milli:
 
 | Task | Answer |
 |---|---|
 | **Privacy policy** | `<BASE_URL>/privacy` |
 | **App access** | *All functionality is available without special access*: guest accounts, no login wall. |
 | **Ads** | *Yes, my app contains ads.* |
-| **Content rating** | Start the IARC questionnaire with your email; category *Game*. Stack IT has no violence, sexual content, gambling, drugs or bad language. Players see each other's **display names** on leaderboards, friends and challenges, but there is **no chat, voice or photo sharing**. There are no real-money purchases: skins cost in-game coins. Answer the user-interaction questions with those facts. |
+| **Content rating** | Start the IARC questionnaire with your email; category *Game*. Milli has no violence, sexual content, gambling, drugs or bad language. Players see each other's **display names** on leaderboards, friends and challenges, but there is **no chat, voice or photo sharing**. There are no real-money purchases: skins cost in-game coins. Answer the user-interaction questions with those facts. |
 | **Target audience** | Tick **13–15, 16–17, 18+**. Don't include under-13: that brings the Families policy and certified-ads-only rules. If asked whether the app could unintentionally appeal to children, answer honestly. The look is bright and casual, so expect a follow-up question. |
 | **Data safety** | See the table below. |
 | **Advertising ID** | *Yes*, the app uses the advertising ID, for **Advertising or marketing**. The Google Mobile Ads SDK adds the `AD_ID` permission. |
@@ -591,12 +591,20 @@ SDK's part: https://developers.google.com/admob/android/privacy/play-data-disclo
 
 | Asset | Requirement | Where to get it |
 |---|---|---|
-| App name | ≤ 30 characters | `Stack IT` |
+| App name | ≤ 30 characters | `Milli: Stack Tower Duel` |
 | Short description | ≤ 80 characters | For example: "Stack blocks, beat your friends' scores, one tap at a time." |
 | Full description | ≤ 4000 characters | What the game is, duels and challenge links, the two looks, free with ads |
-| **App icon** | 512 × 512 PNG, 32-bit, ≤ 1 MB | Shrink the Neon icon: from `backend/`, `uv run python -c "from PIL import Image; Image.open('../unity/Assets/_Project/Art/Icons/AppIcon-Neon.png').convert('RGBA').resize((512, 512), Image.LANCZOS).save('../play-icon-512.png')"` |
-| **Feature graphic** | Exactly 1024 × 500, JPG or 24-bit PNG (no transparency) | Make it yourself: logo plus tower on the Neon gradient. Keep the important part in the middle. |
-| **Phone screenshots** | 2–8 images, JPG/PNG, each side 320–3840 px | Take them on the phone (power + volume down), portrait. Show Home, a run, a duel and the two looks. |
+| **App icon** | 512 × 512 PNG, 32-bit, ≤ 1 MB | `store/icon-512.png` (see below) |
+| **Feature graphic** | Exactly 1024 × 500, JPG or 24-bit PNG (no transparency) | `store/feature-graphic.png` |
+| **Phone screenshots** | 2–8 images, JPG/PNG, each side 320–3840 px | Take them on the phone (power + volume down), portrait: a run, a near miss ("0.4 mm from perfect"), a duel, the daily tower, the two looks. Then frame them (below): most phones capture 20:9, and Play refuses anything longer than 2:1. |
+
+`backend/scripts/generate_store_art.py` draws the logo (`store/logo-neon.png`, `logo-pop.png`), the icon and the feature graphic, and frames screenshots under a caption on a 1080 × 1920 card:
+
+```sh
+cd backend
+uv run python -m scripts.generate_store_art --screens "D:\path\to\phone-screenshots"          # store/screenshots-en/
+uv run python -m scripts.generate_store_art --screens "D:\path\to\phone-screenshots" --lang es # store/screenshots-es/
+```
 
 ### 8.11 Testing tracks, then production
 
