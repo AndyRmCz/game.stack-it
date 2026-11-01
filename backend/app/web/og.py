@@ -130,18 +130,16 @@ def render(score: int | None, lang: Lang) -> bytes:
     primary = _rgb("text.primary")
     secondary = _rgb("text.secondary")
     x = 640
-    _glowing_text(image, (x, 170), "milli", _font("Fredoka-Bold.ttf", 64), primary)
+    _glowing_text(image, (x, 170), "milli", _font("Sora-Bold.ttf", 64), primary)
     if score is None:
-        _glowing_text(
-            image, (x, 360), t(lang, "og_generic"), _font("Fredoka-Bold.ttf", 76), primary
-        )
+        _glowing_text(image, (x, 360), t(lang, "og_generic"), _font("Sora-Bold.ttf", 76), primary)
     else:
-        _glowing_text(image, (x, 420), str(score), _font("Fredoka-Bold.ttf", 230), primary)
+        _glowing_text(image, (x, 420), str(score), _font("Sora-Bold.ttf", 230), primary)
         overline = t(lang, "og_beat").upper()
         ImageDraw.Draw(image).text(
             (x + 6, 500),
             overline,
-            font=_font("Nunito-ExtraBold.ttf", 38),
+            font=_font("LexendDeca-SemiBold.ttf", 38),
             fill=secondary,
             anchor="ls",
         )

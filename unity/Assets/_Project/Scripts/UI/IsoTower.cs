@@ -74,19 +74,31 @@ namespace StackIt.UI
             };
         }
 
-        protected override void OnPopulateMesh(VertexHelper vh)
+        /// <summary>Centre of the top block's top face in local coordinates (the base's bottom face if empty).</summary>
+        public Vector2 TopFaceCentre()
         {
-            vh.Clear();
-            Rect r = GetPixelAdjustedRect();
-            int total = _blocks.Count + (_hasMoving ? 1 : 0);
-            if (total == 0) return;
-            float side = r.width * Footprint / (2f * Cos30);       // block side length in UI units
-            float height = side * Thickness;
+            Metrics(rectTransform.rect, out Vector2 baseCentre, out _, out float height);
+            return baseCentre + new Vector2(0f, _blocks.Count * height);
+        }
+
+        private void Metrics(Rect r, out Vector2 baseCentre, out float side, out float height)
+        {
+            int total = Mathf.Max(1, _blocks.Count + (_hasMoving ? 1 : 0));
+            side = r.width * Footprint / (2f * Cos30);             // block side length in UI units
+            height = side * Thickness;
             float towerHeight = total * height + side;             // tower plus the top diamond
             float scale = Mathf.Min(1f, r.height / towerHeight);
             side *= scale;
             height *= scale;
-            var baseCentre = new Vector2(r.center.x, r.yMin + side * 0.5f * scale);
+            baseCentre = new Vector2(r.center.x, r.yMin + side * 0.5f * scale);
+        }
+
+        protected override void OnPopulateMesh(VertexHelper vh)
+        {
+            vh.Clear();
+            int total = _blocks.Count + (_hasMoving ? 1 : 0);
+            if (total == 0) return;
+            Metrics(GetPixelAdjustedRect(), out Vector2 baseCentre, out float side, out float height);
             for (int i = 0; i < _blocks.Count; i++)
                 Block(vh, baseCentre + new Vector2(0f, (i + _drop[i]) * height), side, height, _blocks[i]);
             if (_hasMoving)

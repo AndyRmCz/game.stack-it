@@ -264,7 +264,7 @@ rewarded continue once per run and never in challenge duels.
    the strings import on its own when it loads or when `strings.csv` changes (`AutoSetup`).
 
    **Fonts** (all SIL OFL 1.1 or Apache 2.0, licences next to them in `Assets/_Project/Fonts`):
-   Fredoka 700/600 and Nunito 700/800, instanced and subset to Latin + Latin-1 (Spanish included),
+   Sora 700/600 and Lexend Deca 500/600, instanced and subset to Latin + Latin-1 (Spanish included),
    and Material Symbols Rounded in an outline and a filled cut (only the icons in `UI/Fonts.cs`).
    To add an icon or characters, re-subset with fonttools (`docs/THEMING.md` has the command); the
    atlases rebuild by themselves.

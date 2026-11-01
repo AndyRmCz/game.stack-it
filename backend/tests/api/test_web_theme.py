@@ -44,7 +44,7 @@ async def test_landing_page_is_neon_by_default_and_pop_in_light_mode(
     root, light = html.split("@media (prefers-color-scheme: light)", 1)
     assert f"--accent: {neon_accent};" in root
     assert f"--accent: {pop_accent};" in light
-    assert "fonts.googleapis.com/css2?family=Fredoka" in html and "Nunito" in html
+    assert "fonts.googleapis.com/css2?family=Sora" in html and "Lexend+Deca" in html
 
 
 async def test_landing_page_primary_action_opens_the_app(

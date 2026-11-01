@@ -497,7 +497,6 @@ namespace StackIt.UI
             UiKit.Size(_best.rectTransform, height: 18);
             _score = UiKit.Text(_sheet, "0", TextRole.BigNumber, T.TextPrimary, size: 88f);
             UiKit.Size(_score.rectTransform, height: 96);
-            TextEffect.Add(_score, TextEffectKind.LogoGlow);
 
             _coinsRow = UiKit.Rect("Coins", _sheet);
             HorizontalLayoutGroup coinsRow = UiKit.Row(_coinsRow, 8);

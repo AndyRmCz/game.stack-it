@@ -196,7 +196,7 @@ class Screen:
         d.ellipse((cx - ri, cy - ri, cx + ri, cy + ri), fill=self.color("coin.fill"))
 
     def coin_pill(self, right: float, y: float, amount: str) -> None:
-        f = font("Fredoka-Bold.ttf", 18)
+        f = font("Sora-Bold.ttf", 18)
         w = 16 + 22 + 8 + f.getlength(amount) / K + 16
         self.rrect(
             (right - w, y, right, y + 40),
@@ -213,14 +213,14 @@ class Screen:
         self.glow(box, 24, "accent.glow")
         self.rrect(box, 24, self.color("accent.edge"))
         self.rrect((box[0], box[1], box[2], box[3] - 6), 24, self.color("accent"))
-        f = font("Fredoka-Bold.ttf", 26)
+        f = font("Sora-Bold.ttf", 26)
         w = 22 + 12 + f.getlength(label) / K
         x0, cy = W / 2 - w / 2, y + (PRIMARY_H - 6) / 2
         self.icon((x0 + 11, cy), icon, 22, self.color("accent.onAccent"), filled=True)
         self.text((x0 + 34, cy), label, f, self.color("accent.onAccent"), anchor="lm")
 
     def pill(self, center_x: float, y: float, label: str, icon: str | None) -> None:
-        f = font("Fredoka-SemiBold.ttf", 18)
+        f = font("Sora-SemiBold.ttf", 18)
         w = 18 + (18 + 8 if icon else 0) + f.getlength(label) / K + 18
         x0 = center_x - w / 2
         self.rrect(
@@ -244,7 +244,7 @@ class Screen:
             self.color("surface.navBorder"),
             1,
         )
-        f = font("Nunito-Bold.ttf", 12)
+        f = font("LexendDeca-Medium.ttf", 12)
         step = (W - 2 * SIDE - 16) / len(labels)
         for i, (label, name) in enumerate(
             zip(labels, ("friends", "ranks", "shop", "settings"), strict=True)
@@ -254,12 +254,12 @@ class Screen:
             self.text((cx, y + 52), label, f, self.color("nav.label"))
 
     def overline(self, xy: tuple[float, float], s: str, token: str = "text.secondary") -> None:
-        self.text(xy, s.upper(), font("Nunito-ExtraBold.ttf", 13), self.color(token), spacing=3)
+        self.text(xy, s.upper(), font("LexendDeca-SemiBold.ttf", 13), self.color(token), spacing=3)
 
     def chip(
         self, center: tuple[float, float], label: str, fill: str, ink: str, size: float = 14
     ) -> float:
-        f = font("Fredoka-Bold.ttf", size)
+        f = font("Sora-Bold.ttf", size)
         w, h = f.getlength(label) / K + 28, size + 16
         box = (center[0] - w / 2, center[1] - h / 2, center[0] + w / 2, center[1] + h / 2)
         self.rrect(box, h / 2, self.color(fill))
@@ -334,7 +334,7 @@ class Screen:
         before, after = template.split("{0}")
 
         def layout(pt: float) -> tuple[list[tuple[str, ImageFont.FreeTypeFont]], float]:
-            big, small = font("Fredoka-Bold.ttf", pt * 1.45), font("Fredoka-Bold.ttf", pt)
+            big, small = font("Sora-Bold.ttf", pt * 1.45), font("Sora-Bold.ttf", pt)
             parts = [(before, small), (mm, big), (after, small)]
             return parts, sum(f.getlength(t) + 3 * K * len(t) for t, f in parts)
 
@@ -400,9 +400,9 @@ def home(t: dict) -> Image.Image:
     s.text(
         (W / 2, y + 100),
         "milli",
-        font("Fredoka-Bold.ttf", 58),
+        font("Sora-Bold.ttf", 58),
         s.color("text.primary"),
-        spacing=2,
+        spacing=8,
         glow=True,
     )
     s.overline((W / 2, y + 146), t["best"].format(87))
@@ -425,7 +425,7 @@ def _hud(s: Screen, score: int) -> None:
     s.text(
         (W / 2, y + 40 + 45),
         str(score),
-        font("Fredoka-Bold.ttf", 72),
+        font("Sora-Bold.ttf", 72),
         s.color("text.primary"),
         glow=True,
     )
@@ -448,12 +448,12 @@ def challenge(t: dict) -> Image.Image:
     s.text(
         (W / 2, 250),
         t["intro_title"].format("maya"),
-        font("Fredoka-Bold.ttf", 30),
+        font("Sora-Bold.ttf", 30),
         s.color("text.primary"),
     )
     s.overline((W / 2, 300), t["score_to_beat"])
-    s.text((W / 2, 372), "120", font("Fredoka-Bold.ttf", 96), s.color("text.primary"), glow=True)
-    body = font("Nunito-Bold.ttf", 16)
+    s.text((W / 2, 372), "120", font("Sora-Bold.ttf", 96), s.color("text.primary"), glow=True)
+    body = font("LexendDeca-Medium.ttf", 16)
     for i, line in enumerate(_wrap(t["rules"], body, 300)):
         s.text((W / 2, 460 + i * 24), line, body, s.color("text.secondary"))
     s.primary(560, t["accept"], "play")
@@ -471,7 +471,7 @@ def rival(t: dict) -> Image.Image:
         lambda d: d.line((0, line_y * K, W * K, line_y * K), fill=(*accent2[:3], 200), width=2 * K)
     )
     label = t["rival"].format("maya", 120)
-    f = font("Fredoka-Bold.ttf", 12)
+    f = font("Sora-Bold.ttf", 12)
     w = f.getlength(label) / K + 24
     s.rrect((W - SIDE - w, line_y - 15, W - SIDE, line_y + 15), 15, accent2)
     s.text((W - SIDE - w / 2, line_y), label, f, s.color("accent2.onAccent2"))
@@ -493,15 +493,12 @@ def game_over(t: dict) -> Image.Image:
     s.icon_button(SIDE, SAFE_TOP + TOP_GAP, "home")
     top = 300
     s.rrect((0, top, W, H + 40), 22, s.color("surface.raised"))
-    # A new best: Blocky cheers under the gold slab and the sheet takes its colour (Blocky.cs).
-    s.rrect((0, top, W, H + 40), 22, (*s.color("accent2")[:3], round(255 * 0.14)))
+    # A new best: Blocky cheers under the gold slab (Blocky.cs).
     art.blocky(s.image, 300 * K, (top + 6) * K, 64 * K, (300 * K, 0), s.tok("accent2"), hat=True)
     s.chip((W / 2, top + 36), t["new_record"].upper(), "accent2", "accent2.onAccent2", 13)
-    s.text(
-        (W / 2, top + 120), "87", font("Fredoka-Bold.ttf", 88), s.color("text.primary"), glow=True
-    )
+    s.text((W / 2, top + 120), "87", font("Sora-Bold.ttf", 88), s.color("text.primary"))
     coins = t["coins"].format(24)
-    f = font("Fredoka-Bold.ttf", 20)
+    f = font("Sora-Bold.ttf", 20)
     w = f.getlength(coins) / K
     s.coin((W / 2 - w / 2 - 14, top + 190), 11)
     s.text((W / 2 + 14, top + 190), coins, f, s.color("coin.fill"))

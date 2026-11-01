@@ -48,7 +48,23 @@ namespace StackIt.Tests
             Assert.AreEqual(1f, root.anchorMin.y);
             Assert.AreEqual(0f, root.pivot.y);
             Assert.IsTrue(root.GetComponent<UnityEngine.UI.LayoutElement>().ignoreLayout);
-            Assert.AreEqual(0, _sheet.Find("MoodTint").GetSiblingIndex(), "the tint stays behind the content");
+        }
+
+        [Test]
+        public void PerchingLeavesTheSheetsColoursAlone()
+        {
+            Blocky blocky = Blocky.Perch(_sheet);
+            blocky.SetMood(MascotMood.Cheer);
+            Assert.AreEqual(1, _sheet.childCount, "only Blocky is added: no tint behind the content");
+        }
+
+        [Test]
+        public void AStillBlockyStaysFullSizeForTheCard()
+        {
+            // The challenge card is one rendered frame: a pop-in would catch Blocky half grown.
+            Blocky blocky = Blocky.Create(_sheet, 64f, still: true);
+            blocky.SetMood(MascotMood.Cheer);
+            Assert.AreEqual(Vector3.one, blocky.transform.localScale);
         }
     }
 }

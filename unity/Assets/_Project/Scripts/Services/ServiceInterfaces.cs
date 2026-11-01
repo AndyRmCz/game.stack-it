@@ -86,16 +86,18 @@ namespace StackIt.Services
         void ShareTo(ShareTarget target, string text, string url, string filePath);
     }
 
-    /// <summary>What the challenge card shows (drawn by UI's EndCardRenderer).</summary>
+    /// <summary>What the challenge card shows (drawn by UI's EndCardRenderer). Texts come localized.</summary>
     public readonly struct EndCard
     {
         public readonly int Score;
+        public readonly string ScoreLabel;
         public readonly string Headline;
         public readonly string Code;
 
-        public EndCard(int score, string headline, string code)
+        public EndCard(int score, string scoreLabel, string headline, string code)
         {
             Score = score;
+            ScoreLabel = scoreLabel;
             Headline = headline;
             Code = code;
         }

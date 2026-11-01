@@ -27,7 +27,7 @@ from scripts import art
 from scripts.generate_app_icons import CORAL, icon
 
 OUT = Path(__file__).resolve().parents[2] / "store"
-DOTLESS_I = chr(0x131)  # Fredoka's dotless i
+DOTLESS_I = chr(0x131)  # the display font's dotless i
 WORD = f"m{DOTLESS_I}ll{DOTLESS_I}"  # the dots are drawn as blocks
 CAPTIONS = {
     "en": [
@@ -48,9 +48,9 @@ CAPTIONS = {
 
 
 def wordmark(look: str, size: int) -> Image.Image:
-    """The wordmark at a Fredoka size of `size` px, cropped to its ink and soft shadow."""
+    """The wordmark at a Sora size of `size` px, cropped to its ink and soft shadow."""
     ink = art.CREAM if look == "neon" else art.INK
-    font = _font("Fredoka-Bold.ttf", size)
+    font = _font("Sora-Bold.ttf", size)
     pad = size // 2
     probe = ImageDraw.Draw(Image.new("L", (1, 1)))
     x0, y0, x1, y1 = probe.textbbox((0, 0), WORD, font=font, anchor="ls")
@@ -93,7 +93,7 @@ def feature_graphic(lang: str = "en") -> Image.Image:
     ImageDraw.Draw(image).text(
         (722, 352),
         CAPTIONS[lang][1],
-        font=_font("Nunito-ExtraBold.ttf", 38),
+        font=_font("LexendDeca-SemiBold.ttf", 38),
         fill=art.rgba(art.PEACH),
         anchor="mm",
     )
@@ -114,7 +114,7 @@ def framed_screenshot(shot: Image.Image, caption: str) -> Image.Image:
     """A phone screenshot under a caption on a 1080 x 1920 card (9:16, inside Play's 2:1)."""
     width, height = 1080, 1920
     image = art.grain(art.sky((width, height), art.DUSK, stars=True))
-    font = _font("Fredoka-Bold.ttf", 84)
+    font = _font("Sora-Bold.ttf", 84)
     y = 190
     for line in _wrap(caption, font, width - 160):
         ImageDraw.Draw(image).text(

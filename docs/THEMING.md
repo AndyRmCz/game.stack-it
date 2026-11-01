@@ -86,7 +86,7 @@ top colour × 0.85 (left) and × 0.70 (right). The moving block always uses `blo
 
 ## Fonts and icons
 
-Fredoka 700/600 and Nunito 700/800 (SIL OFL), Material Symbols Rounded outline and filled
+Sora 700/600 and Lexend Deca 500/600 (SIL OFL), Material Symbols Rounded outline and filled
 (Apache 2.0), subset with fonttools. To add an icon: add its codepoint to `UI/Fonts.cs`
 (`Icons`), then re-subset:
 

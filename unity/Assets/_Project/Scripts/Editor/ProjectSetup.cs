@@ -101,10 +101,10 @@ namespace StackIt.EditorTools
             if (TMP_Settings.defaultFontAsset != null) fallbacks.Add(TMP_Settings.defaultFontAsset);
             // Text: ~210 characters at 56 px sampling fit a 1024x2048 atlas.
             string text = TextCharacters();
-            CreateFont("Fredoka-Bold.ttf", Fonts.DisplayName, text, 56, 1024, 2048, fallbacks);
-            CreateFont("Fredoka-SemiBold.ttf", Fonts.DisplaySemiName, text, 56, 1024, 2048, fallbacks);
-            CreateFont("Nunito-Bold.ttf", Fonts.BodyName, text, 56, 1024, 2048, fallbacks);
-            CreateFont("Nunito-ExtraBold.ttf", Fonts.BodyHeavyName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("Sora-Bold.ttf", Fonts.DisplayName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("Sora-SemiBold.ttf", Fonts.DisplaySemiName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("LexendDeca-Medium.ttf", Fonts.BodyName, text, 56, 1024, 2048, fallbacks);
+            CreateFont("LexendDeca-SemiBold.ttf", Fonts.BodyHeavyName, text, 56, 1024, 2048, fallbacks);
             File.WriteAllText(FontRecipeFile, FontRecipe());
             AssetDatabase.SaveAssets();
         }

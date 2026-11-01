@@ -6,15 +6,15 @@ namespace StackIt.UI
     /// <summary>Text roles from the design language (sizes in points at the 390-wide reference).</summary>
     public enum TextRole
     {
-        Logo,          // Fredoka 700, 58, +2
-        BigNumber,     // Fredoka 700, 48-96 (size given per use)
-        ButtonPrimary, // Fredoka 700, 26, +0.5
-        Title,         // Fredoka 700, 28, +1
-        Overline,      // Nunito 800, 13, +3, uppercase
-        Body,          // Nunito 700, 16
-        Pill,          // Nunito 800, 15
-        Caption,       // Nunito 700, 12
-        Coin,          // Fredoka 600, 18
+        Logo,          // Sora 700, 58, +8 (airy: the letters breathe)
+        BigNumber,     // Sora 700, 48-96 (size given per use)
+        ButtonPrimary, // Sora 700, 26, +0.5
+        Title,         // Sora 700, 28, +1
+        Overline,      // Lexend Deca 600, 13, +3, uppercase
+        Body,          // Lexend Deca 500, 16
+        Pill,          // Lexend Deca 600, 15
+        Caption,       // Lexend Deca 500, 12
+        Coin,          // Sora 600, 18
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ namespace StackIt.UI
             tracking = 0f;
             switch (role)
             {
-                case TextRole.Logo: font = Fonts.Display; size = 58f; tracking = 2f; break;
+                case TextRole.Logo: font = Fonts.Display; size = 58f; tracking = 8f; break;
                 case TextRole.BigNumber: font = Fonts.Display; size = 72f; break;
                 case TextRole.ButtonPrimary: font = Fonts.Display; size = 26f; tracking = 0.5f; break;
                 case TextRole.Title: font = Fonts.Display; size = 28f; tracking = 1f; break;

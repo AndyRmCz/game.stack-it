@@ -7,33 +7,37 @@ namespace StackIt.UI
 {
     /// <summary>
     /// Blocky in 2D, front on as in the store art: an accent2 block with a lighter top face and
-    /// big eyes, reacting with a <see cref="MascotMood"/>. Cheer hops under the gold slab (and
-    /// tints the sheet it perches on in its colour), Rally squints and bounces, Happy bobs.
-    /// Still with Reduce motion. Eyes keep the 3D mascot's fixed white and ink in every look.
+    /// big eyes, reacting with a <see cref="MascotMood"/>. Cheer hops under the gold slab, Rally
+    /// squints and bounces, Happy bobs. Still with Reduce motion, and always on the challenge card
+    /// (one rendered frame). Eyes keep the 3D mascot's fixed white and ink in every look.
     /// </summary>
     public sealed class Blocky : Themed
     {
         private static readonly Color EyeWhite = new Color(0.97f, 0.97f, 1f);
         private static readonly Color Ink = new Color(0.1f, 0.1f, 0.14f);
-        private const float TintAlpha = 0.14f;
 
         private float _w;
         private RectTransform _body;
         private RectTransform _hat;
-        private RoundedRect _top, _front, _hatTop, _hatFront, _mouth, _tint;
+        private RoundedRect _top, _front, _hatTop, _hatFront, _mouth;
         private readonly RoundedRect[] _eyes = new RoundedRect[2];
         private readonly RoundedRect[] _pupils = new RoundedRect[2];
         private MascotMood _mood;
         private float _since;
+        private bool _still;
 
-        /// <summary>A Blocky <paramref name="width"/> wide, laid out like any child of <paramref name="parent"/>.</summary>
-        public static Blocky Create(Transform parent, float width)
+        /// <summary>
+        /// A Blocky <paramref name="width"/> wide, laid out like any child of <paramref name="parent"/>.
+        /// A <paramref name="still"/> one neither pops in nor moves.
+        /// </summary>
+        public static Blocky Create(Transform parent, float width, bool still = false)
         {
             RectTransform root = UiKit.Rect("Blocky", parent);
             float height = width * 1.45f; // body plus the hat
             UiKit.Size(root, width, height);
             root.sizeDelta = new Vector2(width, height);
             Blocky blocky = root.gameObject.AddComponent<Blocky>();
+            blocky._still = still;
             blocky.Build(width);
             blocky.Refresh();
             return blocky;
@@ -42,20 +46,12 @@ namespace StackIt.UI
         /// <summary>Stands on the top edge of a sheet, right of centre, looking at the score.</summary>
         public static Blocky Perch(RectTransform sheet)
         {
-            RoundedRect tint = UiKit.Shape(sheet, "MoodTint", Ui.SheetRadius);
-            UiKit.Stretch(tint.rectTransform);
-            UiKit.IgnoreLayout(tint);
-            tint.transform.SetAsFirstSibling();
-
             Blocky blocky = Create(sheet, 64f);
             var root = (RectTransform)blocky.transform;
             UiKit.IgnoreLayout(root);
             root.anchorMin = root.anchorMax = new Vector2(0.78f, 1f);
             root.pivot = new Vector2(0.5f, 0f);
             root.anchoredPosition = new Vector2(0f, -6f); // feet just over the edge
-            blocky._tint = tint;
-            ThemedPart.Mark(tint, blocky);
-            blocky.Refresh();
             return blocky;
         }
 
@@ -107,12 +103,7 @@ namespace StackIt.UI
             // Cheer looks up at the hat; the others look left and down, at the score.
             Vector2 look = mood == MascotMood.Cheer ? new Vector2(0f, 0.3f) : mood == MascotMood.Rally ? new Vector2(-0.35f, 0f) : new Vector2(-0.3f, -0.3f);
             foreach (RoundedRect pupil in _pupils) pupil.rectTransform.anchoredPosition = look * (_w * 0.06f);
-            if (_tint != null)
-            {
-                float from = _tint.Fill.a, to = mood == MascotMood.Cheer ? TintAlpha : 0f;
-                Tween.Run(_tint, Look.ReduceMotion ? 0f : 0.5f, t => Tint(Mathf.Lerp(from, to, t)), () => Tint(to));
-            }
-            if (!Look.ReduceMotion && isActiveAndEnabled) Tween.PopIn(transform); // the root: Update poses the body
+            if (!_still && !Look.ReduceMotion && isActiveAndEnabled) Tween.PopIn(transform); // the root: Update poses the body
         }
 
         public override void Apply(ThemePalette p)
@@ -129,17 +120,11 @@ namespace StackIt.UI
             foreach (RoundedRect eye in _eyes) eye.Fill = EyeWhite;
             foreach (RoundedRect pupil in _pupils) pupil.Fill = Ink;
             _mouth.Fill = Ink;
-            if (_tint != null) Tint(_tint.Fill.a);
-        }
-
-        private void Tint(float alpha)
-        {
-            if (_tint != null) _tint.Fill = Look.WithAlpha(Look.C(T.Accent2), alpha);
         }
 
         private void Update()
         {
-            if (Look.ReduceMotion)
+            if (_still || Look.ReduceMotion)
             {
                 Pose(0f, 0f, 0f);
                 return;

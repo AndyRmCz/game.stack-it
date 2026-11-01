@@ -717,7 +717,7 @@ namespace StackIt.Bootstrap
             try
             {
                 ChallengeInfo challenge = await _api.CreateChallengeAsync(_lastResult.RunId);
-                string image = await SaveEndCard(new EndCard(challenge.Score, L.T("share.headline"), challenge.Code));
+                string image = await SaveEndCard(new EndCard(challenge.Score, L.T("intro.score_to_beat"), L.T("share.headline"), challenge.Code));
                 _share.ShareTo(target, L.T("share.text", challenge.Score, challenge.Code), challenge.Url, image);
             }
             catch (ApiException e)

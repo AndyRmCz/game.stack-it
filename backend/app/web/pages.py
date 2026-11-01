@@ -11,19 +11,19 @@ from app.web import theme
 from app.web.i18n import Lang, t
 
 FONTS = (
-    "https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700"
-    "&family=Nunito:wght@700;800&display=swap"
+    "https://fonts.googleapis.com/css2?family=Sora:wght@600;700"
+    "&family=Lexend+Deca:wght@500;600&display=swap"
 )
 
 CSS = """
 :root {
-  --display: "Fredoka", "Segoe UI", system-ui, sans-serif;
-  --body: "Nunito", system-ui, -apple-system, sans-serif;
+  --display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --body: "Lexend Deca", system-ui, -apple-system, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  min-height: 100svh; color: var(--text-primary); font: 700 1rem/1.5 var(--body);
+  min-height: 100svh; color: var(--text-primary); font: 500 1rem/1.5 var(--body);
   background:
     radial-gradient(circle at 50% 38%, var(--bg-centerGlow-color),
   transparent calc(var(--bg-centerGlow-radius) * 100vw)),
@@ -34,10 +34,10 @@ body {
 a { color: var(--secondary-text); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
 main { max-width: 24.375rem; margin: 0 auto; padding: 1.75rem 1.25rem 2rem; }
-.logo { font: 700 2.4rem/1 var(--display); letter-spacing: .04em; text-align: center;
+.logo { font: 700 2.4rem/1 var(--display); letter-spacing: .14em; text-align: center;
   margin: .5rem 0 1.5rem;
   text-shadow: 0 0 var(--text-logoGlow-blur) var(--text-logoGlow-color); }
-.overline { font: 800 .8125rem/1 var(--body); letter-spacing: .23em; text-transform: uppercase;
+.overline { font: 600 .8125rem/1 var(--body); letter-spacing: .23em; text-transform: uppercase;
   color: var(--text-secondary); margin: 0 0 .6rem; text-align: center; }
 h1 { font: 700 1.75rem/1.15 var(--display); margin: 0 0 .25rem; text-align: center; }
 .score { font: 700 6rem/1 var(--display); text-align: center; margin: .25rem 0 .25rem;
@@ -49,7 +49,7 @@ h1 { font: 700 1.75rem/1.15 var(--display); margin: 0 0 .25rem; text-align: cent
 .hero svg { width: 11rem; height: auto; overflow: visible; }
 .ghost { position: absolute; left: 0; right: 0; top: .9rem; border-top: 2px dashed var(--accent2);
   filter: drop-shadow(0 0 6px var(--accent2-glow-color)); }
-.ghost span { position: absolute; right: 0; top: -1.7rem; font: 800 .8rem/1 var(--body);
+.ghost span { position: absolute; right: 0; top: -1.7rem; font: 600 .8rem/1 var(--body);
   padding: .3rem .6rem;
   border-radius: 999px; background: var(--accent2); color: var(--accent2-onAccent2); }
 .moving { animation: slide 2.4s ease-in-out infinite alternate; }
@@ -70,7 +70,7 @@ h1 { font: 700 1.75rem/1.15 var(--display); margin: 0 0 .25rem; text-align: cent
 @keyframes breathe { 50% { scale: 1.03; } }
 .pill { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem;
   padding: 0 1.125rem;
-  border-radius: 999px; text-decoration: none; font: 800 .9375rem/1 var(--body);
+  border-radius: 999px; text-decoration: none; font: 600 .9375rem/1 var(--body);
   color: var(--secondary-text); background: var(--secondary-fill);
   border: var(--secondary-borderWidth) solid var(--secondary-border); }
 .code { margin: 1.5rem auto 0; text-align: center; color: var(--text-secondary); font-size: .9rem; }

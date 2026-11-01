@@ -82,6 +82,7 @@ Choices the brief left open, one line of reasoning each. Newest milestone at the
 | End card rendered offscreen into the recorder target, paced in real time (2 s) | Android's surface encoder timestamps on arrival. |
 | Clips are silent | Keeps the encoder simple; most sharers add music on TikTok/Instagram. |
 | **2026-10-31: recorder and clips removed.** The challenge is shared as a PNG of the end card (`EndCardRenderer.SavePng`) | Owner: the video took long to make and added no value. Nothing records during play any more. The recorder rows above and H3 below are history. |
+| **2026-10-31: Sora + Lexend Deca replace Fredoka + Nunito.** Sora 700/600 for the logo, numbers, titles and primary buttons; Lexend Deca 500/600 for text; the wordmark tracks at +8 | Owner: the rounded pair felt cheap; these are modern, airy and calm. Same subset and bake (`ProjectSetup.CreateFonts`); the web pages and generated art use them too. Rows above naming Fredoka/Nunito are history. |
 | Android Java as loose files in `Plugins/Android` + a manifest-only `.androidlib` | Loose Java compiles with Unity's classes; the manifest merge adds intent filters + FileProvider to Unity's own activity. |
 | Native deps via EDM4U `StackItDependencies.xml` | EDM4U ships with the Google Mobile Ads plugin, which is required anyway. |
 | AdMob adapter outside all asmdefs, behind `STACKIT_ADMOB`, registered through `AdsServiceRegistry` | Project compiles with or without the plugin, however the plugin is packaged. |
@@ -111,7 +112,7 @@ tactile style; free Google Fonts and free sound packs; must run well on an iPhon
 | Shop ids (`synthwave`, `magma`, …) kept; only their looks changed | Renaming would need a data migration; names can change later. |
 | UI strings in sentence case; eyebrows use an uppercase font style | Calmer voice; capitals stay a styling choice, not baked into translations. |
 
-Third-party assets: Fredoka and Nunito Sans (SIL OFL 1.1), Material Symbols Rounded (Apache 2.0) in
+Third-party assets: Sora and Lexend Deca (SIL OFL 1.1; earlier Fredoka and Nunito), Material Symbols Rounded (Apache 2.0) in
 `unity/Assets/_Project/Fonts` with their licences; Kenney "Interface Sounds" and "Impact Sounds" (CC0)
 in `unity/Assets/_Project/Resources/StackIt/Audio` with the licence.
 

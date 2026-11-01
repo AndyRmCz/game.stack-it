@@ -5,7 +5,7 @@ namespace StackIt.UI
 {
     /// <summary>
     /// TMP font assets baked by Stack IT ▸ Setup Project (or automatically on editor load) into
-    /// Resources/StackIt/Fonts: Fredoka for the logo, numbers, titles and primary buttons, Nunito
+    /// Resources/StackIt/Fonts: Sora for the logo, numbers, titles and primary buttons, Lexend Deca
     /// for everything else, Material Symbols Rounded for icons (outline set, plus a filled set for
     /// primary buttons). The text fonts fall back to the outline icons, so an icon codepoint can sit
     /// inside a label. Missing assets fall back to TMP's default font (no icons), with a warning.
@@ -13,22 +13,22 @@ namespace StackIt.UI
     public static class Fonts
     {
         public const string ResourceDir = "StackIt/Fonts/";
-        public const string DisplayName = "Fredoka Bold SDF";
-        public const string DisplaySemiName = "Fredoka SemiBold SDF";
-        public const string BodyName = "Nunito Bold SDF";
-        public const string BodyHeavyName = "Nunito ExtraBold SDF";
+        public const string DisplayName = "Sora Bold SDF";
+        public const string DisplaySemiName = "Sora SemiBold SDF";
+        public const string BodyName = "Lexend Deca Medium SDF";
+        public const string BodyHeavyName = "Lexend Deca SemiBold SDF";
         public const string IconsName = "Icons Outline SDF";
         public const string IconsFilledName = "Icons Filled SDF";
 
         private static TMP_FontAsset _display, _displaySemi, _body, _bodyHeavy, _icons, _iconsFilled;
 
-        /// <summary>Fredoka 700.</summary>
+        /// <summary>Sora 700.</summary>
         public static TMP_FontAsset Display => Load(ref _display, DisplayName);
-        /// <summary>Fredoka 600 (coin counter).</summary>
+        /// <summary>Sora 600 (coin counter).</summary>
         public static TMP_FontAsset DisplaySemi => Load(ref _displaySemi, DisplaySemiName);
-        /// <summary>Nunito 700.</summary>
+        /// <summary>Lexend Deca 500.</summary>
         public static TMP_FontAsset Body => Load(ref _body, BodyName);
-        /// <summary>Nunito 800.</summary>
+        /// <summary>Lexend Deca 600.</summary>
         public static TMP_FontAsset BodyHeavy => Load(ref _bodyHeavy, BodyHeavyName);
         public static TMP_FontAsset Icons => Load(ref _icons, IconsName);
         public static TMP_FontAsset IconsFilled => Load(ref _iconsFilled, IconsFilledName);

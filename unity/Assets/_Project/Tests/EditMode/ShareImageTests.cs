@@ -33,5 +33,21 @@ namespace StackIt.Tests
         {
             Assert.AreEqual("milli-*.png", ShareImage.Pattern);
         }
+
+        [Test]
+        public void TheCardsTowerClimbsFromTheBaseToTheScore()
+        {
+            // Each block wears the colour the run had at that height.
+            CollectionAssert.AreEqual(new[] { 0, 30, 60, 90, 120 }, ShareImage.TowerBlocks(120, 5));
+            CollectionAssert.AreEqual(new[] { 0, 2, 4, 5, 7 }, ShareImage.TowerBlocks(7, 5));
+        }
+
+        [Test]
+        public void AShortRunShowsOneBlockPerPoint()
+        {
+            CollectionAssert.AreEqual(new[] { 0, 1, 2 }, ShareImage.TowerBlocks(2, 5));
+            CollectionAssert.AreEqual(new[] { 0 }, ShareImage.TowerBlocks(0, 5));
+            CollectionAssert.AreEqual(new[] { 0 }, ShareImage.TowerBlocks(-3, 5));
+        }
     }
 }

@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using StackIt.Client;
 using StackIt.Client.Theming;
+using StackIt.Game;
 using StackIt.Services;
 using TMPro;
 using UnityEngine;
@@ -7,17 +10,21 @@ using UnityEngine.UI;
 namespace StackIt.UI
 {
     /// <summary>
-    /// The challenge card in the player's current look: the logo, the big score, "Can you beat
-    /// me?" and the challenge code in a pill, drawn offscreen by its own camera into its own
-    /// 720 × 1280 texture, so the layout has a story's shape rather than the phone screen's
-    /// (sizes are in pixels; the score is 220 px so it stays readable in a phone feed).
-    /// <see cref="SavePng"/> makes the shared image. Never shown on the device screen.
+    /// The challenge card, the image shared with the link, in the player's current look: the logo,
+    /// the score to beat, and the player's tower (its blocks in the colours the run had on the way
+    /// up) reaching the rival line the friend will race in the game, with Blocky standing on top
+    /// under the gold slab. Then "Can you beat me?" and the code in a pill. Drawn offscreen by its
+    /// own camera into a 720 x 1280 texture (a story's shape; sizes and positions are pixels from
+    /// the top). <see cref="SavePng"/> makes the shared image. Never shown on the device screen.
     /// </summary>
     public sealed class EndCardRenderer : System.IDisposable
     {
         public const int Layer = 31;
         public const int Width = 720;
         public const int Height = 1280;
+        private const float Margin = 48f;
+        private const float LineY = 760f; // the line to beat, where Blocky stands
+        private const int TowerBlocks = 5;
 
         private readonly GameObject _root;
         private readonly Camera _camera;
@@ -51,27 +58,41 @@ namespace StackIt.UI
             scaler.referenceResolution = new Vector2(Width, Height);
 
             UiKit.Background(canvasGo.transform, 0.5f);
-            RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
-            _group = col.gameObject.AddComponent<CanvasGroup>(); // the content fades in over the background
-            UiKit.Column(col, 22, null, TextAnchor.MiddleCenter);
-            TextMeshProUGUI logo = UiKit.Text(col, "milli", TextRole.Logo, size: 96f);
-            UiKit.Size(logo.rectTransform, height: 110);
+            RectTransform content = UiKit.Stretch(UiKit.Rect("Content", canvasGo.transform));
+            _group = content.gameObject.AddComponent<CanvasGroup>(); // the content fades in over the background
+
+            TextMeshProUGUI logo = UiKit.Text(content, "milli", TextRole.Logo, size: 84f);
+            Place(logo.rectTransform, 132f, 100f);
             TextEffect.Add(logo, TextEffectKind.LogoGlow);
-            TextMeshProUGUI score = UiKit.Text(col, card.Score.ToString(), TextRole.BigNumber, T.TextPrimary, size: 220f);
-            UiKit.Size(score.rectTransform, height: 240);
+            TextMeshProUGUI score = UiKit.Text(content, card.Score.ToString(), TextRole.BigNumber, T.TextPrimary, size: 220f);
+            Place(score.rectTransform, 330f, 240f);
             TextEffect.Add(score, TextEffectKind.LogoGlow);
             _score = score.rectTransform;
-            TextMeshProUGUI headline = UiKit.Text(col, card.Headline, TextRole.Title, T.TextPrimary, size: 60f);
-            UiKit.Size(headline.rectTransform, height: 76);
+            if (!string.IsNullOrEmpty(card.ScoreLabel))
+                Place(UiKit.Text(content, card.ScoreLabel, TextRole.Overline, T.TextSecondary, size: 26f).rectTransform, 478f, 36f);
+
+            // The rival line as the game draws it, behind the tower that reaches it.
+            RoundedRect line = UiKit.Solid(content, "LineToBeat", T.Accent2, 2f, alpha: 0.85f, glow: T.Accent2Glow);
+            Place(line.rectTransform, LineY, 4f, Width);
+            Tower(content, card.Score);
+            Blocky blocky = Blocky.Create(content, 104f, still: true);
+            blocky.SetMood(MascotMood.Cheer);
+            var feet = (RectTransform)blocky.transform;
+            feet.anchorMin = feet.anchorMax = new Vector2(0.5f, 1f);
+            feet.pivot = new Vector2(0.5f, 0f);
+            feet.anchoredPosition = new Vector2(0f, -LineY);
+
+            TextMeshProUGUI headline = UiKit.Text(content, card.Headline, TextRole.Title, T.TextPrimary, size: 60f);
+            Place(headline.rectTransform, 1062f, 76f);
             if (!string.IsNullOrEmpty(card.Code))
             {
                 // The code in a pill, like the app's secondary buttons.
-                RectTransform line = UiKit.Rect("CodeLine", col);
-                UiKit.Size(line, height: 104);
-                HorizontalLayoutGroup row = UiKit.Row(line, 0);
+                RectTransform codeLine = UiKit.Rect("CodeLine", content);
+                Place(codeLine, 1170f, 104f);
+                HorizontalLayoutGroup row = UiKit.Row(codeLine, 0);
                 row.childForceExpandWidth = false;
                 row.childControlWidth = true;
-                RoundedRect pill = UiKit.Shape(line, "Code", 52f);
+                RoundedRect pill = UiKit.Shape(codeLine, "Code", 52f);
                 var themed = pill.gameObject.AddComponent<ThemedButton>();
                 themed.Kind = ButtonKind.Secondary;
                 themed.Face = pill;
@@ -86,6 +107,29 @@ namespace StackIt.UI
                 pill.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             SetLayer(_root.transform);
+        }
+
+        /// <summary>The player's tower, its top face on the line to beat.</summary>
+        private static void Tower(RectTransform parent, int score)
+        {
+            RectTransform rt = UiKit.Rect("Tower", parent);
+            Place(rt, 0f, 400f, 240f);
+            var tower = rt.gameObject.AddComponent<IsoTower>();
+            tower.raycastTarget = false;
+            var blocks = new List<IsoTower.BlockFaces>();
+            foreach (int height in ShareImage.TowerBlocks(score, TowerBlocks))
+                blocks.Add(IsoTower.FromTop(Palette.BlockTop(null, height, Look.P)));
+            tower.SetBlocks(blocks);
+            rt.anchoredPosition = new Vector2(0f, -(LineY + tower.TopFaceCentre().y));
+        }
+
+        /// <summary>Centres <paramref name="rt"/> <paramref name="fromTop"/> pixels below the card's top edge.</summary>
+        private static void Place(RectTransform rt, float fromTop, float height, float width = Width - 2f * Margin)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(0f, -fromTop);
         }
 
         public Texture Render(float progress)
