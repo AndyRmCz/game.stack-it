@@ -34,7 +34,7 @@ namespace StackIt.Services.Native
             }
         }
 
-        /// <summary>Registers a one-shot wait for a callback channel ("signin", "export", ...).</summary>
+        /// <summary>Registers a one-shot wait for a callback channel ("signin", ...).</summary>
         public Task<string> Expect(string channel)
         {
             if (_pending.TryGetValue(channel, out var previous)) previous.TrySetCanceled();
@@ -54,7 +54,6 @@ namespace StackIt.Services.Native
 
         // Method names are part of the native contract: see Plugins/iOS/*.mm and Plugins/Android.
         public void OnSignInResult(string json) => Complete("signin", json);
-        public void OnClipExported(string pathOrError) => Complete("export", pathOrError);
         public void OnInstallReferrer(string referrer) => InstallReferrerReceived?.Invoke(referrer);
     }
 
@@ -65,10 +64,6 @@ namespace StackIt.Services.Native
         [DllImport("__Internal")] public static extern void _StackItHaptic(int kind);
         [DllImport("__Internal")] public static extern void _StackItShare(string text, string url, string filePath);
         [DllImport("__Internal")] public static extern void _StackItShareInstagramStory(string facebookAppId, string text, string url, string filePath);
-        [DllImport("__Internal")] [return: MarshalAs(UnmanagedType.I1)] public static extern bool _StackItRecStart(int width, int height, int fps, int bitrate, int keepSeconds);
-        [DllImport("__Internal")] public static extern void _StackItRecAppend(IntPtr bgra, int length, int bytesPerRow, double seconds);
-        [DllImport("__Internal")] public static extern void _StackItRecExport(string path, double lastSeconds);
-        [DllImport("__Internal")] public static extern void _StackItRecStop();
         [DllImport("__Internal")] public static extern void _StackItSignInApple(string nonce);
         [DllImport("__Internal")] public static extern void _StackItSignInGoogle(string clientId);
         [DllImport("__Internal")] [return: MarshalAs(UnmanagedType.I1)] public static extern bool _StackItGoogleAvailable(); // C++ bool is 1 byte
@@ -76,10 +71,6 @@ namespace StackIt.Services.Native
         public static void _StackItHaptic(int kind) { }
         public static void _StackItShare(string text, string url, string filePath) { }
         public static void _StackItShareInstagramStory(string facebookAppId, string text, string url, string filePath) { }
-        public static bool _StackItRecStart(int width, int height, int fps, int bitrate, int keepSeconds) => false;
-        public static void _StackItRecAppend(IntPtr bgra, int length, int bytesPerRow, double seconds) { }
-        public static void _StackItRecExport(string path, double lastSeconds) { }
-        public static void _StackItRecStop() { }
         public static void _StackItSignInApple(string nonce) { }
         public static void _StackItSignInGoogle(string clientId) { }
         public static bool _StackItGoogleAvailable() => false;

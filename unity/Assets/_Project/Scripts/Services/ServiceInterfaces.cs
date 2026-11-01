@@ -69,7 +69,7 @@ namespace StackIt.Services
         public void Track(string name, params (string Key, object Value)[] props) { }
     }
 
-    /// <summary>Where a clip goes: the system sheet, or straight into one app (H5).</summary>
+    /// <summary>Where a share goes: the system sheet, or straight into one app (H5).</summary>
     public enum ShareTarget
     {
         System,
@@ -79,26 +79,14 @@ namespace StackIt.Services
 
     public interface IShareService
     {
-        /// <summary>Opens the native share sheet with text + link and, if given, an MP4 file.</summary>
-        void Share(string text, string url, string videoPath);
+        /// <summary>Opens the native share sheet with text + link and, if given, a file (the challenge card PNG).</summary>
+        void Share(string text, string url, string filePath);
 
         /// <summary>Shares straight into one app; falls back to the sheet when that isn't possible.</summary>
-        void ShareTo(ShareTarget target, string text, string url, string videoPath);
+        void ShareTo(ShareTarget target, string text, string url, string filePath);
     }
 
-    public interface IRecorderService
-    {
-        bool IsSupported { get; }
-        void BeginRun();
-        void EndRun();
-
-        /// <summary>Marks a highlight now (see ClipMoments weights): the clip will start just before the best one.</summary>
-        void Highlight(float weight);
-
-        /// <summary>Encodes from just before the run's best moment (at most the last ~15 s) plus an end card. Returns the MP4 path, or null.</summary>
-        Task<string> ExportClipAsync(EndCard card);
-    }
-
+    /// <summary>What the challenge card shows (drawn by UI's EndCardRenderer).</summary>
     public readonly struct EndCard
     {
         public readonly int Score;

@@ -33,7 +33,7 @@ MonoBehaviour:
     - rid: 1108984455021723728
       type: {class: AndroidPlatformBuildSettings, ns: UnityEditor.Android, asm: UnityEditor.Android.Extensions}
       data:
-        m_Development: 1
+        m_Development: 0
         m_ConnectProfiler: 0
         m_BuildWithDeepProfilingSupport: 0
         m_BuildWithCodeCoverage: 0
@@ -53,9 +53,9 @@ MonoBehaviour:
         m_ExportAsGoogleAndroidProject: 0
         m_DebugSymbolLevel: 1
         m_DebugSymbolFormat: 5
-        m_CurrentDeploymentTargetId: R5CX23TAW1M
-        m_BuildType: 1
+        m_CurrentDeploymentTargetId: __builtin__target_default
+        m_BuildType: 2
         m_LinkTimeOptimization: 0
-        m_BuildAppBundle: 0
+        m_BuildAppBundle: 1
         m_IPAddressToConnect: 
         m_SymlinkSources: 0

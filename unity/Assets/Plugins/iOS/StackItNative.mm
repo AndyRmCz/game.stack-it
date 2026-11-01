@@ -31,15 +31,15 @@ extern "C" void _StackItShare(const char* text, const char* url, const char* fil
     });
 }
 
-// Instagram's official "Sharing to Stories" (H5): the clip goes to the pasteboard as the story's
-// background video, then Instagram opens. Needs the Facebook App ID registered for this app. If
+// Instagram's official "Sharing to Stories" (H5): the challenge card goes to the pasteboard as
+// the story's background image, then Instagram opens. Needs the Facebook App ID registered for this app. If
 // Instagram can't be opened, falls back to the share sheet.
 extern "C" void _StackItShareInstagramStory(const char* facebookAppId, const char* text, const char* url, const char* filePath)
 {
     NSString* appId = StackItString(facebookAppId);
     NSString* path = StackItString(filePath);
-    NSData* video = path.length > 0 ? [NSData dataWithContentsOfFile:path] : nil;
-    if (appId.length == 0 || video == nil)
+    NSData* image = path.length > 0 ? [NSData dataWithContentsOfFile:path] : nil;
+    if (appId.length == 0 || image == nil)
     {
         _StackItShare(text, url, filePath);
         return;
@@ -49,7 +49,7 @@ extern "C" void _StackItShareInstagramStory(const char* facebookAppId, const cha
     NSString* fallbackUrl = StackItString(url);
     NSURL* open = [NSURL URLWithString:[@"instagram-stories://share?source_application=" stringByAppendingString:appId]];
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSDictionary* item = @{ @"com.instagram.sharedSticker.backgroundVideo": video };
+        NSDictionary* item = @{ @"com.instagram.sharedSticker.backgroundImage": image };
         NSDictionary* options = @{ UIPasteboardOptionExpirationDate: [NSDate dateWithTimeIntervalSinceNow:300] };
         [[UIPasteboard generalPasteboard] setItems:@[ item ] options:options];
         [[UIApplication sharedApplication] openURL:open options:@{} completionHandler:^(BOOL success) {

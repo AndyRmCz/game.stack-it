@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Folders the share sheet may expose through the FileProvider: exported gameplay clips only. -->
+<!-- Folders the share sheet may expose through the FileProvider: the shared challenge card (a PNG in the cache) only. -->
 <paths>
-    <cache-path name="clips" path="." />
-    <external-cache-path name="external_clips" path="." />
+    <cache-path name="cards" path="." />
+    <external-cache-path name="external_cards" path="." />
 </paths>

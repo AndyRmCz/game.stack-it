@@ -442,9 +442,11 @@ namespace StackIt.UI
     }
 
     /// <summary>
-    /// Results sheet under the camera's pull-back over the whole tower: score, best, coins, the
-    /// challenge result, the breathing "Challenge a friend" (the viral loop gets the accent) and
-    /// the pills: Play again, Continue (once per run), Double coins, Rematch.
+    /// Results sheet under the camera's pull-back over the whole tower: Blocky perched on its edge
+    /// reacting to the run, score, best, coins, the challenge result, the breathing "Challenge a
+    /// friend" (the viral loop gets the accent; the share sheet already lists TikTok, Instagram
+    /// and chats, so it is the only share button) and the pills: Play again, Continue (once per
+    /// run), Double coins, Rematch.
     /// </summary>
     public sealed class GameOverScreen : UiScreen
     {
@@ -464,8 +466,10 @@ namespace StackIt.UI
         private readonly Button _continue;
         private readonly Button _double;
         private readonly Button _rematch;
+        private readonly Blocky _blocky;
         private int _shownCoins;
         private bool _awaitingContinue;
+        private bool _newRecord;
 
         public GameOverScreen(UiContext ctx, Transform parent) : base(ctx, parent, "GameOver", ScreenBackground.None)
         {
@@ -474,6 +478,7 @@ namespace StackIt.UI
             UiKit.Pin((RectTransform)home.transform, new Vector2(0, 0.5f), new Vector2(Ui.IconButton, Ui.IconButton), Vector2.zero);
 
             _sheet = UiRouter.BottomSheet(Safe);
+            _blocky = Blocky.Perch(_sheet);
 
             _record = UiKit.Solid(_sheet, "Record", T.Accent2, 14f, glow: T.Accent2Glow).rectTransform;
             UiKit.Size(_record, height: 28);
@@ -492,6 +497,7 @@ namespace StackIt.UI
             UiKit.Size(_best.rectTransform, height: 18);
             _score = UiKit.Text(_sheet, "0", TextRole.BigNumber, T.TextPrimary, size: 88f);
             UiKit.Size(_score.rectTransform, height: 96);
+            TextEffect.Add(_score, TextEffectKind.LogoGlow);
 
             _coinsRow = UiKit.Rect("Coins", _sheet);
             HorizontalLayoutGroup coinsRow = UiKit.Row(_coinsRow, 8);
@@ -528,19 +534,6 @@ namespace StackIt.UI
             HorizontalLayoutGroup moreRow = UiKit.Row(more, 10);
             moreRow.childForceExpandWidth = false;
             _double = UiKit.Pill(more, L.T("over.double_short"), Icons.VideoAd, () => Ctx.Flow.DoubleCoins());
-            // Straight into TikTok or Instagram Stories (H5); phones only, where clips are recorded.
-            if (Application.isMobilePlatform)
-            {
-                RectTransform apps = UiKit.Rect("ShareTo", _sheet);
-                UiKit.Size(apps, height: Ui.PillHeight);
-                HorizontalLayoutGroup appsRow = UiKit.Row(apps, 10);
-                appsRow.childAlignment = TextAnchor.MiddleCenter;
-                appsRow.childForceExpandWidth = false;
-                UiKit.Pill(apps, L.T("over.tiktok"), Icons.Share, () => Ctx.Flow.ShareChallengeTo(StackIt.Services.ShareTarget.TikTok));
-                UiKit.Pill(apps, L.T("over.stories"), Icons.Share, () => Ctx.Flow.ShareChallengeTo(StackIt.Services.ShareTarget.InstagramStory));
-            }
-            // The spoiler-free emoji result for chats (H2).
-            UiKit.CenteredPill(_sheet, L.T("over.copy_result"), Icons.Copy, () => Ctx.Flow.CopyResult());
         }
 
         /// <summary>Centres a hugging child on its own line of the sheet's column.</summary>
@@ -578,6 +571,7 @@ namespace StackIt.UI
             _status.text = L.T("over.keep_going");
             _continue.gameObject.SetActive(true);
             _challenge.interactable = true; // pressing it ends the run, then shares
+            _blocky.SetMood(MascotMood.Rally);
         }
 
         /// <summary>Immediate results from the local simulation; the server result refines them.</summary>
@@ -591,6 +585,8 @@ namespace StackIt.UI
 
         private void Fill(int score, bool newRecord, int best, bool ranked, string challengeCode)
         {
+            _newRecord = newRecord;
+            _blocky.SetMood(MascotMoods.ForResult(newRecord, duelWon: null));
             _record.parent.gameObject.SetActive(newRecord);
             if (newRecord && !Look.ReduceMotion) Tween.Punch(_record, 0.25f, 0.5f);
             CountUp(_score, score, null);
@@ -632,6 +628,7 @@ namespace StackIt.UI
             _duelResult.text = result.Challenge.Won ? L.T("over.duel_won", rival.DisplayName, rival.Score) : L.T("over.duel_lost", rival.DisplayName, rival.Score);
             ThemedGraphic.Bind(_duelResult, result.Challenge.Won ? T.Success : T.TextPrimary);
             _rematch.gameObject.SetActive(true);
+            _blocky.SetMood(MascotMoods.ForResult(_newRecord, result.Challenge.Won));
         }
 
         private void Rematch()
@@ -703,7 +700,7 @@ namespace StackIt.UI
             UiKit.Column(column, 12, new RectOffset(0, 0, 80, 0), TextAnchor.UpperCenter);
             _avatar = UiKit.Rect("AvatarLine", column);
             UiKit.Size(_avatar, height: 76);
-            HorizontalLayoutGroup avatarRow = UiKit.Row(_avatar, 0);
+            HorizontalLayoutGroup avatarRow = UiKit.Row(_avatar, 18);
             avatarRow.childForceExpandWidth = false;
             avatarRow.childControlWidth = true;
             _title = UiKit.Text(column, "", TextRole.Title);
@@ -725,6 +722,7 @@ namespace StackIt.UI
             _code = info.Code;
             UiKit.Clear(_avatar);
             UiKit.Avatar(_avatar, info.CreatorName, 72f);
+            Blocky.Create(_avatar, 52f).SetMood(MascotMood.Rally); // squares up to the rival
             _title.text = L.T("intro.title", info.CreatorName);
             _score.text = info.Score.ToString();
             _note.text = info.Expired ? L.T("intro.expired") : L.T("intro.rules");

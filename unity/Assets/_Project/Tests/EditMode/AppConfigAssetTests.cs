@@ -25,5 +25,13 @@ namespace StackIt.Tests
             Assert.That(uri.Scheme, Is.EqualTo("https").Or.EqualTo("http"), url);
             Assert.IsFalse(url.EndsWith("/"), "paths are appended with a leading slash: " + url);
         }
+
+        [Test]
+        public void BundleIdIsThePackageRegisteredOnGooglePlay()
+        {
+            // The Play Console app was created as game.milli.com, and a package can never change:
+            // a bundle with any other id is refused on upload.
+            Assert.AreEqual("game.milli.com", Field("bundleId"));
+        }
     }
 }

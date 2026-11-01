@@ -61,5 +61,8 @@ namespace StackIt.Client.Theming
         public const string BloomThreshold = "postFx.bloomThreshold";
         public const string BloomScatter = "postFx.bloomScatter";
         public const string ChromaticPulse = "postFx.chromaticPulse";
+        public const string SkyStars = "sky.stars";
+        public const string SkyStarCount = "sky.starCount";
+        public const string SkyStarTwinkle = "sky.starTwinkle";
     }
 }

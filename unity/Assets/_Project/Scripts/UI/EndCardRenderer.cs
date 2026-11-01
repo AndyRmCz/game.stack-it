@@ -1,6 +1,5 @@
 using StackIt.Client.Theming;
 using StackIt.Services;
-using StackIt.Services.Native;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,15 +7,17 @@ using UnityEngine.UI;
 namespace StackIt.UI
 {
     /// <summary>
-    /// The clip's closing card in the player's current look: the logo, the big score, "Can you beat
+    /// The challenge card in the player's current look: the logo, the big score, "Can you beat
     /// me?" and the challenge code in a pill, drawn offscreen by its own camera into its own
-    /// 720 × 1280 texture, so the layout has the video's shape rather than the phone screen's
-    /// (sizes are in pixels; the score is 220 px so it stays readable in a phone feed). The
-    /// recorder copies it into the video the right way up. Never shown on the device screen.
+    /// 720 × 1280 texture, so the layout has a story's shape rather than the phone screen's
+    /// (sizes are in pixels; the score is 220 px so it stays readable in a phone feed).
+    /// <see cref="SavePng"/> makes the shared image. Never shown on the device screen.
     /// </summary>
-    public sealed class EndCardRenderer : IEndCardRenderer
+    public sealed class EndCardRenderer : System.IDisposable
     {
         public const int Layer = 31;
+        public const int Width = 720;
+        public const int Height = 1280;
 
         private readonly GameObject _root;
         private readonly Camera _camera;
@@ -34,7 +35,7 @@ namespace StackIt.UI
             _camera.backgroundColor = Look.C(T.TextPrimary); // hidden behind the gradient
             _camera.cullingMask = 1 << Layer;
             _camera.orthographic = true;
-            _target = new RenderTexture(RecorderService.Width, RecorderService.Height, 24, RenderTextureFormat.ARGB32);
+            _target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32);
             _camera.targetTexture = _target; // from the start: the canvas sizes itself to it
 
             var canvasGo = new GameObject("Canvas", typeof(RectTransform));
@@ -47,7 +48,7 @@ namespace StackIt.UI
             canvas.vertexColorAlwaysGammaSpace = true;
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(RecorderService.Width, RecorderService.Height);
+            scaler.referenceResolution = new Vector2(Width, Height);
 
             UiKit.Background(canvasGo.transform, 0.5f);
             RectTransform col = UiKit.Stretch(UiKit.Rect("Col", canvasGo.transform), 48, 0, 48, 0);
@@ -96,6 +97,26 @@ namespace StackIt.UI
             Canvas.ForceUpdateCanvases();
             _camera.Render();
             return _target;
+        }
+
+        /// <summary>The finished card (score popped, content in) as a PNG at <paramref name="path"/>: the challenge share.</summary>
+        public void SavePng(string path)
+        {
+            var still = (RenderTexture)Render(1f);
+            RenderTexture previous = RenderTexture.active;
+            var image = new Texture2D(still.width, still.height, TextureFormat.RGBA32, false);
+            try
+            {
+                RenderTexture.active = still;
+                image.ReadPixels(new Rect(0, 0, still.width, still.height), 0, 0);
+                image.Apply(false);
+                System.IO.File.WriteAllBytes(path, image.EncodeToPNG());
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                Object.Destroy(image);
+            }
         }
 
         public void Dispose()

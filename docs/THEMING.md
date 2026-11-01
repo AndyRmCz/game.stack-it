@@ -20,8 +20,8 @@ Tests fail if either copy drifts (`ThemeTokenTests.TheUnityCopyMatchesTheSharedF
 ### Value formats
 
 - Colour: `"#RRGGBB"` or `"#RRGGBBAA"`. A fully transparent colour means "none".
-- List of colours: `bg.gradient` (top, middle, bottom), `block.base` / `block.moving` (top, left, right faces), `block.ramp` (6 stops).
-- Number: widths, `bg.gradientMid`, post-FX values, `accent.glowPulse` (0/1), `block.emission`.
+- List of colours: `bg.gradient` (top, middle, bottom), `block.base` / `block.moving` (top, left, right faces), `block.ramp` (6 stops), `sky.stars` (any number; each star picks one).
+- Number: widths, `bg.gradientMid`, post-FX values, `accent.glowPulse` (0/1), `block.emission`, `sky.starCount`, `sky.starTwinkle` (0..1).
 - Shadow/glow: `{ "color", "y", "blur" }`; radial glows use `{ "color", "radius" }` (fraction of the screen width).
 - In CSS: `accent.glow` → `--accent-glow-color`, `--accent-glow-y` (px), `--accent-glow-blur` (px); lists → `--bg-gradient-1..3`.
 
@@ -52,6 +52,7 @@ Tests fail if either copy drifts (`ThemeTokenTests.TheUnityCopyMatchesTheSharedF
 | `block.base`, `block.moving`, `block.ramp`, `block.groundShadow` | pink base, mint moving, pastel ramp | teal base, magenta moving, cyan→coral ramp | Gameplay blocks (exact face colours) |
 | `block.emission` | 0 | 0.35 | Emissive blocks for bloom |
 | `postFx.bloom*`, `postFx.chromaticPulse` | bloom off, 0.15 | bloom 1.2 / 0.9 / 0.7, 0.35 | URP volume |
+| `sky.stars`, `sky.starCount`, `sky.starTwinkle` | 28 soft white and coral specks, still | 60 cream and mint stars that twinkle, 3 four-point sparkles | `StarField`: stars falling behind the tower, sliding down as it climbs |
 
 The tower climbs `block.ramp`: a stop every 10 blocks, interpolated, looping; side faces are the
 top colour × 0.85 (left) and × 0.70 (right). The moving block always uses `block.moving`.

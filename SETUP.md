@@ -10,7 +10,7 @@ Placeholders used below:
 |---|---|---|
 | `<BASE_URL>` | `https://stackit-production.up.railway.app` | `PUBLIC_BASE_URL` (server) + `AppConfig.apiBaseUrl` (Unity) |
 | `<HOST>` | `stackit-production.up.railway.app` | derived from `<BASE_URL>` |
-| `<BUNDLE_ID>` | `com.milli.game` | `APP_BUNDLE_ID` (server) + `AppConfig.bundleId` (Unity) |
+| `<BUNDLE_ID>` | `game.milli.com` | `APP_BUNDLE_ID` (server) + `AppConfig.bundleId` (Unity) |
 
 ---
 
@@ -107,7 +107,7 @@ dotnet build unity/DotNetTests/CompileCheck/Editor -p:UnityEditorData="<Unity>/E
 | `DATABASE_URL` | yes | `${{Postgres.DATABASE_URL}}` | PostgreSQL connection. |
 | `PUBLIC_BASE_URL` | yes | `<BASE_URL>` | Every public link: challenge URLs, OG tags, well-known files. |
 | `JWT_SECRET` | yes | 48+ random chars: `python -c "import secrets; print(secrets.token_urlsafe(48))"` | Signs access tokens. Rotating it signs everybody out (refresh tokens keep working). |
-| `APP_BUNDLE_ID` | yes | `com.milli.game` | Android package / iOS bundle ID in well-known files and store links. |
+| `APP_BUNDLE_ID` | yes | `game.milli.com` | Android package / iOS bundle ID in well-known files and store links. |
 | `APP_URL_SCHEME` | no | `milli` | "Open in app" button on landing pages. |
 | `GOOGLE_CLIENT_IDS` | for Google sign-in | `123-web.apps.googleusercontent.com,123-ios.apps.googleusercontent.com` | Accepted `aud` of Google ID tokens (web client ID used by Android + iOS client ID). |
 | `APPLE_CLIENT_IDS` | no | defaults to `APP_BUNDLE_ID` | Accepted `aud` of Apple identity tokens. |
@@ -294,7 +294,7 @@ the release bundle and Google Play.
 2. Open **`Unity-iPhone.xcworkspace`** (not `.xcodeproj`).
 3. *Signing & Capabilities*: select your team; confirm **Associated Domains**
    (`applinks:<HOST>`) and **Sign in with Apple** are present (added by `BuildHooks.cs`).
-4. Run on a device. The clip recorder, share sheet, haptics and sign-in need real hardware.
+4. Run on a device. The share sheet, haptics and sign-in need real hardware.
 5. *Product ▸ Archive* → *Distribute App* → App Store Connect.
 
 ## 8. Android and Google Play, step by step
@@ -543,7 +543,7 @@ Play Console ▸ *Home* ▸ **Create app**:
 - Tick the declarations (Developer Program Policies, US export laws) → **Create app**.
 
 You don't type the package name here. **Your first upload fixes it forever** (`<BUNDLE_ID>`,
-`com.milli.game` by default). If Play says that name is already taken, choose another one, for
+`game.milli.com` by default). If Play says that name is already taken, choose another one, for
 example `com.<yourname>.milli`:
 
 1. Set it in `AppConfig.asset` ▸ `bundleId` and in Railway ▸ `APP_BUNDLE_ID`.
@@ -705,7 +705,7 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
       `Info.plist`. (The code opens Instagram without checking first, so it works without this,
       but Apple recommends declaring it.)
 2. **TikTok:**
-   - On Android, the button already opens TikTok directly with the clip.
+   - On Android, the button already opens TikTok directly with the challenge card.
    - Adding TikTok's own hashtag and green-screen mode needs TikTok's **Share Kit SDK**:
      1. Register at [developers.tiktok.com](https://developers.tiktok.com).
      2. Add the Share Kit product.
@@ -774,8 +774,7 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
       both platforms
 - [ ] Google OAuth clients include the **Play App Signing** SHA-1; consent screen published
 - [ ] Sign in with Apple and Google tested on device, including "switch account"
-- [ ] Clip export and share tested on a low-end Android and an older iPhone (check orientation:
-      if a clip is upside down, toggle `RecorderService.invertFlip`)
+- [ ] Challenge share (the end card image + link) tested on a low-end Android and an older iPhone
 - [ ] Offline run → reconnect → run is verified (offline queue)
 - [ ] Account deletion tested end to end; `/delete-account` reachable
 - [ ] Spanish pass on every screen (device language and Settings switch)

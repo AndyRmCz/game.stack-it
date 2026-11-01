@@ -33,43 +33,43 @@ namespace StackIt.Services.Native
 
         public NativeShareService(string facebookAppId = "") => _facebookAppId = facebookAppId ?? "";
 
-        public void ShareTo(ShareTarget target, string text, string url, string videoPath)
+        public void ShareTo(ShareTarget target, string text, string url, string filePath)
         {
             string message = text + "\n" + url;
             switch (target)
             {
                 case ShareTarget.TikTok when Application.platform == RuntimePlatform.Android:
                     using (AndroidJavaObject activity = AndroidNative.Activity())
-                        AndroidNative.CallStatic("ShareBridge", "shareToTikTok", activity, message, videoPath ?? "");
+                        AndroidNative.CallStatic("ShareBridge", "shareToTikTok", activity, message, filePath ?? "");
                     return;
                 case ShareTarget.InstagramStory when Application.platform == RuntimePlatform.Android:
                     using (AndroidJavaObject activity = AndroidNative.Activity())
-                        AndroidNative.CallStatic("ShareBridge", "shareToInstagramStory", activity, _facebookAppId, message, videoPath ?? "");
+                        AndroidNative.CallStatic("ShareBridge", "shareToInstagramStory", activity, _facebookAppId, message, filePath ?? "");
                     return;
                 case ShareTarget.InstagramStory when Application.platform == RuntimePlatform.IPhonePlayer:
-                    IosNative._StackItShareInstagramStory(_facebookAppId, text, url, videoPath ?? "");
+                    IosNative._StackItShareInstagramStory(_facebookAppId, text, url, filePath ?? "");
                     return;
                 default:
                     // TikTok on iOS needs its Share Kit SDK (not added yet): the sheet lists TikTok anyway.
-                    Share(text, url, videoPath);
+                    Share(text, url, filePath);
                     return;
             }
         }
 
-        public void Share(string text, string url, string videoPath)
+        public void Share(string text, string url, string filePath)
         {
             switch (Application.platform)
             {
                 case RuntimePlatform.IPhonePlayer:
-                    IosNative._StackItShare(text, url, videoPath ?? "");
+                    IosNative._StackItShare(text, url, filePath ?? "");
                     break;
                 case RuntimePlatform.Android:
                     using (AndroidJavaObject activity = AndroidNative.Activity())
-                        AndroidNative.CallStatic("ShareBridge", "share", activity, text + "\n" + url, videoPath ?? "");
+                        AndroidNative.CallStatic("ShareBridge", "share", activity, text + "\n" + url, filePath ?? "");
                     break;
                 default:
                     GUIUtility.systemCopyBuffer = text + " " + url; // editor / desktop: copy the link
-                    Debug.Log($"[Share] {text} {url} {videoPath}");
+                    Debug.Log($"[Share] {text} {url} {filePath}");
                     break;
             }
         }

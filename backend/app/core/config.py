@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = ""
 
     # Placeholder bundle / package ID, kept in one place (mirrors the Unity project setting).
-    app_bundle_id: str = "com.milli.game"
+    app_bundle_id: str = "game.milli.com"
     app_url_scheme: str = "milli"
 
     # --- Auth ---

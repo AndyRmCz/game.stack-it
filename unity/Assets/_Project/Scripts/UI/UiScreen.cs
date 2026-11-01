@@ -27,7 +27,7 @@ namespace StackIt.UI
         void DeclineContinue();
         void DoubleCoins();
         void ShareChallenge();
-        /// <summary>The challenge clip straight into TikTok or Instagram Stories (H5).</summary>
+        /// <summary>The challenge card straight into TikTok or Instagram Stories (H5).</summary>
         void ShareChallengeTo(ShareTarget target);
         void Pause();
         void Resume();

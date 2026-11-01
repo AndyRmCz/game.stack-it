@@ -11,8 +11,8 @@ Assets/
       Client/       StackIt.Client: API DTOs, retry policy, offline queue, deep links, ad policy,
                     rival tracker, strings CSV, manifest generation (no UnityEngine, unit tested)
       Game/         game loop (GameController), stack view, camera, sky, hype effects, rival ghost
-      Services/     ApiClient, AuthService, GameApi, audio, deep links, native bridges, recorder
-      UI/           code-built uGUI + TMP screens (UiKit, router, all screens, clip end card)
+      Services/     ApiClient, AuthService, GameApi, audio, deep links, native bridges
+      UI/           code-built uGUI + TMP screens (UiKit, router, all screens, challenge card)
       Integrations/ URP post-processing, Localization, Input System event system
       Bootstrap/    App (composition root + game flow), AppConfig / AdsConfig
       Editor/       Setup Project, Import Strings, build hooks (Android manifest, iOS capabilities)
@@ -20,8 +20,8 @@ Assets/
     Editor/         EDM4U native dependencies
     Resources/      strings.csv (+ config and materials created by Setup Project)
     Tests/EditMode/ NUnit tests shared with DotNetTests (golden vectors, client logic)
-  Plugins/iOS       share, haptics, Sign in with Apple/Google, VideoToolbox recorder (.mm)
-  Plugins/Android   share, haptics, install referrer, Credential Manager, MediaCodec recorder (.java)
+  Plugins/iOS       share, haptics, Sign in with Apple/Google (.mm)
+  Plugins/Android   share, haptics, install referrer, Credential Manager (.java)
                     + StackItManifest.androidlib (App Links, FileProvider)
   Settings/         URP assets from the Universal 3D template
 DotNetTests/        dotnet test runner + compile checks (outside Assets, ignored by Unity)

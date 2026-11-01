@@ -59,7 +59,10 @@
         "postFx.bloomIntensity": 0,
         "postFx.bloomThreshold": 0.9,
         "postFx.bloomScatter": 0.7,
-        "postFx.chromaticPulse": 0.15
+        "postFx.chromaticPulse": 0.15,
+        "sky.stars": ["#FFFFFFE6", "#FFFFFFB3", "#FF6B5B8C"],
+        "sky.starCount": 28,
+        "sky.starTwinkle": 0
       }
     },
     "neon": {
@@ -119,7 +122,10 @@
         "postFx.bloomIntensity": 1.2,
         "postFx.bloomThreshold": 0.9,
         "postFx.bloomScatter": 0.7,
-        "postFx.chromaticPulse": 0.35
+        "postFx.chromaticPulse": 0.35,
+        "sky.stars": ["#FFF4E8", "#FFF4E8", "#9BEADF"],
+        "sky.starCount": 60,
+        "sky.starTwinkle": 1
       }
     }
   }

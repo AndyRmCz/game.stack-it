@@ -59,7 +59,7 @@ over.queued,Saved. It will be verified when you're back online.,Guardada. Se ver
 over.not_verified,This run could not be verified and does not count.,Esta partida no se pudo verificar y no cuenta.
 over.duel_won,You beat @{0}'s {1}!,¡Superaste los {1} de @{0}!
 over.duel_lost,@{0}'s {1} still stands. Rematch?,Los {1} de @{0} siguen en pie. ¿Revancha?
-over.preparing_clip,Preparing clip…,Preparando clip…
+over.preparing_clip,Preparing…,Preparando…
 over.continue,Continue,Continuar
 over.double_short,Double coins,Monedas ×2
 over.rematch,Rematch,Revancha

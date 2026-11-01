@@ -6,7 +6,7 @@
 -->
 <dependencies>
   <androidPackages>
-    <!-- FileProvider for sharing clips. -->
+    <!-- FileProvider for sharing the challenge card. -->
     <androidPackage spec="androidx.core:core:1.13.1" />
     <!-- Challenge code through fresh installs. -->
     <androidPackage spec="com.android.installreferrer:installreferrer:2.2" />

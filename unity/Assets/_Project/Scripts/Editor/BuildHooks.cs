@@ -58,8 +58,7 @@ namespace StackIt.EditorTools
             var project = new PBXProject();
             project.ReadFromFile(projectPath);
             string frameworkTarget = project.GetUnityFrameworkTargetGuid();
-            foreach (string framework in new[] { "AVFoundation.framework", "VideoToolbox.framework", "CoreMedia.framework", "CoreVideo.framework", "AuthenticationServices.framework" })
-                project.AddFrameworkToProject(frameworkTarget, framework, false);
+            project.AddFrameworkToProject(frameworkTarget, "AuthenticationServices.framework", false);
             project.WriteToFile(projectPath);
 
             // Universal Links + Sign in with Apple.

@@ -40,7 +40,6 @@ namespace StackIt.Bootstrap
         private IHaptics _haptics;
         private AudioService _audio;
         private MusicService _music;
-        private RecorderService _recorder;
         private UnityLocalizer _localizer;
         private DeepLinkService _deepLinks;
         private AdPolicy _adPolicy;
@@ -48,6 +47,7 @@ namespace StackIt.Bootstrap
 
         private CameraRig _rig;
         private SkyBackdrop _sky;
+        private StarField _stars;
         private StackView _view;
         private HypeFx _fx;
         private Mascot _mascot;
@@ -129,8 +129,6 @@ namespace StackIt.Bootstrap
             _music.Enabled = _save.MusicOn;
             _music.Equip(_api.Profile?.EquippedMusic); // the cached profile, until the server's arrives
             _api.ProfileChanged += p => _music.Equip(p?.EquippedMusic);
-            _recorder = gameObject.AddComponent<RecorderService>();
-            _recorder.EndCardFactory = card => new EndCardRenderer(card);
             _adPolicy = new AdPolicy(_adsConfig.interstitialMinRuns, _adsConfig.interstitialMinSeconds);
 
             BuildWorld();
@@ -211,6 +209,8 @@ namespace StackIt.Bootstrap
             _rig.Camera.cullingMask &= ~(1 << EndCardRenderer.Layer);
             DontDestroyOnLoad(_rig.gameObject);
             _sky = SkyBackdrop.Create(_rig.Camera);
+            _stars = StarField.Create(_rig.Camera);
+            _stars.ReduceMotion = _save.ReduceMotion;
 
             _postFx = new GameObject("PostFx").AddComponent<UrpPostFx>();
             DontDestroyOnLoad(_postFx.gameObject);
@@ -233,15 +233,9 @@ namespace StackIt.Bootstrap
                 float width = Mathf.Min(step.Block.Width, step.Block.Depth) / (float)SimConstants.BlockSize;
                 _music.Progress(step.N, width);
                 _mascot.Placed(step.Perfect, step.Combo, step.N, width);
-                // Clip highlights (H3): a perfect streak counts more the longer it gets.
-                if (step.Perfect && step.Combo >= 5) _recorder.Highlight(ClipMoments.StreakWeight * step.Combo / 5f);
+                _stars.SetHeight(step.N);
+                if (step.Perfect) _stars.Streak(Feel.StreakFanfare(step.Combo));
             };
-            _game.RivalProgress += e =>
-            {
-                if (e == RivalEvent.Passed) _recorder.Highlight(ClipMoments.RivalWeight);
-            };
-            _game.NearMissed += near => _recorder.Highlight(
-                near.Kind == NearMissKind.AlmostSaved ? ClipMoments.AlmostSavedWeight : ClipMoments.AlmostPerfectWeight);
 
             _view.ResetStack(new StackSim(0).Top);
             ApplyLook(_theme.Palette);
@@ -309,6 +303,7 @@ namespace StackIt.Bootstrap
         private void ApplyLook(ThemePalette look)
         {
             _sky.SetLook(look, _api?.Profile?.EquippedTheme);
+            _stars.SetLook(look);
             _view.SetLook(look, _api?.Profile?.EquippedBlockSkin, _sky.Horizon);
             _postFx.SetLook(look.Number(T.BloomIntensity), look.Number(T.BloomThreshold), look.Number(T.BloomScatter),
                 look.Number(T.ChromaticPulse));
@@ -356,6 +351,7 @@ namespace StackIt.Bootstrap
             Look.ReduceMotion = on;
             _fx.ReduceMotion = on;
             _mascot.ReduceMotion = on;
+            _stars.ReduceMotion = on;
         }
 
         public void SetMusic(bool on)
@@ -566,7 +562,7 @@ namespace StackIt.Bootstrap
             _runOpen = true;
             _telemetry.RunStarted(setup.RunId, setup.ChallengeCode != null);
             _router.Reset(_hud);
-            _recorder.BeginRun();
+            _stars.SetHeight(0);
             _mascot.ResetMood();
             // A soundtrack tried with a rewarded ad lasts one run.
             _music.Override(_trialMusic);
@@ -595,7 +591,6 @@ namespace StackIt.Bootstrap
             TrackRunEnd("restart");
             _game.Resume();
             _game.Idle();
-            _recorder.EndRun();
             PlayNormal();
         }
 
@@ -650,7 +645,6 @@ namespace StackIt.Bootstrap
                 _telemetry.Track(TelemetryEvents.OfferDeclined, ("placement", AdPlacements.Continue));
             }
             TrackRunEnd("miss");
-            _recorder.EndRun();
             _adPolicy.RecordRunEnded();
             _music.GameOver();
             _mascot.GameOver();
@@ -706,7 +700,7 @@ namespace StackIt.Bootstrap
             }
         }
 
-        /// <summary>The viral loop: duel link + auto-recorded clip with an end card, via the share sheet.</summary>
+        /// <summary>The viral loop: duel link + the end card as an image, via the share sheet.</summary>
         public void ShareChallenge() => ShareChallengeTo(ShareTarget.System);
 
         public async void ShareChallengeTo(ShareTarget target)
@@ -723,13 +717,8 @@ namespace StackIt.Bootstrap
             try
             {
                 ChallengeInfo challenge = await _api.CreateChallengeAsync(_lastResult.RunId);
-                string clip = null;
-                if (_recorder.IsSupported)
-                {
-                    clip = await _recorder.ExportClipAsync(new EndCard(challenge.Score, L.T("share.headline"), challenge.Code));
-                    _telemetry.Track(TelemetryEvents.ClipExported, ("ok", clip != null));
-                }
-                _share.ShareTo(target, L.T("share.text", challenge.Score, challenge.Code), challenge.Url, clip);
+                string image = await SaveEndCard(new EndCard(challenge.Score, L.T("share.headline"), challenge.Code));
+                _share.ShareTo(target, L.T("share.text", challenge.Score, challenge.Code), challenge.Url, image);
             }
             catch (ApiException e)
             {
@@ -738,6 +727,29 @@ namespace StackIt.Bootstrap
             finally
             {
                 _gameOver.SetSharing(false);
+            }
+        }
+
+        /// <summary>The end card as a PNG in the cache (earlier cards deleted); null if it can't be written: the link alone still works.</summary>
+        private static async Task<string> SaveEndCard(EndCard card)
+        {
+            try
+            {
+                foreach (string old in System.IO.Directory.GetFiles(Application.temporaryCachePath, ShareImage.Pattern))
+                    System.IO.File.Delete(old);
+                string path = System.IO.Path.Combine(Application.temporaryCachePath, ShareImage.FileName(card.Code, System.DateTime.UtcNow));
+                using (var renderer = new EndCardRenderer(card))
+                {
+                    renderer.Render(1f);
+                    await Task.Yield(); // a frame for the card's text and layout to settle
+                    renderer.SavePng(path);
+                }
+                return path;
+            }
+            catch (System.Exception e) when (e is System.IO.IOException || e is System.UnauthorizedAccessException)
+            {
+                Debug.LogWarning("End card not saved: " + e.Message);
+                return null;
             }
         }
 
@@ -756,6 +768,7 @@ namespace StackIt.Bootstrap
             _rig.Follow(0f, snap: true);
             _rig.SetHome(true, snap: true);
             _sky.SetHeight(0);
+            _stars.SetHeight(0);
             _game.Ghost.Hide();
             _router.Reset(_home);
             _music.Override(null); // a trial soundtrack ends with its run

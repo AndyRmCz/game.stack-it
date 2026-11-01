@@ -9,10 +9,12 @@ import android.net.Uri;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
- * Native share sheet (ACTION_SEND), plus direct shares to one app (H5). Videos are shared through
- * a FileProvider content:// URI. A direct share whose app isn't installed falls back to the sheet.
+ * Native share sheet (ACTION_SEND), plus direct shares to one app (H5). The attached file (the
+ * challenge card, a .png) is shared through a FileProvider content:// URI, typed by its extension.
+ * A direct share whose app isn't installed falls back to the sheet.
  */
 public final class ShareBridge {
     private static final String INSTAGRAM = "com.instagram.android";
@@ -21,15 +23,15 @@ public final class ShareBridge {
 
     private ShareBridge() {}
 
-    /** Straight into TikTok's own share flow with the clip and the text (no SDK: no auto hashtag). */
-    public static void shareToTikTok(final Activity activity, final String text, final String videoPath) {
+    /** Straight into TikTok's own share flow with the card and the text (no SDK: no auto hashtag). */
+    public static void shareToTikTok(final Activity activity, final String text, final String filePath) {
         activity.runOnUiThread(() -> {
-            Uri uri = videoUri(activity, videoPath);
+            Uri uri = fileUri(activity, filePath);
             for (String pkg : TIKTOK) {
                 Intent intent = new Intent(Intent.ACTION_SEND);
                 intent.setPackage(pkg);
                 intent.putExtra(Intent.EXTRA_TEXT, text);
-                attach(intent, uri);
+                attach(intent, uri, filePath);
                 try {
                     activity.startActivity(intent);
                     return;
@@ -37,62 +39,67 @@ public final class ShareBridge {
                     // try the other package, then the sheet
                 }
             }
-            share(activity, text, videoPath);
+            share(activity, text, filePath);
         });
     }
 
     /**
-     * Instagram's official "Sharing to Stories" intent: the clip as the story's background video.
+     * Instagram's official "Sharing to Stories" intent: the card as the story's background.
      * Needs the Facebook App ID registered for this app (source_application).
      */
     public static void shareToInstagramStory(final Activity activity, final String facebookAppId, final String text,
-                                             final String videoPath) {
+                                             final String filePath) {
         activity.runOnUiThread(() -> {
-            Uri uri = videoUri(activity, videoPath);
+            Uri uri = fileUri(activity, filePath);
             if (uri == null || facebookAppId == null || facebookAppId.isEmpty()) {
-                share(activity, text, videoPath);
+                share(activity, text, filePath);
                 return;
             }
             Intent intent = new Intent("com.instagram.share.ADD_TO_STORY");
             intent.putExtra("source_application", facebookAppId);
-            intent.setDataAndType(uri, "video/mp4");
+            intent.setDataAndType(uri, mimeType(filePath));
             intent.setPackage(INSTAGRAM);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             activity.grantUriPermission(INSTAGRAM, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             try {
                 activity.startActivity(intent);
             } catch (ActivityNotFoundException e) {
-                share(activity, text, videoPath);
+                share(activity, text, filePath);
             }
         });
     }
 
-    private static Uri videoUri(Activity activity, String videoPath) {
-        File video = videoPath == null || videoPath.isEmpty() ? null : new File(videoPath);
-        if (video == null || !video.exists()) return null;
-        return FileProvider.getUriForFile(activity, activity.getPackageName() + ".stackit.fileprovider", video);
+    private static Uri fileUri(Activity activity, String filePath) {
+        File file = filePath == null || filePath.isEmpty() ? null : new File(filePath);
+        if (file == null || !file.exists()) return null;
+        return FileProvider.getUriForFile(activity, activity.getPackageName() + ".stackit.fileprovider", file);
     }
 
-    private static void attach(Intent intent, Uri uri) {
+    /** image/png for the challenge card; anything else is sent untyped. */
+    static String mimeType(String path) {
+        return path != null && path.toLowerCase(Locale.ROOT).endsWith(".png") ? "image/png" : "application/octet-stream";
+    }
+
+    private static void attach(Intent intent, Uri uri, String path) {
         if (uri == null) {
             intent.setType("text/plain");
             return;
         }
-        intent.setType("video/mp4");
+        intent.setType(mimeType(path));
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.setClipData(ClipData.newRawUri("", uri));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
     }
 
-    public static void share(final Activity activity, final String text, final String videoPath) {
+    public static void share(final Activity activity, final String text, final String filePath) {
         activity.runOnUiThread(() -> {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.putExtra(Intent.EXTRA_TEXT, text);
-            File video = videoPath == null || videoPath.isEmpty() ? null : new File(videoPath);
-            if (video != null && video.exists()) {
+            File file = filePath == null || filePath.isEmpty() ? null : new File(filePath);
+            if (file != null && file.exists()) {
                 String authority = activity.getPackageName() + ".stackit.fileprovider";
-                Uri uri = FileProvider.getUriForFile(activity, authority, video);
-                intent.setType("video/mp4");
+                Uri uri = FileProvider.getUriForFile(activity, authority, file);
+                intent.setType(mimeType(filePath));
                 intent.putExtra(Intent.EXTRA_STREAM, uri);
                 intent.setClipData(ClipData.newRawUri("", uri));
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

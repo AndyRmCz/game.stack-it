@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AppConfig
   m_EditorClassIdentifier: StackIt.Runtime::StackIt.Bootstrap.AppConfig
   apiBaseUrl: https://gamestack-it-production.up.railway.app
-  bundleId: com.milli.game
+  bundleId: game.milli.com
   urlScheme: milli
   iosAppStoreUrl: 
   androidPlayStoreUrl: 

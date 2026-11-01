@@ -81,6 +81,7 @@ Choices the brief left open, one line of reasoning each. Newest milestone at the
 | Android encoder uses an input Surface drawn with `lockHardwareCanvas` | The GPU does RGBA→YUV conversion; no native C code needed. |
 | End card rendered offscreen into the recorder target, paced in real time (2 s) | Android's surface encoder timestamps on arrival. |
 | Clips are silent | Keeps the encoder simple; most sharers add music on TikTok/Instagram. |
+| **2026-10-31: recorder and clips removed.** The challenge is shared as a PNG of the end card (`EndCardRenderer.SavePng`) | Owner: the video took long to make and added no value. Nothing records during play any more. The recorder rows above and H3 below are history. |
 | Android Java as loose files in `Plugins/Android` + a manifest-only `.androidlib` | Loose Java compiles with Unity's classes; the manifest merge adds intent filters + FileProvider to Unity's own activity. |
 | Native deps via EDM4U `StackItDependencies.xml` | EDM4U ships with the Google Mobile Ads plugin, which is required anyway. |
 | AdMob adapter outside all asmdefs, behind `STACKIT_ADMOB`, registered through `AdsServiceRegistry` | Project compiles with or without the plugin, however the plugin is packaged. |
