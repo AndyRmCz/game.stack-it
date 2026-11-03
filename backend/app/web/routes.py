@@ -21,6 +21,7 @@ async def challenge_landing(
     challenges: ChallengeServiceDep,
     settings: SettingsDep,
     accept_language: AcceptLanguage = None,
+    user_agent: Annotated[str | None, Header()] = None,
     lang: LangOverride = None,
 ) -> HTMLResponse:
     language = pick_lang(accept_language, lang)
@@ -40,10 +41,15 @@ async def challenge_landing(
         placed=view.challenge.placed,
         expired=view.expired,
         app_scheme=settings.app_url_scheme,
+        app_package=settings.app_bundle_id,
         ios_url=settings.ios_app_store_url,
         play_url=settings.play_store_url,
+        platform=pages.platform_of(user_agent),
     )
-    return HTMLResponse(html, headers={"Cache-Control": "public, max-age=60"})
+    # The buttons depend on the phone, so caches keep one copy per user agent.
+    return HTMLResponse(
+        html, headers={"Cache-Control": "public, max-age=60", "Vary": "User-Agent, Accept-Language"}
+    )
 
 
 @router.get("/og/{code}.png")

@@ -37,6 +37,7 @@ mission.daily,Play the Daily Tower,Juega la torre diaria
 over.tiktok,TikTok,TikTok
 over.stories,Instagram Stories,Historias de Instagram
 flow.result_copied,Result copied: paste it in a chat,Resultado copiado: pégalo en un chat
+flow.link_copied,Link copied: paste it in a story's link sticker,Enlace copiado: pégalo en el sticker de enlace de tu historia
 flow.daily_offline,The Daily Tower needs a connection,La torre diaria necesita conexión
 hud.almost,@{0} is right above you,@{0} está justo encima
 pause.title,Paused,En pausa

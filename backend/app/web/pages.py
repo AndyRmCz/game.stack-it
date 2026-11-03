@@ -5,10 +5,21 @@ They wear the app's looks: colours are CSS custom properties generated from the 
 (Neon by default, Pop when the browser prefers light), with the app's fonts, shapes and buttons."""
 
 from html import escape
+from typing import Literal
 from urllib.parse import quote
 
 from app.web import theme
 from app.web.i18n import Lang, t
+
+Platform = Literal["android", "ios", "other"]
+
+# iPhone: the game opens over the page if installed; if the page is still showing after this,
+# it isn't, and the App Store opens instead.
+IOS_FALLBACK = (
+    "<script>document.querySelectorAll('[data-store]').forEach(function (a) {"
+    "a.addEventListener('click', function () { setTimeout(function () {"
+    "if (!document.hidden) location.href = a.dataset.store; }, 1500); }); });</script>"
+)
 
 FONTS = (
     "https://fonts.googleapis.com/css2?family=Sora:wght@600;700"
@@ -169,6 +180,16 @@ def _tower(placed: int, rival: str, lang: Lang) -> str:
     )
 
 
+def platform_of(user_agent: str | None) -> Platform:
+    """Which store the visitor's phone uses. In-app browsers (Instagram, TikTok) keep the OS."""
+    agent = (user_agent or "").lower()
+    if "android" in agent:
+        return "android"
+    if any(device in agent for device in ("iphone", "ipad", "ipod")):
+        return "ios"
+    return "other"
+
+
 def challenge_page(
     *,
     lang: Lang,
@@ -179,8 +200,10 @@ def challenge_page(
     placed: int,
     expired: bool,
     app_scheme: str,
+    app_package: str,
     ios_url: str,
     play_url: str,
+    platform: Platform = "other",
 ) -> str:
     page_url = f"{base_url}/c/{code}"
     title = t(lang, "og_title", name=rival, score=score)
@@ -201,13 +224,39 @@ def challenge_page(
 <meta name="twitter:card" content="summary_large_image">"""
 
     notice = f'<p class="notice">{e(t(lang, "expired"))}</p>' if expired else ""
-    primary = (
-        ""
-        if expired
-        else f'<a class="btn btn-primary" href="{e(app_scheme)}://c/{e(code)}">'
-        f"{e(t(lang, 'open_app'))}</a>"
+    # One button that lands in the game if it is installed and in the store if it isn't, so a
+    # link from a story or a chat works either way. Android does it natively with an intent;
+    # the fresh install still opens the challenge through the Play referrer.
+    primary = script = ""
+    if expired:
+        pass
+    elif platform == "android":
+        fallback = quote(play_link, safe="")
+        intent = (
+            f"intent://c/{code}#Intent;scheme={app_scheme};package={app_package};"
+            f"S.browser_fallback_url={fallback};end"
+        )
+        primary = (
+            f'<a class="btn btn-primary" href="{e(intent)}">{e(t(lang, "play_challenge"))}</a>'
+        )
+    elif platform == "ios" and ios_url:
+        primary = (
+            f'<a class="btn btn-primary" href="{e(app_scheme)}://c/{e(code)}" '
+            f'data-store="{e(ios_url)}">{e(t(lang, "play_challenge"))}</a>'
+        )
+        script = IOS_FALLBACK
+    else:
+        primary = (
+            f'<a class="btn btn-primary" href="{e(app_scheme)}://c/{e(code)}">'
+            f"{e(t(lang, 'open_app'))}</a>"
+        )
+    # The other stores only where they can help: the button already covers this phone's store.
+    show_play = platform == "other" or (platform == "android" and expired)
+    show_ios = bool(ios_url) and (platform == "other" or (platform == "ios" and expired))
+    play = (
+        f'<a class="pill" href="{e(play_link)}">{e(t(lang, "play_store"))}</a>' if show_play else ""
     )
-    ios = f'<a class="pill" href="{e(ios_url)}">{e(t(lang, "app_store"))}</a>' if ios_url else ""
+    ios = f'<a class="pill" href="{e(ios_url)}">{e(t(lang, "app_store"))}</a>' if show_ios else ""
     body = f"""<p class="logo">milli</p>
 <p class="overline">{e(t(lang, "eyebrow"))}</p>
 <h1>{e(t(lang, "headline_pre", name=rival))}</h1>
@@ -218,10 +267,10 @@ def challenge_page(
 {notice}
 <div class="actions">
 {primary}
-<a class="pill" href="{e(play_link)}">{e(t(lang, "play_store"))}</a>
+{play}
 {ios}
 </div>
-<p class="code">{e(t(lang, "code_hint"))} <b>{e(code)}</b></p>"""
+<p class="code">{e(t(lang, "code_hint"))} <b>{e(code)}</b></p>{script}"""
     return _shell(lang, title, body, head, base_url)
 
 

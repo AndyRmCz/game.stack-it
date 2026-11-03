@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models import Challenge, Run, User
+from app.web import pages
 
 
 async def _challenge(db: AsyncSession, name: str, expires_in: timedelta) -> Challenge:
@@ -44,6 +45,62 @@ async def test_landing_page_has_rich_preview_and_app_links(
     assert 'href="milli://c/K7QX9PA"' in html
     # Play Store link carries the code through the Install Referrer for fresh installs.
     assert "referrer=challenge%3DK7QX9PA" in html
+
+
+ANDROID_INSTAGRAM = (
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Version/4.0 Chrome/129.0 Mobile Safari/537.36 Instagram 350.0.0.0 Android"
+)
+IPHONE = (
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Mobile/15E148 Instagram 350.0.0"
+)
+
+
+async def test_on_android_one_button_opens_the_game_or_the_play_store(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _challenge(db_session, "Nova", timedelta(days=3))
+
+    response = await client.get("/c/K7QX9PA", headers={"User-Agent": ANDROID_INSTAGRAM})
+
+    html = response.text
+    # Installed: the intent opens the game on the challenge. Not installed: Android follows the
+    # fallback to the Play Store, whose referrer opens the challenge on the first launch.
+    assert (
+        'href="intent://c/K7QX9PA#Intent;scheme=milli;package=game.milli.com;'
+        "S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails"
+        '%3Fid%3Dgame.milli.com%26referrer%3Dchallenge%253DK7QX9PA;end"' in html
+    )
+    assert 'href="milli://c/K7QX9PA"' not in html
+    assert "Vary" in response.headers and "User-Agent" in response.headers["Vary"]
+
+
+def test_on_iphone_the_button_tries_the_game_then_the_app_store() -> None:
+    html = pages.challenge_page(
+        lang="en",
+        base_url="https://milli.test",
+        code="K7QX9PA",
+        rival="Nova",
+        score=48,
+        placed=31,
+        expired=False,
+        app_scheme="milli",
+        app_package="game.milli.com",
+        ios_url="https://apps.apple.com/app/id123",
+        play_url="https://play.google.com/store/apps/details?id=game.milli.com",
+        platform="ios",
+    )
+
+    assert 'href="milli://c/K7QX9PA" data-store="https://apps.apple.com/app/id123"' in html
+    assert "play.google.com" not in html
+
+
+def test_platform_comes_from_the_user_agent() -> None:
+    assert pages.platform_of(ANDROID_INSTAGRAM) == "android"
+    assert pages.platform_of(IPHONE) == "ios"
+    assert pages.platform_of("Mozilla/5.0 (Windows NT 10.0; Win64; x64)") == "other"
+    assert pages.platform_of(None) == "other"
 
 
 async def test_landing_page_speaks_spanish(client: AsyncClient, db_session: AsyncSession) -> None:

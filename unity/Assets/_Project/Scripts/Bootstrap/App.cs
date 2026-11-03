@@ -718,6 +718,10 @@ namespace StackIt.Bootstrap
             {
                 ChallengeInfo challenge = await _api.CreateChallengeAsync(_lastResult.RunId);
                 string image = await SaveEndCard(new EndCard(challenge.Score, L.T("intro.score_to_beat"), L.T("share.headline"), challenge.Code));
+                // Instagram and TikTok keep the image but drop the text: the link waits in the
+                // clipboard for a story's link sticker.
+                GUIUtility.systemCopyBuffer = challenge.Url;
+                _router.Toast(L.T("flow.link_copied"), 4f);
                 _share.ShareTo(target, L.T("share.text", challenge.Score, challenge.Code), challenge.Url, image);
             }
             catch (ApiException e)

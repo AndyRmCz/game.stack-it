@@ -21,6 +21,7 @@ STRINGS: dict[str, dict[Lang, str]] = {
     "ghost": {"en": "@{name}", "es": "@{name}"},
     "tower_alt": {"en": "{name}'s tower, {n} blocks high", "es": "Torre de {name}, {n} bloques"},
     "open_app": {"en": "Open in Milli", "es": "Abrir en Milli"},
+    "play_challenge": {"en": "Take the challenge", "es": "Acepta el reto"},
     "score_to_beat": {"en": "Score to beat", "es": "Puntos a superar"},
     "og_beat": {"en": "Beat my score", "es": "Supera mi puntuación"},
     "og_generic": {"en": "Can you beat me?", "es": "¿Me superas?"},
