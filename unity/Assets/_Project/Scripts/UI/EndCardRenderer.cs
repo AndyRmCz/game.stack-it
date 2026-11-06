@@ -76,7 +76,8 @@ namespace StackIt.UI
             Place(line.rectTransform, LineY, 4f, Width);
             Tower(content, card.Score);
             Blocky blocky = Blocky.Create(content, 104f, still: true);
-            blocky.SetMood(MascotMood.Cheer);
+            blocky.SetMood(MascotMood.Smug); // the card is a taunt
+            blocky.WearSlab();
             var feet = (RectTransform)blocky.transform;
             feet.anchorMin = feet.anchorMax = new Vector2(0.5f, 1f);
             feet.pivot = new Vector2(0.5f, 0f);

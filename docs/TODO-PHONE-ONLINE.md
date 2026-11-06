@@ -119,6 +119,24 @@ could not be run here:
 - [ ] Commit the regenerated localization assets (`UI Shared Data.asset`, `UI_en.asset`,
       `UI_es.asset`) that Unity rebuilt from `strings.csv`.
 
+## Pending from Blocky's personality (2026-11-04)
+
+- [ ] **On the phone, check:**
+  - [ ] the 3D Blocky's face sits on its front, in both looks, during a run and on Home;
+  - [ ] the speech bubble on Home sits beside Blocky, clear of the logo and Play;
+  - [ ] the bubble on the results sheet does not cover anything needed;
+  - [ ] tapping Blocky on Home and on results: a giggle first, then it wears thin;
+  - [ ] the first open of a day, and after 3+ days (set the phone's date forward): sulk, then melt;
+  - [ ] claiming the daily reward, then back on Home: the coins line.
+- [ ] **Blocky's glass, on the phone:**
+  - [ ] the 2D Blocky looks like `unity/Assets/_Project/Resources/StackIt/BlockyGlass.png`: no banding in the soft light (texture compression);
+  - [ ] the 3D Blocky's glass lines up with its front, and its top and sides match the glass (they are plain block colours);
+  - [ ] the colours match in the 2D and 3D Blocky (the project is in Linear colour);
+  - [ ] you can spot Blocky on Neon at a glance: ultraviolet has less contrast than the old pink, the glow has to carry it;
+  - [ ] the bigger Home Blocky clears the tower, Play and the challenge button;
+  - [ ] the gold slab reads on the glass, on results and on the challenge card;
+  - [ ] blinks and mood changes stay smooth on a cheap phone.
+
 ## Pending from the soundtracks (2026-10-24)
 
 Built and tested outside Unity (`docs/PLAN.md`, "Soundtracks plan"). Still to do:

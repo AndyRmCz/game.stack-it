@@ -198,3 +198,37 @@ error.provider_unavailable,This sign-in option isn't available on this device.,E
 error.provider_already_linked,This account is already linked.,Esta cuenta ya está vinculada.
 error.run_not_verified,Only verified runs can be shared as challenges.,Solo las partidas verificadas se pueden compartir como reto.
 error.invalid_display_name,"Use 3–20 letters, digits, spaces, _ . or -.","Usa de 3 a 20 letras, números, espacios, _ . o -."
+blocky.ordinary.0,Not bad. For a Tuesday.,Nada mal. Para ser martes.
+blocky.ordinary.1,The tower has seen worse.,La torre ha visto cosas peores.
+blocky.ordinary.2,Another? I have time.,¿Otra? Tengo tiempo.
+blocky.good_run.0,Now THAT was stacking!,¡ESO sí es apilar!
+blocky.good_run.1,Beautiful. I might cry.,Precioso. Voy a llorar.
+blocky.good_run.2,Look at it! LOOK at it!,¡Mírala! ¡MÍRALA!
+blocky.new_best.0,I told them. I TOLD them!,Se lo dije. ¡SE LO DIJE!
+blocky.new_best.1,New record! I'm framing this!,¡Nuevo récord! ¡Esto lo enmarco!
+blocky.new_best.2,Best day of my blocky life!,¡El mejor día de mi vida cuadrada!
+blocky.near_best.0,ONE point. One.,UN punto. Uno.
+blocky.near_best.1,So close I felt it.,Tan cerca que lo sentí.
+blocky.early_out.0,We don't talk about that one.,De esa no hablamos.
+blocky.early_out.1,That never happened.,Eso nunca pasó.
+blocky.duel_won.0,Go on. Tell them.,Anda. Cuéntaselo.
+blocky.duel_won.1,Poor @{0}. Anyway.,Pobre @{0}. En fin.
+blocky.duel_lost.0,@{0} got lucky. Again.,@{0} tuvo suerte. Otra vez.
+blocky.duel_lost.1,Rematch. Now.,Revancha. Ya.
+blocky.continue.0,It's not over. Is it?,"Esto no acaba aquí, ¿verdad?"
+blocky.continue.1,I've seen you do worse. Keep going.,Te he visto peor. Sigue.
+blocky.greeting.0,You're here! Best part of my day!,¡Llegaste! ¡Lo mejor de mi día!
+blocky.greeting.1,The tower missed you. Me too!,La torre te extrañó. ¡Yo también!
+blocky.greeting.2,Good news: you're back!,Buenas noticias: ¡volviste!
+blocky.returned.0,Oh. You came back.,Ah. Volviste.
+blocky.returned.1,The tower didn't notice you left.,La torre ni notó que te fuiste.
+blocky.melted.0,"...OK, I'm so happy you're here!","...Bueno, ¡qué alegría verte!"
+blocky.melted.1,...I can't stay mad. Hi!,...No puedo enojarme. ¡Hola!
+blocky.reward.0,Coins! My second favorite shape!,¡Monedas! ¡Mi segunda forma favorita!
+blocky.reward.1,Payday! Don't spend it all on me.,¡Día de paga! No lo gastes todo en mí.
+blocky.tickled.0,Hehe! That tickles!,¡Jeje! ¡Eso da cosquillas!
+blocky.tickled.1,Hi! Hi hi hi!,"¡Hola! ¡Hola, hola!"
+blocky.noticed.0,"Yes, it's me. Hello.","Sí, soy yo. Hola."
+blocky.warned.0,This is a work zone. Please.,Esto es zona de obra. Por favor.
+blocky.offended.0,I will remember this.,Esto no lo olvidaré.
+blocky.offended.1,I'm telling the tower.,Se lo voy a contar a la torre.

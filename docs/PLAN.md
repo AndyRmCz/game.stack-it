@@ -176,6 +176,9 @@ The ideas left here, roughly cheapest first:
   - It breathes, hops on perfects (higher on fanfares), shivers on thin blocks, looks up as the
     tower grows, and droops at game over.
   - Still with Reduce Motion.
+  - ✅ *2026-11-04:* nine faces (`FacePoses`), idle life (`FaceAnimator`), lines in a speech
+    bubble on the results sheet and Home, and pokes. It reacts to what happened
+    (`BlockyMoments`). Next: wearables in the shop.
   - **Not yet seen in Unity:** its spot beside the base may need adjusting.
 - *Not built (owner, 2026-10-24):* fever mode and tower events. Both change the simulation the
   server replays (a `SIM_VERSION` bump).

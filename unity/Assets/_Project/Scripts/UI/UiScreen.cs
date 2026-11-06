@@ -64,6 +64,10 @@ namespace StackIt.UI
         public IGameFlow Flow;
         public UiRouter Router;
         public ITelemetry Telemetry = NullTelemetry.Instance;
+        public Mascot Mascot;
+
+        /// <summary>Set by a screen with news for Blocky; Home's next showing reacts to it.</summary>
+        public BlockyMoment? NextHomeMoment;
     }
 
     public enum ScreenBackground

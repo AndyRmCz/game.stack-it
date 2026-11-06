@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using StackIt.Client;
 using UnityEngine;
 
@@ -36,6 +37,8 @@ namespace StackIt.Services
         private const string ProfileKey = "stackit.profile_cache";
         private const string LocalBestKey = "stackit.local_best";
         private const string SeenCodePromptKey = "stackit.seen_code_prompt";
+        private const string LastVisitKey = "stackit.last_visit";
+        private const string VisitFormat = "yyyy-MM-dd";
 
         private readonly IKeyValueStore _store;
 
@@ -101,6 +104,16 @@ namespace StackIt.Services
                 return best;
             }
             set => _store.SetString(LocalBestKey, Math.Max(value, LocalBest).ToString());
+        }
+
+        /// <summary>Records a visit on <paramref name="today"/>.</summary>
+        /// <returns>Calendar days since the last visit; null on the very first one.</returns>
+        public int? Visit(DateTime today)
+        {
+            string last = _store.GetString(LastVisitKey);
+            _store.SetString(LastVisitKey, today.ToString(VisitFormat, CultureInfo.InvariantCulture));
+            if (!DateTime.TryParseExact(last, VisitFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime seen)) return null;
+            return Math.Max(0, (today.Date - seen).Days);
         }
 
         public string CachedProfileJson

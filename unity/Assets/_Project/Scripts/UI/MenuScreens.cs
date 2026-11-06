@@ -750,6 +750,7 @@ namespace StackIt.UI
             Ctx.Audio.Reward();
             Ctx.Haptics.Play(HapticKind.Success);
             Ctx.Router.Toast(L.T("daily.claimed", _status.ClaimedAmount ?? 0));
+            Ctx.NextHomeMoment = BlockyMoment.Reward;
             Render();
         }
     }

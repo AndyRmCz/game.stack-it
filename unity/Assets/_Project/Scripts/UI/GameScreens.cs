@@ -73,9 +73,12 @@ namespace StackIt.UI
 
         public UiScreen Friends, Leaderboard, Shop, Settings, Daily, CodeEntry, Missions;
         private readonly RoundedRect _missionsDot;
+        private readonly HomeBlocky _blocky;
 
         public HomeScreen(UiContext ctx, Transform parent, bool reserveBanner) : base(ctx, parent, "Home", ScreenBackground.None)
         {
+            if (Ctx.Mascot != null) _blocky = HomeBlocky.Create(Safe, Ctx.Mascot);
+
             // Top bar: gift (left), coins (right).
             RectTransform top = TopBar(Safe);
             Button gift = UiKit.IconButton(top, Icons.Gift, () => Ctx.Router.Show(Daily));
@@ -148,6 +151,17 @@ namespace StackIt.UI
             RefreshDaily();
             RefreshShop();
             RefreshMissions();
+            GreetWithBlocky();
+        }
+
+        /// <summary>The day's first visit gets a welcome; news from another screen comes first.</summary>
+        private void GreetWithBlocky()
+        {
+            if (_blocky == null) return;
+            int? daysAway = Ctx.Save.Visit(System.DateTime.Now);
+            BlockyMoment? moment = Ctx.NextHomeMoment ?? BlockyMoments.ForHome(daysAway);
+            Ctx.NextHomeMoment = null;
+            if (moment.HasValue) _blocky.React(moment.Value);
         }
 
         /// <summary>The missions dot: a finished mission or the chest is waiting to be claimed.</summary>
@@ -443,7 +457,7 @@ namespace StackIt.UI
 
     /// <summary>
     /// Results sheet under the camera's pull-back over the whole tower: Blocky perched on its edge
-    /// reacting to the run, score, best, coins, the challenge result, the breathing "Challenge a
+    /// reacting to the run in its own words, score, best, coins, the challenge result, the breathing "Challenge a
     /// friend" (the viral loop gets the accent; the share sheet already lists TikTok, Instagram
     /// and chats, so it is the only share button) and the pills: Play again, Continue (once per
     /// run), Double coins, Rematch.
@@ -570,7 +584,7 @@ namespace StackIt.UI
             _status.text = L.T("over.keep_going");
             _continue.gameObject.SetActive(true);
             _challenge.interactable = true; // pressing it ends the run, then shares
-            _blocky.SetMood(MascotMood.Rally);
+            _blocky.React(BlockyMoment.ContinueOffer);
         }
 
         /// <summary>Immediate results from the local simulation; the server result refines them.</summary>
@@ -580,12 +594,14 @@ namespace StackIt.UI
             Fill(score, newRecord, best, ranked, Ctx.Game.Setup?.ChallengeCode);
             _status.text = ranked ? L.T("over.verifying") : L.T("over.unranked");
             _challenge.interactable = false;
+            BlockyMoment moment = BlockyMoments.ForResult(score, best, newRecord, duelWon: null);
+            if (Ctx.Game.Setup?.ChallengeCode == null) _blocky.React(moment);
+            else _blocky.SetMood(BlockyMoments.Mood(moment)); // the duel's result has the last word
         }
 
         private void Fill(int score, bool newRecord, int best, bool ranked, string challengeCode)
         {
             _newRecord = newRecord;
-            _blocky.SetMood(MascotMoods.ForResult(newRecord, duelWon: null));
             _record.parent.gameObject.SetActive(newRecord);
             if (newRecord && !Look.ReduceMotion) Tween.Punch(_record, 0.25f, 0.5f);
             CountUp(_score, score, null);
@@ -627,7 +643,7 @@ namespace StackIt.UI
             _duelResult.text = result.Challenge.Won ? L.T("over.duel_won", rival.DisplayName, rival.Score) : L.T("over.duel_lost", rival.DisplayName, rival.Score);
             ThemedGraphic.Bind(_duelResult, result.Challenge.Won ? T.Success : T.TextPrimary);
             _rematch.gameObject.SetActive(true);
-            _blocky.SetMood(MascotMoods.ForResult(_newRecord, result.Challenge.Won));
+            _blocky.React(BlockyMoments.ForResult(result.Score ?? 0, 0, _newRecord, result.Challenge.Won), rival.DisplayName);
         }
 
         private void Rematch()

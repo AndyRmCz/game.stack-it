@@ -222,6 +222,7 @@ namespace StackIt.Bootstrap
             _fx = world.AddComponent<HypeFx>();
             _mascot = world.AddComponent<Mascot>();
             _mascot.ReduceMotion = _save.ReduceMotion;
+            _mascot.ViewCamera = _rig.Camera;
             _fx.Init(_rig, _postFx, _haptics, _audio);
             _fx.ReduceMotion = _save.ReduceMotion;
             RivalGhostView ghost = RivalGhostView.Create(world.transform);
@@ -268,6 +269,7 @@ namespace StackIt.Bootstrap
                 Flow = this,
                 Router = _router,
                 Telemetry = _telemetry,
+                Mascot = _mascot,
             };
             Transform root = _canvas.transform;
             _splash = new SplashScreen(ctx, root);
@@ -308,7 +310,6 @@ namespace StackIt.Bootstrap
             _postFx.SetLook(look.Number(T.BloomIntensity), look.Number(T.BloomThreshold), look.Number(T.BloomScatter),
                 look.Number(T.ChromaticPulse));
             _fx.SetLook(look);
-            _mascot.SetLook(look);
             _game.Ghost.SetColor(Palette.ToColor(look.Color(T.Accent2)), look.Number(T.BlockEmission) + 0.3f);
         }
 
@@ -647,12 +648,12 @@ namespace StackIt.Bootstrap
             TrackRunEnd("miss");
             _adPolicy.RecordRunEnded();
             _music.GameOver();
-            _mascot.GameOver();
 
             RunSetup setup = _game.Setup;
             int score = _game.Score;
             int previousBest = setup.PersonalBest;
             _lastRunWasRecord = _game.IsNewRecord;
+            _mascot.GameOver(BlockyMoments.Mood(BlockyMoments.ForResult(score, previousBest, _lastRunWasRecord, null)));
             _save.LocalBest = score;
 
             bool ranked = setup.RunId != null;
@@ -774,9 +775,9 @@ namespace StackIt.Bootstrap
             _sky.SetHeight(0);
             _stars.SetHeight(0);
             _game.Ghost.Hide();
-            _router.Reset(_home);
-            _music.Override(null); // a trial soundtrack ends with its run
             _mascot.ResetMood();
+            _router.Reset(_home); // after the reset: Home may have something to say
+            _music.Override(null); // a trial soundtrack ends with its run
             _music.Home();
             if (_auth.IsSignedIn) _ = RefreshFriends();
         }
