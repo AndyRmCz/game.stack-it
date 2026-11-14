@@ -1,15 +1,16 @@
-"""Drawing kit for Milli's icon and store art (Pillow), shared by generate_app_icons and
-generate_store_art.
+"""Drawing kit for Milli's icon and store art (Pillow), shared by generate_app_icons,
+generate_store_art and generate_screen_mockups.
 
-The art tells the game's own story: the "daybreak" sky the tower climbs through (dusk into
-night, Palette.SkyKeys in Unity), soft pastel blocks, and Blocky, the mascot who stands at the
-foot of the tower and looks up, here at a gold slab that landed a hair off. Gold (arcade.*
-tokens) is the brand's "perfect" colour; a plum ink line makes it all read as drawn.
+The art is the game's Neon night (bg.* tokens) with Blocky in it: the ultraviolet glass mascot,
+baked with the game's own faces by unity/Tools/blocky_stills.py into scripts/blocky/. Its story
+is the gold slab (arcade.* tokens, the brand's "perfect" colour) landed a hair off on its head.
 """
 
 import math
 import random
 from collections.abc import Sequence
+from functools import cache
+from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -18,16 +19,14 @@ from app.web import theme
 Point = tuple[float, float]
 RGBA = tuple[int, int, int, int]
 
-# The daybreak sky's dusk moment (night above, ember at the horizon), and its morning one.
-DUSK = ("#1E2346", "#8E6FB5", "#FFB59A")
-MORNING = ("#C9C3F0", "#DCCBE0", "#FFDCCB")
-HILL = "#2E2450"
 CREAM = "#FFF4E8"
-PEACH = "#FFE0CF"
 INK = "#1B2440"
-BLUSH = "#FF9AA8"
-LINE = "#2A1F45"  # plum ink, the sunset sky's last moment
+LINE = "#2A1F45"  # plum ink for outlined boxes
+VIOLET = "#7A55FA"  # the light inside Blocky's glass
 C30 = math.cos(math.radians(30))
+STILLS = Path(__file__).with_name("blocky")
+PER_BLOCK, FOOT = 640, 0.04  # the stills' pixels per block width, and their foot above the bottom
+HAT_OFF, HAT_SEAT = 0.13, 0.97  # the slab lands a hair right of centre, on top of the head
 
 
 def rgba(color: str, alpha: int | None = None) -> RGBA:
@@ -62,60 +61,50 @@ def soft(layer: Image.Image, radius: float) -> Image.Image:
     return layer.convert("RGBa").filter(ImageFilter.GaussianBlur(radius)).convert("RGBA")
 
 
-def sky(size: tuple[int, int], stops: Sequence[str], stars: bool, seed: int = 7) -> Image.Image:
-    """Vertical three-stop sky, the horizon's warm glow, and stars thinning towards it."""
+def backdrop(size: tuple[int, int], look: str = "neon", seed: int = 7) -> Image.Image:
+    """A look's background (bg.gradient, bg.centerGlow) and, at night, stars thinning downwards."""
     width, height = size
-    top, mid, bottom = (theme.rgba(c) for c in stops)
+    top, mid, bottom = (theme.rgba(c) for c in theme.token(look, "bg.gradient"))
+    mid_at = float(theme.token(look, "bg.gradientMid"))
     column = Image.new("RGBA", (1, height))
     for y in range(height):
         f = y / (height - 1)
-        a, b, k = (top, mid, f / 0.55) if f < 0.55 else (mid, bottom, (f - 0.55) / 0.45)
+        a, b, k = (
+            (top, mid, f / mid_at) if f < mid_at else (mid, bottom, (f - mid_at) / (1 - mid_at))
+        )
         k = k * k * (3 - 2 * k)  # smoothstep: no visible bands
         column.putpixel((0, y), tuple(round(a[i] + (b[i] - a[i]) * k) for i in range(4)))
     image = column.resize(size)
 
-    glow = Image.new("RGBA", size)
-    r = max(width, height) * 0.55
-    ImageDraw.Draw(glow).ellipse(
-        (width / 2 - r, height - r * 0.35, width / 2 + r, height + r * 0.35),
-        fill=rgba(stops[2], 150),
-    )
-    image.alpha_composite(soft(glow, r * 0.3))
+    glow = theme.token(look, "bg.centerGlow")
+    color = theme.rgba(glow["color"])
+    if color[3]:
+        r = glow["radius"] * max(width, height)
+        layer = Image.new("RGBA", size)
+        cy = height * 0.58
+        ImageDraw.Draw(layer).ellipse((width / 2 - r, cy - r, width / 2 + r, cy + r), fill=color)
+        image.alpha_composite(soft(layer, r * 0.45))
 
-    if stars:
+    if look == "neon":  # the night look
         rng = random.Random(seed)
         draw = ImageDraw.Draw(image)
-        unit = min(width, height) / 500
-        for _ in range(int(width * height / 2600)):
-            x, y = (
-                rng.uniform(0, width),
-                rng.uniform(0, height * 0.6) ** 1.15 / (height * 0.6) ** 0.15,
-            )
-            fade = 1 - y / (height * 0.62)
-            s = rng.choice((0.6, 0.8, 1.0, 1.0, 1.4)) * unit
-            draw.ellipse(
-                (x - s, y - s, x + s, y + s),
-                fill=rgba(CREAM, int(255 * fade * rng.uniform(0.4, 1))),
-            )
-        for _ in range(3):  # a few that twinkle
-            x, y = rng.uniform(width * 0.05, width * 0.95), rng.uniform(height * 0.04, height * 0.3)
-            long, thin = 7 * unit, 1.1 * unit
-            draw.ellipse((x - long, y - thin, x + long, y + thin), fill=rgba(CREAM, 220))
-            draw.ellipse((x - thin, y - long, x + thin, y + long), fill=rgba(CREAM, 220))
+        unit = max(width, height) / 900
+        for _ in range(int(width * height / 9000)):
+            x, y = rng.uniform(0, width), rng.uniform(0, height * 0.6)
+            fade = (1 - y / (height * 0.63)) * rng.uniform(0.35, 1)
+            s = rng.choice((0.6, 0.8, 1.0, 1.0, 1.5)) * unit
+            draw.ellipse((x - s, y - s, x + s, y + s), fill=rgba(CREAM, int(255 * fade)))
     return image
 
 
-def hill(image: Image.Image, top: float, color: str = HILL) -> None:
-    """A gentle rolling ground across the bottom, so the tower stands somewhere."""
-    width, height = image.size
-    points = [(0.0, float(height))]
-    for i in range(41):
-        x = width * i / 40
-        points.append((x, top + math.sin(i / 40 * math.pi * 2.2 + 0.6) * height * 0.012))
-    points.append((float(width), float(height)))
+def ground_light(image: Image.Image, c: Point, width: float, color: str, alpha: int) -> None:
+    """A flat pool of light (or, on a light ground, shade) where something stands."""
     layer = Image.new("RGBA", image.size)
-    ImageDraw.Draw(layer).polygon(points, fill=rgba(color))
-    image.alpha_composite(layer)
+    rx, ry = width / 2, width * 0.06
+    ImageDraw.Draw(layer).ellipse(
+        (c[0] - rx, c[1] - ry, c[0] + rx, c[1] + ry), fill=rgba(color, alpha)
+    )
+    image.alpha_composite(soft(layer, width * 0.035))
 
 
 def grain(image: Image.Image, amount: float = 0.3) -> Image.Image:
@@ -206,93 +195,59 @@ def toward_viewer(c: Point, d: float) -> Point:
     return c[0] + d * C30, c[1] + d / 2
 
 
-def contact_shadow(image: Image.Image, c: Point, width: float, alpha: int = 90) -> None:
-    layer = Image.new("RGBA", image.size)
-    ImageDraw.Draw(layer).ellipse(
-        (c[0] - width / 2, c[1] - width * 0.12, c[0] + width / 2, c[1] + width * 0.12),
-        fill=(20, 12, 40, alpha),
-    )
-    image.alpha_composite(soft(layer, width * 0.06))
+@cache
+def _still(name: str) -> Image.Image:
+    return Image.open(STILLS / f"{name}.png").convert("RGBA")
 
 
-def tower(
-    image: Image.Image, foot: Point, side: float, ramp: Sequence[str], slabs: int = 3
-) -> Point:
-    """Base block, pastel slabs up the ramp, then the gold slab landed a hair off.
-    Returns the gold slab's top centre (where Blocky looks)."""
-    base_h, slab_h = side * 0.72, side * 0.24
-    line = side * 0.022
-    contact_shadow(image, (foot[0], foot[1] - side * 0.02), side * 1.9)
-    c = (foot[0], foot[1] - side / 2)  # bottom-face centre of the base
-    iso_box(image, c, side, side, base_h, faces(ramp[0]), line_px=line)
-    c = (c[0], c[1] - base_h)
-    for i in range(slabs):
-        iso_box(image, c, side, side, slab_h, faces(ramp[(i + 1) % len(ramp)]), line_px=line)
-        c = (c[0], c[1] - slab_h)
+def _place(image: Image.Image, sprite: Image.Image, x: float, y: float, glow: str | None) -> None:
+    """Pastes sprite with its top-left at (x, y), over a soft glow of its shape in glow's colour."""
+    if glow:
+        radius = sprite.width * 0.07
+        pad = math.ceil(radius * 3)
+        halo = Image.new("RGBA", (sprite.width + 2 * pad, sprite.height + 2 * pad), rgba(glow))
+        shape = Image.new("L", halo.size)
+        shape.paste(sprite.getchannel("A"), (pad, pad))
+        halo.putalpha(shape.filter(ImageFilter.GaussianBlur(radius)).point(lambda v: v * 7 // 10))
+        image.alpha_composite(halo, (round(x) - pad, round(y) - pad))
+    image.alpha_composite(sprite, (round(x), round(y)))
 
-    # The near miss: the gold slab landed a hair toward the viewer, its lip over the edge.
-    iso_box(image, toward_viewer(c, side * 0.09), side, side, slab_h, gold(), line_px=line)
-    return c[0], c[1] - slab_h - side * 0.25
+
+def _scaled(name: str, block: float) -> Image.Image:
+    still = _still(name)
+    k = block / PER_BLOCK
+    return still.resize((round(still.width * k), round(still.height * k)), Image.LANCZOS)
+
+
+def slab(
+    image: Image.Image, cx: float, foot: float, block: float, glow: bool = True, tall: float = 1
+) -> None:
+    """The gold slab, block wide, its foot's centre at (cx, foot); tall stretches it upwards."""
+    sprite = _scaled("slab", block)
+    if tall != 1:
+        sprite = sprite.resize((sprite.width, round(sprite.height * tall)), Image.LANCZOS)
+    y = foot + FOOT * block - sprite.height
+    _place(image, sprite, cx - sprite.width / 2, y, "#FFBE3C" if glow else None)
 
 
 def blocky(
     image: Image.Image,
     cx: float,
-    bottom: float,
-    w: float,
-    look_at: Point,
-    color: str,
+    foot: float,
+    block: float,
+    pose: str,
+    glow: bool = True,
     hat: bool = False,
 ) -> None:
-    """The mascot, front on: a soft coral block with big eyes, a little "o" mouth and blush,
-    looking at look_at. With hat, a gold slab balanced on its head, a hair off to the right."""
-    # Seen as in the game: the front face square on, the top face foreshortened above it.
-    contact_shadow(image, (cx, bottom), w * 1.25, 110)
-    band, line = w * 0.3, w * 0.03
-    x0, x1, y0 = cx - w / 2, cx + w / 2, bottom - w * 0.9
-    top_face = [(x0, y0 - band), (x1, y0 - band), (x1, y0 + 1), (x0, y0 + 1)]
-    body = [(x0, y0), (x1, y0), (x1, bottom), (x0, bottom)]
-    layer, origin = _rounded(
-        [(top_face, mix(color, CREAM, 0.35)), (body, rgba(color))], w * 0.08, line
+    """Blocky, block pixels wide, standing with its foot's centre at (cx, foot): a pose baked in
+    scripts/blocky. With hat, wearing the gold slab, landed a hair off."""
+    sprite = _scaled(pose, block)
+    _place(
+        image,
+        sprite,
+        cx - sprite.width / 2,
+        foot + FOOT * block - sprite.height,
+        VIOLET if glow else None,
     )
-    image.alpha_composite(layer, origin)
-
-    draw = ImageDraw.Draw(image)
-    dx, dy = look_at[0] - cx, look_at[1] - (y0 + w * 0.4)
-    n = math.hypot(dx, dy) or 1
-    lx, ly = dx / n, dy / n
-    for side in (-1, 1):
-        ex, ey = cx + side * w * 0.18, y0 + w * 0.42
-        rx, ry = w * 0.12, w * 0.15
-        draw.ellipse((ex - rx, ey - ry, ex + rx, ey + ry), fill=rgba("#FFFFFF"))
-        px, py, pr = ex + lx * rx * 0.42, ey + ly * ry * 0.45, w * 0.065
-        draw.ellipse((px - pr, py - pr, px + pr, py + pr), fill=rgba("#1A1A24"))
-        hr = pr * 0.38
-        draw.ellipse(
-            (px - pr * 0.45 - hr, py - pr * 0.45 - hr, px - pr * 0.45 + hr, py - pr * 0.45 + hr),
-            fill=rgba("#FFFFFF"),
-        )
-    blush = Image.new("RGBA", image.size)
-    for side in (-1, 1):
-        bx, by = cx + side * w * 0.31, y0 + w * 0.66
-        ImageDraw.Draw(blush).ellipse(
-            (bx - w * 0.08, by - w * 0.045, bx + w * 0.08, by + w * 0.045), fill=rgba(BLUSH, 150)
-        )
-    image.alpha_composite(soft(blush, w * 0.02))
-    mx, my = cx + lx * w * 0.03, y0 + w * 0.7
-    draw.ellipse((mx - w * 0.04, my - w * 0.05, mx + w * 0.04, my + w * 0.05), fill=rgba("#5A1F2A"))
-
     if hat:
-        # Same footprint as the head, landed a hair to the right: a strip of head shows left.
-        off, hh = w * 0.09, w * 0.2
-        hx0, hx1 = x0 + off, x1 + off
-        g = gold()
-        hat_front = [(hx0, y0 - hh), (hx1, y0 - hh), (hx1, y0), (hx0, y0)]
-        hat_top = [
-            (hx0, y0 - hh - band),
-            (hx1, y0 - hh - band),
-            (hx1, y0 - hh + 1),
-            (hx0, y0 - hh + 1),
-        ]
-        layer, origin = _rounded([(hat_top, g[0]), (hat_front, g[1])], w * 0.05, line)
-        image.alpha_composite(layer, origin)
+        slab(image, cx + HAT_OFF * block, foot - HAT_SEAT * block, block, glow)

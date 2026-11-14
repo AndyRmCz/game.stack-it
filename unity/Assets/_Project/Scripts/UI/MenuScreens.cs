@@ -74,24 +74,36 @@ namespace StackIt.UI
             Load();
         }
 
+        /// <summary>Draws the last friends list at once (signing in read it), then the fresh one if it differs.</summary>
         private async void Load()
         {
-            UiKit.Clear(_list);
-            Pending();
+            List<Friend> last = Ctx.Api.LastFriends;
+            Show(last);
+            List<Friend> friends;
             try
             {
-                List<Friend> friends = await Ctx.Api.FriendsAsync();
-                if (friends.Count == 0)
-                {
-                    States.Show(_list, Icons.Invite, L.T("friends.empty"), L.T("friends.invite"), Icons.Share, ShareCode);
-                    return;
-                }
-                foreach (Friend friend in friends) Row(friend);
+                friends = await Ctx.Api.FriendsAsync();
             }
             catch (ApiException e)
             {
-                States.Failed(_list, e, Load);
+                if (last != null) Ctx.Router.Toast(Errors.Describe(e)); // keep the last list on screen
+                else States.Failed(_list, e, Load);
+                return;
             }
+            if (friends != last) Show(friends);
+        }
+
+        private void Show(List<Friend> friends)
+        {
+            UiKit.Clear(_list);
+            Pending();
+            if (friends == null) return; // still on its way
+            if (friends.Count == 0)
+            {
+                States.Show(_list, Icons.Invite, L.T("friends.empty"), L.T("friends.invite"), Icons.Share, ShareCode);
+                return;
+            }
+            foreach (Friend friend in friends) Row(friend);
         }
 
         /// <summary>Challenges opened but not played yet, with the accent2 dot.</summary>
@@ -213,11 +225,16 @@ namespace StackIt.UI
             Load(period);
         }
 
+        /// <summary>Draws the last ranks of <paramref name="period"/> at once, then the fresh ones if they differ.</summary>
         private async void Load(string period)
         {
-            bool weekly = period == "weekly";
-            UiKit.Clear(_list);
-            UiKit.Clear(_mine);
+            Leaderboard last = Ctx.Api.LastLeaderboard(period);
+            if (last != null) Show(period, last);
+            else
+            {
+                UiKit.Clear(_list);
+                UiKit.Clear(_mine);
+            }
             Leaderboard board;
             try
             {
@@ -225,10 +242,19 @@ namespace StackIt.UI
             }
             catch (ApiException e)
             {
-                States.Failed(_list, e, () => Load(period));
+                if (last != null) Ctx.Router.Toast(Errors.Describe(e)); // keep the last ranks on screen
+                else States.Failed(_list, e, () => Load(period));
                 return;
             }
-            if (period != _period) return; // switched tabs meanwhile
+            if (period != _period || board == last) return; // switched tabs meanwhile, or nothing new
+            Show(period, board);
+        }
+
+        private void Show(string period, Leaderboard board)
+        {
+            bool weekly = period == "weekly";
+            UiKit.Clear(_list);
+            UiKit.Clear(_mine);
             if (period == "daily")
             {
                 int today = DailyTower.Number(DateTime.UtcNow);
@@ -305,6 +331,8 @@ namespace StackIt.UI
         protected override void OnShow()
         {
             _trialOffered = false;
+            _shop = Ctx.Api.LastShop; // usually there: Home's shop dot read it
+            Render();
             Reload();
         }
 
@@ -312,19 +340,27 @@ namespace StackIt.UI
 
         private async void Reload()
         {
+            Shop shop;
             try
             {
-                _shop = await Ctx.Api.ShopAsync();
+                shop = await Ctx.Api.ShopAsync();
             }
             catch (ApiException e)
             {
+                if (_shop != null)
+                {
+                    Ctx.Router.Toast(Errors.Describe(e)); // keep the last shop on screen
+                    return;
+                }
                 UiKit.Clear(_grid);
                 States.Failed(_grid, e, Reload);
                 return;
             }
+            bool changed = shop != _shop;
+            _shop = shop;
             Ctx.Seen.MarkSeen(Entries(_shop), _shop.Balance);
             Ctx.Telemetry.Track(TelemetryEvents.ShopView, ("balance", _shop.Balance));
-            Render();
+            if (changed) Render();
         }
 
         private void Select(string kind)
@@ -336,7 +372,11 @@ namespace StackIt.UI
         private void Render()
         {
             _selectTab(Array.IndexOf(Kinds, _kind));
-            if (_shop == null) return;
+            if (_shop == null)
+            {
+                UiKit.Clear(_grid); // another account's shop must not stay
+                return;
+            }
             _balance.text = _shop.Balance.ToString("N0");
             UiKit.Clear(_grid);
             RectTransform line = null;
@@ -534,20 +574,34 @@ namespace StackIt.UI
             UiKit.Size((RectTransform)_list.parent, height: 300).flexibleHeight = 1;
         }
 
-        protected override void OnShow() => Reload();
+        protected override void OnShow()
+        {
+            _missions = Ctx.Api.LastMissions; // usually there: Home's missions dot read it
+            if (_missions != null) Render();
+            else UiKit.Clear(_list);
+            Reload();
+        }
 
         private async void Reload()
         {
+            MissionBoard missions;
             try
             {
-                _missions = await Ctx.Api.MissionsAsync();
+                missions = await Ctx.Api.MissionsAsync();
             }
             catch (ApiException e)
             {
+                if (_missions != null)
+                {
+                    Ctx.Router.Toast(Errors.Describe(e)); // keep the last missions on screen
+                    return;
+                }
                 UiKit.Clear(_list);
                 States.Failed(_list, e, Reload);
                 return;
             }
+            if (missions == _missions) return; // nothing new
+            _missions = missions;
             Render();
         }
 
@@ -657,6 +711,8 @@ namespace StackIt.UI
 
         protected override void OnShow()
         {
+            _status = Ctx.Api.LastDaily; // usually there: Home's gift dot read it
+            if (_status != null) Render();
             Load();
             UiRouter.Rise(_card, 0f);
         }
@@ -665,7 +721,9 @@ namespace StackIt.UI
         {
             try
             {
-                _status = await Ctx.Api.DailyAsync();
+                DailyStatus status = await Ctx.Api.DailyAsync();
+                if (status == _status) return; // nothing new
+                _status = status;
                 Render();
             }
             catch (ApiException e)

@@ -14,13 +14,15 @@ namespace StackIt.EditorTools
     /// <summary>
     /// Platform wiring derived from AppConfig at build time:
     /// Android: deep-link intent filters + FileProvider (StackItManifest.androidlib).
-    /// iOS: Associated Domains, Sign in with Apple, ATT text, Google Sign-In URL scheme, frameworks.
+    /// iOS: Associated Domains, Sign in with Apple, ATT text, Photos text, the encryption answer,
+    /// Google Sign-In URL scheme, frameworks.
     /// </summary>
     public sealed class BuildHooks : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         private const string AndroidManifestPath = "Assets/Plugins/Android/StackItManifest.androidlib/AndroidManifest.xml";
         private const string TrackingUsage =
             "Your data is used to show you ads that are more relevant to you. Ads keep Milli free.";
+        private const string PhotosUsage = "Saves your challenge card to your photos.";
 
         public int callbackOrder => 0;
 
@@ -72,6 +74,10 @@ namespace StackIt.EditorTools
             plist.ReadFromFile(plistPath);
             PlistElementDict root = plist.root;
             root.SetString("NSUserTrackingUsageDescription", TrackingUsage);
+            // The share sheet offers Save Image for the card: without this text, iOS kills the app.
+            root.SetString("NSPhotoLibraryAddUsageDescription", PhotosUsage);
+            // Milli encrypts nothing itself beyond HTTPS, so builds don't wait on this question.
+            root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
             if (!string.IsNullOrEmpty(config.googleIosClientId))
             {
                 root.SetString("GIDClientID", config.googleIosClientId);

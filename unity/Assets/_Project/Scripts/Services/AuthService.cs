@@ -161,7 +161,7 @@ namespace StackIt.Services
         }
 
         private static ProviderTokenRequest Body(ProviderToken token) =>
-            new ProviderTokenRequest { IdToken = token.IdToken, Nonce = token.Nonce };
+            new ProviderTokenRequest { IdToken = token.IdToken, Nonce = token.Nonce, AuthorizationCode = token.AuthorizationCode };
 
         private static string Name(SignInProvider provider) => provider == SignInProvider.Google ? "google" : "apple";
     }

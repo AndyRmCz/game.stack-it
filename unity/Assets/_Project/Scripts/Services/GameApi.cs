@@ -19,6 +19,13 @@ namespace StackIt.Services
         private readonly RunReservation _reserved;
         private bool _flushing;
 
+        // The last answer of each screen's read, drawn at once when the screen opens again.
+        private readonly LastAnswer<Shop> _shop = new LastAnswer<Shop>();
+        private readonly LastAnswer<MissionBoard> _missions = new LastAnswer<MissionBoard>();
+        private readonly LastAnswer<DailyStatus> _daily = new LastAnswer<DailyStatus>();
+        private readonly Dictionary<string, LastAnswer<Leaderboard>> _boards = new Dictionary<string, LastAnswer<Leaderboard>>();
+        private readonly LastAnswer<List<Friend>> _friends = new LastAnswer<List<Friend>>();
+
         public Profile Profile { get; private set; }
         public event Action<Profile> ProfileChanged;
 
@@ -65,6 +72,8 @@ namespace StackIt.Services
 
         private void SetProfile(Profile profile)
         {
+            if (Profile != null && profile != null && Profile.UserId != profile.UserId) ForgetLastAnswers();
+            if (profile != null && _shop.Value != null) _shop.Value.Balance = profile.Coins; // affordable or not
             Profile = profile;
             _save.CachedProfileJson = JsonConvert.SerializeObject(profile, ApiClient.Json);
             ProfileChanged?.Invoke(profile);
@@ -198,24 +207,84 @@ namespace StackIt.Services
             public List<JRaw> Events;
         }
 
-        public Task<List<Friend>> FriendsAsync() => _api.Get<List<Friend>>("/v1/friends");
+        public Task<List<Friend>> FriendsAsync() => Read(_friends, "/v1/friends");
 
-        public Task<Friend> AddFriendAsync(string code) =>
-            _api.Post<Friend>("/v1/friends", new AddFriendRequest { FriendCode = code });
+        public async Task<Friend> AddFriendAsync(string code)
+        {
+            Friend friend = await _api.Post<Friend>("/v1/friends", new AddFriendRequest { FriendCode = code });
+            List<Friend> kept = _friends.Value;
+            if (kept != null && !kept.Exists(f => f.UserId == friend.UserId)) kept.Add(friend); // shown until the fresh list
+            FriendsChanged();
+            return friend;
+        }
 
-        public Task RemoveFriendAsync(string userId) => _api.Delete("/v1/friends/" + userId);
+        public async Task RemoveFriendAsync(string userId)
+        {
+            await _api.Delete("/v1/friends/" + userId);
+            _friends.Value?.RemoveAll(f => f.UserId == userId);
+            FriendsChanged();
+        }
+
+        /// <summary>Lists and ranks read before a friend came or went are out of date.</summary>
+        private void FriendsChanged()
+        {
+            _friends.Changed();
+            foreach (LastAnswer<Leaderboard> board in _boards.Values) board.Changed();
+        }
 
         /// <param name="period">"weekly", "all_time" or "daily" (today's Daily Tower).</param>
         public Task<Leaderboard> LeaderboardAsync(string period) =>
-            _api.Get<Leaderboard>("/v1/leaderboards/friends?period=" + period);
+            Read(Board(period), "/v1/leaderboards/friends?period=" + period);
+
+        // --- last answers ------------------------------------------------------------------------
+
+        /// <summary>What the shop, missions, daily reward, ranks and friends said last time (null before
+        /// the first answer), for their screens to draw while the fresh answer is on its way. Home's dots
+        /// fill the first three, and signing in the friends.</summary>
+        public Shop LastShop => _shop.Value;
+        public MissionBoard LastMissions => _missions.Value;
+        public DailyStatus LastDaily => _daily.Value;
+        public Leaderboard LastLeaderboard(string period) => Board(period).Value;
+        public List<Friend> LastFriends => _friends.Value;
+
+        private LastAnswer<Leaderboard> Board(string period)
+        {
+            if (!_boards.TryGetValue(period, out LastAnswer<Leaderboard> board))
+                _boards[period] = board = new LastAnswer<Leaderboard>();
+            return board;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="path"/> and keeps the answer. An answer equal to the last one comes back
+        /// as that same object, so a screen can skip drawing it twice.
+        /// </summary>
+        private async Task<T> Read<T>(LastAnswer<T> last, string path) where T : class
+        {
+            int ticket = last.Begin();
+            T answer = await _api.Get<T>(path);
+            T previous = last.Value;
+            if (previous != null && JsonConvert.SerializeObject(previous, ApiClient.Json) == JsonConvert.SerializeObject(answer, ApiClient.Json))
+                answer = previous;
+            return last.Offer(ticket, answer);
+        }
+
+        private void ForgetLastAnswers()
+        {
+            _shop.Clear();
+            _missions.Clear();
+            _daily.Clear();
+            foreach (LastAnswer<Leaderboard> board in _boards.Values) board.Clear();
+            _friends.Clear();
+        }
 
         // --- economy -----------------------------------------------------------------------------
 
-        public Task<Shop> ShopAsync() => _api.Get<Shop>("/v1/shop");
+        public Task<Shop> ShopAsync() => Read(_shop, "/v1/shop");
 
         public async Task<Shop> PurchaseAsync(string skinId, string idempotencyKey)
         {
             Shop shop = await _api.Post<Shop>("/v1/shop/purchase", new SkinRequest { SkinId = skinId }, idempotencyKey: idempotencyKey);
+            _shop.Set(shop);
             SetCoins(shop.Balance);
             return shop;
         }
@@ -223,25 +292,28 @@ namespace StackIt.Services
         public async Task<Shop> EquipAsync(string skinId)
         {
             Shop shop = await _api.Post<Shop>("/v1/skins/equip", new SkinRequest { SkinId = skinId });
+            _shop.Set(shop);
             await RefreshProfileAsync();
             return shop;
         }
 
-        public Task<MissionBoard> MissionsAsync() => _api.Get<MissionBoard>("/v1/missions");
+        public Task<MissionBoard> MissionsAsync() => Read(_missions, "/v1/missions");
 
         /// <summary>Claims a finished mission (slot 0-2) or the chest (3). Claiming twice pays once.</summary>
         public async Task<MissionBoard> ClaimMissionAsync(int slot)
         {
             MissionBoard missions = await _api.Post<MissionBoard>("/v1/missions/claim", new ClaimMissionRequest { Slot = slot });
+            _missions.Set(missions);
             if (missions.Balance.HasValue) SetCoins(missions.Balance.Value);
             return missions;
         }
 
-        public Task<DailyStatus> DailyAsync() => _api.Get<DailyStatus>("/v1/daily");
+        public Task<DailyStatus> DailyAsync() => Read(_daily, "/v1/daily");
 
         public async Task<DailyStatus> ClaimDailyAsync(string idempotencyKey)
         {
             DailyStatus status = await _api.Post<DailyStatus>("/v1/daily/claim", null, idempotencyKey: idempotencyKey);
+            _daily.Set(status);
             if (status.Balance.HasValue) SetCoins(status.Balance.Value);
             return status;
         }

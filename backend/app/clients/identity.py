@@ -101,17 +101,21 @@ class OidcVerifier:
 
 
 def build_verifiers(google_audiences: list[str], apple_audiences: list[str]) -> dict:
-    return {
-        "google": OidcVerifier(
+    """A provider without client IDs is left out, so signing in with it answers
+    provider_not_configured (503) instead of blaming the player's token."""
+    verifiers = {}
+    if google_audiences:
+        verifiers["google"] = OidcVerifier(
             issuers=GOOGLE_ISSUERS,
             audiences=google_audiences,
             fetch_jwks=http_jwks_fetcher(GOOGLE_JWKS_URL),
             hash_nonce=False,
-        ),
-        "apple": OidcVerifier(
+        )
+    if apple_audiences:
+        verifiers["apple"] = OidcVerifier(
             issuers=APPLE_ISSUERS,
             audiences=apple_audiences,
             fetch_jwks=http_jwks_fetcher(APPLE_JWKS_URL),
             hash_nonce=True,
-        ),
-    }
+        )
+    return verifiers

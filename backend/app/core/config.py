@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     google_client_ids: str = ""
     # Comma-separated `aud` values for Sign in with Apple. Defaults to the bundle ID.
     apple_client_ids: str = ""
+    # A Sign in with Apple key, to revoke tokens when an account is deleted (app/clients/
+    # apple_tokens.py). The .p8 file's text; literal \n is accepted for one-line variables.
+    apple_key_id: str = ""
+    apple_private_key: str = ""
 
     # --- Gameplay ---
     run_ttl_hours: int = 48
@@ -89,6 +93,10 @@ class Settings(BaseSettings):
     @property
     def apple_audiences(self) -> list[str]:
         return _csv(self.apple_client_ids) or [self.app_bundle_id]
+
+    @property
+    def apple_signing_key(self) -> str:
+        return self.apple_private_key.replace("\\n", "\n")
 
     @property
     def android_fingerprints(self) -> list[str]:

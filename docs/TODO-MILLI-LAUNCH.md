@@ -11,7 +11,11 @@ for every testing build.
 
 ## 1. Railway (api service ▸ Variables, then apply the changes)
 
-- [ ] `APP_BUNDLE_ID=game.milli.com`
+- [ ] `APP_BUNDLE_ID=game.milli.com`. On 2026-11-10 the live `/.well-known/assetlinks.json`
+      still said `com.milli.game`, so challenge links don't open the app yet. Fix the variable,
+      or delete it: the code's default is already `game.milli.com`.
+- [ ] `GOOGLE_CLIENT_IDS=<web client id>`. Check it with the `curl` in SETUP.md section 4: it
+      must answer `401 invalid_identity_token`, not `503 provider_not_configured`.
 - [ ] `APP_URL_SCHEME=milli`
 - [ ] `ADMOB_PUBLISHER_ID=pub-1305259028857953` (fixes the `/app-ads.txt` 404)
 - [ ] Redeploy the new code: `cd backend`, then `railway up`. The web pages say "Milli" only after this.
@@ -81,5 +85,7 @@ for every testing build.
 
 ## 6. Before the production release
 
-- [ ] Paste the real AdMob App IDs and ad units back from the backup file, build, then switch back to the test IDs.
+- [ ] Set the four `ADMOB_ANDROID_*` variables from the backup file (SETUP.md 8.7), then build
+      with *Stack IT ▸ Build Android Release*. Upload that bundle and promote it: the bundles
+      built the normal way have test ads.
 - [ ] Production DB migrations ran on Railway (they run on every deploy: check the deploy log).

@@ -196,6 +196,7 @@ namespace StackIt.EditorTools
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
 
             PlayerSettings.iOS.targetOSVersionString = "15.0";
+            PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly; // no iPad layout; iPads still run it
             PlayerSettings.iOS.iOSUrlSchemes = new[] { config.urlScheme };
         }
 

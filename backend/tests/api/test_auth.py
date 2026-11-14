@@ -3,6 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.apple_tokens import AppleTokenError
 from app.clients.identity import IdentityTokenError, VerifiedIdentity
 from app.models import Run, User, Wallet
 from tests.factories import guest, verified_run
@@ -17,8 +18,45 @@ class FakeVerifier:
         return VerifiedIdentity(subject=id_token.removeprefix("valid:"), email=None)
 
 
+class FakeAppleTokens:
+    """Hands out 'refresh:<code>'; `broken` stands for Apple refusing or being down."""
+
+    def __init__(self, broken: bool = False) -> None:
+        self.broken = broken
+        self.redeemed: list[str] = []
+        self.revoked: list[str] = []
+
+    async def redeem(self, authorization_code: str) -> str | None:
+        if self.broken:
+            raise AppleTokenError("refused")
+        self.redeemed.append(authorization_code)
+        return f"refresh:{authorization_code}"
+
+    async def revoke(self, refresh_token: str) -> None:
+        if self.broken:
+            raise AppleTokenError("refused")
+        self.revoked.append(refresh_token)
+
+
 def _use_fake_providers(app: FastAPI) -> None:
     app.state.identity_verifiers = {"google": FakeVerifier(), "apple": FakeVerifier()}
+
+
+def _use_fake_apple_tokens(app: FastAPI, broken: bool = False) -> FakeAppleTokens:
+    _use_fake_providers(app)
+    app.state.apple_tokens = FakeAppleTokens(broken)
+    return app.state.apple_tokens
+
+
+def _bearer(tokens: dict) -> dict[str, str]:
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
+
+
+async def _apple_login(client: AsyncClient, subject: str, code: str | None) -> dict:
+    body = {**_token(subject), "authorization_code": code}
+    response = await client.post("/v1/auth/apple/login", json=body)
+    assert response.status_code == 200
+    return response.json()
 
 
 def _token(subject: str) -> dict:
@@ -103,6 +141,16 @@ async def test_invalid_provider_token_is_401(app: FastAPI, client: AsyncClient) 
     assert response.status_code == 401
 
 
+async def test_google_without_client_ids_says_so_instead_of_blaming_the_token(
+    client: AsyncClient,
+) -> None:
+    """GOOGLE_CLIENT_IDS unset on the server: one curl should show it."""
+    response = await client.post("/v1/auth/google/login", json=_token("g-1"))
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "provider_not_configured"
+
+
 async def test_account_deletion_removes_everything_and_kills_tokens(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -117,3 +165,99 @@ async def test_account_deletion_removes_everything_and_kills_tokens(
     async with db_session.begin():
         for model in (User, Run, Wallet):
             assert await db_session.scalar(select(func.count()).select_from(model)) == 0
+
+
+async def test_deleting_an_apple_account_revokes_its_token_at_apple(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    apple = _use_fake_apple_tokens(app)
+    tokens = await _apple_login(client, "apple-user", "code-1")
+
+    deleted = await client.delete("/v1/me", headers=_bearer(tokens))
+
+    assert deleted.status_code == 204
+    assert apple.redeemed == ["code-1"]
+    assert apple.revoked == ["refresh:code-1"]
+
+
+async def test_linking_apple_to_a_guest_keeps_the_token_for_deletion(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    apple = _use_fake_apple_tokens(app)
+    player = await guest(client)
+
+    await client.post(
+        "/v1/auth/apple/link",
+        json={**_token("apple-user"), "authorization_code": "code-1"},
+        headers=player.headers,
+    )
+    await client.delete("/v1/me", headers=player.headers)
+
+    assert apple.revoked == ["refresh:code-1"]
+
+
+async def test_signing_in_again_keeps_the_newest_token(app: FastAPI, client: AsyncClient) -> None:
+    apple = _use_fake_apple_tokens(app)
+    await _apple_login(client, "apple-user", "code-1")
+    tokens = await _apple_login(client, "apple-user", "code-2")
+
+    await client.delete("/v1/me", headers=_bearer(tokens))
+
+    assert apple.revoked == ["refresh:code-2"]
+
+
+async def test_signing_in_without_a_code_keeps_the_token_we_have(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    apple = _use_fake_apple_tokens(app)
+    await _apple_login(client, "apple-user", "code-1")
+    tokens = await _apple_login(client, "apple-user", None)
+
+    await client.delete("/v1/me", headers=_bearer(tokens))
+
+    assert apple.revoked == ["refresh:code-1"]
+
+
+async def test_apple_refusing_a_code_never_blocks_sign_in(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    _use_fake_apple_tokens(app, broken=True)
+
+    tokens = await _apple_login(client, "apple-user", "code-1")
+
+    assert tokens["is_new_user"] is True
+
+
+async def test_apple_being_down_never_blocks_deleting_an_account(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    apple = _use_fake_apple_tokens(app)
+    tokens = await _apple_login(client, "apple-user", "code-1")
+    apple.broken = True
+
+    deleted = await client.delete("/v1/me", headers=_bearer(tokens))
+
+    assert deleted.status_code == 204
+    assert (await client.get("/v1/me", headers=_bearer(tokens))).status_code in (401, 404)
+
+
+async def test_an_account_with_no_apple_token_revokes_nothing(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    apple = _use_fake_apple_tokens(app)
+    player = await guest(client)
+
+    await client.delete("/v1/me", headers=player.headers)
+
+    assert apple.revoked == []
+
+
+async def test_google_never_redeems_a_code(app: FastAPI, client: AsyncClient) -> None:
+    apple = _use_fake_apple_tokens(app)
+
+    response = await client.post(
+        "/v1/auth/google/login", json={**_token("google-user"), "authorization_code": "code-1"}
+    )
+
+    assert response.status_code == 200
+    assert apple.redeemed == []

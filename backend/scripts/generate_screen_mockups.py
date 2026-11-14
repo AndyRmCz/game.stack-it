@@ -5,7 +5,7 @@ constants and screens in unity/.../Scripts/UI), look tokens, strings and fonts.
     uv run python -m scripts.generate_screen_mockups --lang es  # Spanish
 
 Writes store/mockups/NN.png (the raw 1170 x 2532 screens, 390 x 844 points at 3x) and frames
-each one under its caption in store/screenshots-<lang>/NN.png.
+each one under its caption in store/screenshots-<lang>/NN.png, Blocky reacting to it on top.
 
 These are illustrations, not captures: replace them with real phone screenshots (framed by
 scripts.generate_store_art --screens) before the production listing, as Play asks for
@@ -36,6 +36,8 @@ ICONS = {
     "home": 0xE9B2, "ticket": 0xE638, "close": 0xE5CD,
 }  # fmt: skip
 
+# Blocky's reaction to each screen's caption, a pose baked in scripts/blocky.
+POSES = ("cheer-up", "nervous", "smug-right", "rally", "joy")
 TIMES = chr(0xD7)  # the strings' "Perfect \u00d7{0}"
 STRINGS = {
     "en": {
@@ -408,9 +410,7 @@ def home(t: dict) -> Image.Image:
     s.overline((W / 2, y + 146), t["best"].format(87))
     foot = 520
     s.tower(0, 6, 120, None, foot_y=foot)
-    art.blocky(
-        s.image, (W / 2 + 112) * K, (foot - 4) * K, 34 * K, (W / 2 * K, 330 * K), s.tok("accent2")
-    )
+    art.blocky(s.image, (W / 2 + 112) * K, (foot - 4) * K, 34 * K, "happy")
     nav_y = H - SAFE_BOTTOM - BOTTOM_GAP + 14 - NAV_H
     play_y = nav_y - 16 - PRIMARY_H
     s.primary(play_y, t["play"], "play")
@@ -458,7 +458,7 @@ def challenge(t: dict) -> Image.Image:
         s.text((W / 2, 460 + i * 24), line, body, s.color("text.secondary"))
     s.primary(560, t["accept"], "play")
     s.pill(W / 2, 560 + PRIMARY_H + 16, t["later"], "close")
-    art.blocky(s.image, W / 2 * K, 800 * K, 46 * K, (W / 2 * K, 372 * K), s.tok("accent2"))
+    art.blocky(s.image, W / 2 * K, 800 * K, 46 * K, "wonder")  # looking up at the score
     return s.image.convert("RGB")
 
 
@@ -494,7 +494,7 @@ def game_over(t: dict) -> Image.Image:
     top = 300
     s.rrect((0, top, W, H + 40), 22, s.color("surface.raised"))
     # A new best: Blocky cheers under the gold slab (Blocky.cs).
-    art.blocky(s.image, 300 * K, (top + 6) * K, 64 * K, (300 * K, 0), s.tok("accent2"), hat=True)
+    art.blocky(s.image, 300 * K, (top + 6) * K, 64 * K, "cheer-up", hat=True)
     s.chip((W / 2, top + 36), t["new_record"].upper(), "accent2", "accent2.onAccent2", 13)
     s.text((W / 2, top + 120), "87", font("Sora-Bold.ttf", 88), s.color("text.primary"))
     coins = t["coins"].format(24)
@@ -518,10 +518,11 @@ def main() -> None:
     raw, framed = OUT / "mockups" / args.lang, OUT / f"screenshots-{args.lang}"
     raw.mkdir(parents=True, exist_ok=True)
     framed.mkdir(parents=True, exist_ok=True)
-    for n, (draw, caption) in enumerate(zip(SCREENS, t["captions"], strict=True)):
+    for n, (draw, caption, pose) in enumerate(zip(SCREENS, t["captions"], POSES, strict=True)):
         screen = draw(t)
         screen.save(raw / f"{n + 1:02d}.png", optimize=True)
-        framed_screenshot(screen, caption).save(framed / f"{n + 1:02d}.png", optimize=True)
+        card = framed_screenshot(screen, caption, pose=pose)
+        card.save(framed / f"{n + 1:02d}.png", optimize=True)
     print(f"wrote {framed}")
 
 

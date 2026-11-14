@@ -19,7 +19,7 @@ Placeholders used below:
 | Tool | Version | Notes |
 |---|---|---|
 | Unity Hub + **Unity 6** | 6000.5.10f1 (or newer 6.x) | Add modules: **Android Build Support** (with OpenJDK + Android SDK & NDK) and **iOS Build Support**. Sign in to Unity Hub and activate a license (Personal is fine). |
-| Xcode | 16+ (macOS only) | iOS builds and TestFlight. Install CocoaPods: `sudo gem install cocoapods`. |
+| Unity Build Automation | Cloud service | Builds iOS on Unity's Macs, so you need no Mac or Xcode (section 9). |
 | Android Studio / JDK | Optional | Unity's bundled OpenJDK and SDK are enough; Android Studio helps with `adb` and logcat. |
 | Python | 3.12 | Backend. |
 | uv | 0.12+ | `pip install uv` or https://docs.astral.sh/uv/ |
@@ -111,7 +111,9 @@ dotnet build unity/DotNetTests/CompileCheck/Editor -p:UnityEditorData="<Unity>/E
 | `APP_URL_SCHEME` | no | `milli` | "Open in app" button on landing pages. |
 | `GOOGLE_CLIENT_IDS` | for Google sign-in | `123-web.apps.googleusercontent.com,123-ios.apps.googleusercontent.com` | Accepted `aud` of Google ID tokens (web client ID used by Android + iOS client ID). |
 | `APPLE_CLIENT_IDS` | no | defaults to `APP_BUNDLE_ID` | Accepted `aud` of Apple identity tokens. |
-| `APPLE_TEAM_ID` | for iOS links | `ABCDE12345` | `apple-app-site-association`. |
+| `APPLE_TEAM_ID` | for iOS | `ABCDE12345` | `apple-app-site-association`, and revoking Apple tokens. |
+| `APPLE_KEY_ID` | for iOS | `ABC123DEFG` | The Sign in with Apple key (9.3). |
+| `APPLE_PRIVATE_KEY` | for iOS | the text of that `.p8` file | Ends a player's Apple sign-in when they delete their account. Without it, sign-in still works but nothing is revoked. |
 | `ANDROID_SHA256_FINGERPRINTS` | for Android links | `AA:BB:…,CC:DD:…` | `assetlinks.json`: upload key **and** Play App Signing key. |
 | `IOS_APP_STORE_URL` | after release | `https://apps.apple.com/app/id1234567890` | Landing page button (hidden while empty). |
 | `ANDROID_PLAY_STORE_URL` | no | derived from `APP_BUNDLE_ID` | Landing page button; the challenge code is appended as install referrer. |
@@ -150,6 +152,14 @@ In Google Cloud Console (one project for the app):
      *Play Console → Test and release → App integrity*).
    - **iOS** → bundle ID `<BUNDLE_ID>`.
 3. Server: `GOOGLE_CLIENT_IDS=<web client id>,<ios client id>`.
+   To check the server has it, after deploying: a made-up token must be refused as a token
+   (`401 invalid_identity_token`), not with `503 provider_not_configured`, which means
+   `GOOGLE_CLIENT_IDS` is empty:
+
+   ```sh
+   curl -s -X POST <BASE_URL>/v1/auth/google/login -H "Content-Type: application/json" \
+     -d '{"id_token": "not-a-real-token-but-long-enough"}'
+   ```
 4. Unity: `Assets/_Project/Resources/StackIt/AppConfig.asset` → `googleWebClientId` (web) and
    `googleIosClientId` (iOS). The iOS build hook writes `GIDClientID` and the reversed-client-ID
    URL scheme into `Info.plist`.
@@ -158,8 +168,9 @@ In Google Cloud Console (one project for the app):
 
 1. Apple Developer → *Certificates, IDs & Profiles → Identifiers* → your App ID `<BUNDLE_ID>` →
    enable **Sign In with Apple** and **Associated Domains**.
-2. The iOS build hook adds both capabilities to the Xcode project. Nothing to set on the server:
-   `APPLE_CLIENT_IDS` defaults to the bundle ID.
+2. The iOS build hook adds both capabilities to the Xcode project. `APPLE_CLIENT_IDS` defaults to
+   the bundle ID. The server also needs a Sign in with Apple key (9.3), to revoke tokens when an
+   account is deleted.
 3. App Review requires Sign in with Apple whenever Google sign-in is offered on iOS; both are
    wired.
 
@@ -197,10 +208,12 @@ In Google Cloud Console (one project for the app):
 5. Run **Stack IT ▸ Setup Project** again: it detects the plugin and adds the `STACKIT_ADMOB`
    define, which compiles `Assets/_Project/AdMob/AdMobAdsService.cs`. Then resolve the Android
    libraries (section 8.2, steps 3–5).
-6. **Swap the test IDs.** `Assets/_Project/Resources/StackIt/AdsConfig.asset` ships with Google's
-   public test units. Replace the six IDs with yours **only for release builds**. Testing with
-   real ads on your own device risks the account; add your device as a test device in AdMob
-   instead.
+6. **Keep the test IDs in the project.** `Assets/_Project/Resources/StackIt/AdsConfig.asset`
+   and the Google Mobile Ads settings hold Google's public test IDs, and stay that way. Release
+   builds get the real ones at build time, never from the repo: Android from the
+   `ADMOB_ANDROID_*` variables through *Stack IT ▸ Build Android Release* (8.7), iOS from the
+   cloud build's variables (9.11). Testing with real ads on your own device risks the account;
+   add your device as a test device in AdMob instead.
 7. **Consent messages** (AdMob → *Privacy & messaging*):
    - **GDPR** message for EEA/UK/Switzerland. Link the privacy policy `<BASE_URL>/privacy`.
    - **IDFA explainer** (iOS), shown before the ATT prompt. The ATT text itself is set by the
@@ -290,12 +303,8 @@ the release bundle and Google Play.
 
 ### iOS build
 
-1. Switch platform to iOS → *Build* → choose a folder. EDM4U runs `pod install` (GoogleSignIn).
-2. Open **`Unity-iPhone.xcworkspace`** (not `.xcodeproj`).
-3. *Signing & Capabilities*: select your team; confirm **Associated Domains**
-   (`applinks:<HOST>`) and **Sign in with Apple** are present (added by `BuildHooks.cs`).
-4. Run on a device. The share sheet, haptics and sign-in need real hardware.
-5. *Product ▸ Archive* → *Distribute App* → App Store Connect.
+Section 9 walks through everything iOS, with no Mac: signing from Windows, Unity Build Automation,
+TestFlight and the App Store.
 
 ## 8. Android and Google Play, step by step
 
@@ -498,15 +507,29 @@ Google Play takes **Android App Bundles** (`.aab`), not APKs.
 
 1. `AppConfig.asset` ▸ `apiBaseUrl` = `<BASE_URL>`: your `https://` Railway URL, not the LAN
    address.
-2. `AdsConfig.asset`:
-   - keep Google's **test** ad unit IDs for internal and closed testing;
-   - put your real ones in only for the production build (section 5, step 6);
-   - make sure `debugForceEeaConsent` is off.
-3. **Bump Bundle Version Code** (8.3), and Version if you like.
-4. *File ▸ Build Profiles* ▸ Android:
-   - untick **Development Build**;
-   - tick **Build App Bundle (Google Play)**.
-5. Click **Build** and save as `unity/StackIt.aab` (git-ignored).
+2. `AdsConfig.asset` keeps Google's **test** IDs, with `debugForceEeaConsent` off.
+3. **Bump Bundle Version Code** (8.3), and Version if you like. Play refuses a code twice.
+4. Build it one of two ways:
+   - **With test ads**, for internal and closed testing: *File ▸ Build Profiles* ▸ Android,
+     untick **Development Build**, tick **Build App Bundle (Google Play)**, click **Build** and
+     save it in `unity/Builds/`.
+   - **With real ads**, for the release that goes to production. Once, in PowerShell, set the
+     four IDs from your AdMob Android app (they're in the backup file next to the keystore):
+
+     ```powershell
+     setx ADMOB_ANDROID_APP_ID "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"
+     setx ADMOB_ANDROID_REWARDED "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+     setx ADMOB_ANDROID_INTERSTITIAL "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+     setx ADMOB_ANDROID_BANNER "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+     ```
+
+     Close Unity and Unity Hub and open them again, so they see the variables. Enter the
+     keystore passwords (8.3), then *Stack IT ▸ Build Android Release*. It refuses to build if
+     an ID is missing, is one of Google's test IDs, or is in the wrong place (an app ID, with
+     `~`, where an ad unit, with `/`, goes). It builds the release bundle with the real IDs,
+     then puts the test IDs back, so `git status` shows no ad settings changed. Only this menu
+     reads the variables: every other build keeps the test ads.
+5. Builds are git-ignored wherever you save them (`*.aab`).
 6. Play Console may warn that the bundle "contains native code" without **debug symbols**. That's
    a warning, not a blocker. To get readable crash reports, set the Android build profile's
    *Debug Symbols* option to include symbols in the bundle and rebuild. The label varies between
@@ -606,6 +629,17 @@ uv run python -m scripts.generate_store_art --screens "D:\path\to\phone-screensh
 uv run python -m scripts.generate_store_art --screens "D:\path\to\phone-screenshots" --lang es # store/screenshots-es/
 ```
 
+Blocky sits on each card's phone, reacting to the caption (`POSES` in the script). Every Blocky in
+the art is a still baked from the game's own glass and faces, in `backend/scripts/blocky/`. After
+changing Blocky's look or faces, bake them again, then run the art scripts:
+
+```sh
+cd unity
+python Tools/blocky_stills.py   # needs numpy, Pillow and the .NET SDK
+cd ../backend
+uv run python -m scripts.generate_app_icons && uv run python -m scripts.generate_store_art
+```
+
 ### 8.11 Testing tracks, then production
 
 | Track | Who | Review | Use it for |
@@ -685,7 +719,9 @@ uv run python -m scripts.generate_store_art --screens "D:\path\to\phone-screensh
 ### 8.12 Every update after that
 
 1. Bump **Bundle Version Code** (and Version).
-2. Build the `.aab` (8.7) and upload it to Internal testing.
+2. Build the `.aab` (8.7) and upload it to Internal testing. A bundle you'll **promote to
+   production** must be the real-ads one (*Build Android Release*): promoting ships the very
+   same bundle, test ads included.
 3. Check it on your phone, then promote it: on the release, *Promote release ▸ Production*, or
    create a new production release from the library.
 4. Every August Google raises the required target API level. Update Unity (or the Android SDK it
@@ -701,9 +737,9 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
    2. Copy its **App ID**.
    3. In Unity, select `Assets/_Project/Resources/StackIt/AppConfig` and paste the App ID into
       *Facebook App ID*.
-   4. iOS only: add `instagram-stories` to `LSApplicationQueriesSchemes` in the Xcode project's
-      `Info.plist`. (The code opens Instagram without checking first, so it works without this,
-      but Apple recommends declaring it.)
+   4. iOS only: add `instagram-stories` to `LSApplicationQueriesSchemes` in `BuildHooks.cs`. (The
+      code opens Instagram without checking first, so it works without this, but Apple recommends
+      declaring it.)
 2. **TikTok:**
    - On Android, the button already opens TikTok directly with the challenge card.
    - Adding TikTok's own hashtag and green-screen mode needs TikTok's **Share Kit SDK**:
@@ -732,23 +768,440 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
 | Google sign-in works on your own build but not from Play, or the other way round | That build's signing key SHA-1 isn't in Google Cloud: add the matching Android OAuth client (8.6). |
 | Challenge links open the browser, not the app | `assetlinks.json` lacks that build's SHA-256, or the app isn't installed from that signature (8.6, section 6). |
 
-## 9. Publishing on the App Store
+## 9. iOS and the App Store, step by step
 
-### App Store Connect
+Written for a first App Store release from a Windows PC, with **no Mac**. Unity Build Automation
+builds the app on Unity's Mac machines from your GitHub repository, and a script uploads the result
+to Apple. Follow this section top to bottom.
 
-1. Create the app with `<BUNDLE_ID>` and a SKU.
-2. **App Privacy** (nutrition labels):
-   - *Identifiers*: Device ID, used for third-party advertising and **tracking**
-   - *User ID*: app functionality
-   - *Gameplay content* and *Product interaction*: app functionality and analytics
-   - *Email address* (if Apple/Google linked): app functionality
-   - *Advertising data*: third-party advertising
-3. ATT: the `NSUserTrackingUsageDescription` text is set by the build hook, and the prompt appears
-   after the UMP consent flow.
-4. Upload an archive, then **TestFlight** → internal testers → external group (needs a short
-   beta review).
-5. Review notes: mention guest play (no login needed), and that the account deletion is in
-   Settings.
+Plan on **one to three weeks**. Apple's enrollment can take a few days, your first builds will
+probably need fixes, and each review can take a day or more. Apple has no equivalent of Google's
+12-tester closed test.
+
+Three things are different from Android, and they shape everything below:
+
+- **Only what's pushed to GitHub gets built.** Local changes on your PC don't exist for the cloud.
+- **TestFlight is your only way onto an iPhone.** There's no cable and no live log, so every try
+  costs a build and its Mac minutes.
+- **No iOS build of Milli has been made yet.** The native code in `Assets/Plugins/iOS/` has never
+  been compiled, and neither the cloud setup nor the upload script has run on Unity's machines.
+  Expect fixes in 9.8.
+
+App Store Connect and Unity Dashboard menus get renamed from time to time. If a path below doesn't
+match, use their search. Apple's rules below were checked in November 2026; before uploading, read
+[Upcoming Requirements](https://developer.apple.com/news/upcoming-requirements/).
+
+### 9.1 What you need
+
+| What | Notes |
+|---|---|
+| **Apple Developer Program** | US$99 per year (9.2). A free account can't do this: the app uses Sign in with Apple and Associated Domains. |
+| **Unity Build Automation** | Part of Unity Cloud, with the Unity account you already use (9.7). |
+| **The GitHub repository** | Unity reads it with a token you create (9.7). |
+| **OpenSSL** | Already on your PC: use **Git Bash**, not PowerShell, for the commands below. |
+| **An iPhone** | iOS 15 or newer, with Apple's **TestFlight** app installed. |
+| **The backend on Railway** | Section 3. The iPhone build talks to your HTTPS `<BASE_URL>`. |
+
+**What the builds cost.** Unity's free tier includes [100 Mac build minutes a
+month](https://unity.com/products/pricing-updates). After that it's pay-as-you-go: Unity's pricing
+listed Standard Mac at [US$0.07 per minute](https://unity.com/products/gaming-services/pricing), so
+check the current rate. Past the free minutes you need a card on file, or builds stop. A first
+IL2CPP build is slow, so expect it to use a large share of the free minutes. Turn **auto-build
+off** (9.7), so that a push doesn't spend minutes by accident.
+
+You don't need Xcode, CocoaPods or a macOS install: Unity's machines have them.
+
+### 9.2 Join the Apple Developer Program (once)
+
+1. Turn on **two-factor authentication** on the Apple account that will own the app.
+2. Go to https://developer.apple.com/programs/enroll/ and sign in.
+3. Choose the entity type:
+   - **Individual**: you. The App Store shows **your legal name** as the seller.
+   - **Organization**: needs a legal entity and a free D-U-N-S number, and takes longer. The
+     company's name is shown instead.
+4. Pay **US$99 per year** (local prices vary). If the membership lapses, the app leaves the store.
+5. Wait for the confirmation email. It's often quick, but it can take days.
+6. Note your **Team ID**: https://developer.apple.com ▸ *Account* ▸ *Membership details*.
+
+### 9.3 App ID, Sign in with Apple key and deep links
+
+**The App ID:**
+
+1. https://developer.apple.com/account ▸ *Certificates, IDs & Profiles* ▸ *Identifiers* ▸ **+** ▸
+   *App IDs* ▸ *App*.
+2. *Description*: `Milli`. *Bundle ID*: **Explicit**, `<BUNDLE_ID>` (`game.milli.com`). If Apple
+   says it's taken, follow 8.9's steps for a new ID.
+3. Under *Capabilities*, tick **Associated Domains** and **Sign In with Apple**. *Register*.
+
+**The Sign in with Apple key.** The server uses it to end a player's Apple sign-in when they delete
+their account, which [Apple asks of apps](https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion).
+
+1. *Certificates, IDs & Profiles* ▸ *Keys* ▸ **+**.
+2. *Name*: `Milli Sign in with Apple`. Tick **Sign in with Apple** ▸ *Configure* ▸ choose your App
+   ID ▸ *Save* ▸ *Continue* ▸ *Register*.
+3. **Download the `.p8` file. Apple only lets you do this once.** Keep it outside the repo, with a
+   backup. Note the **Key ID**.
+
+**On Railway** (section 3):
+
+1. Set `APPLE_TEAM_ID`, `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY`. For the last one, paste the text of
+   the `.p8` file.
+2. Check that `APP_BUNDLE_ID` and `APP_URL_SCHEME` are set.
+3. Deploy. The migration that stores Apple's token runs by itself.
+4. Check the file Apple reads for challenge links:
+   ```sh
+   curl -i https://<HOST>/.well-known/apple-app-site-association
+   # 200, appIDs ["<TEAM_ID>.<BUNDLE_ID>"]
+   ```
+
+### 9.4 Google sign-in and AdMob for iOS
+
+1. **Google sign-in** (section 4):
+   - create the **iOS** OAuth client with bundle ID `<BUNDLE_ID>`;
+   - add its ID to Railway's `GOOGLE_CLIENT_IDS`, after the web client's;
+   - paste it into `AppConfig.asset` ▸ `googleIosClientId`, which is empty today, and commit it.
+     It isn't a secret.
+2. **AdMob** (section 5): create the **iOS app** and its three ad units, and publish the **IDFA
+   explainer**. Keep the IDs for 9.11: test builds use Google's test IDs, and the real ones never
+   go in the repo.
+
+### 9.5 Create the signing files on Windows
+
+Apple needs two files to trust a build: a **certificate** (`.p12`, it proves it's you) and a
+**provisioning profile** (`.mobileprovision`, it says which app that certificate may sign). The
+usual instructions assume a Mac. These steps do the same with OpenSSL, in **Git Bash**:
+
+1. Make a folder **outside the repo**, and create your private key and a request for Apple. Put your
+   own email, name and country code in the second command:
+   ```sh
+   mkdir -p /d/Keys/milli-ios && cd /d/Keys/milli-ios
+   MSYS_NO_PATHCONV=1 openssl req -new -newkey rsa:2048 -nodes -keyout milli-dist.key -out milli-dist.csr \
+     -subj "/emailAddress=you@example.com/CN=Your Name/C=MX"
+   ```
+   Keep `MSYS_NO_PATHCONV=1`: without it, Git Bash rewrites the `/emailAddress…` part as a Windows
+   path and the command fails.
+2. In the browser: *Certificates, IDs & Profiles* ▸ *Certificates* ▸ **+** ▸ **Apple Distribution**
+   ▸ *Continue*. Upload `milli-dist.csr`, then **download** `distribution.cer` into the same folder.
+3. Turn it into a `.p12`. It asks you to choose a password, which you'll need in 9.7:
+   ```sh
+   openssl x509 -inform DER -in distribution.cer -out distribution.pem
+   openssl pkcs12 -export -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
+     -inkey milli-dist.key -in distribution.pem -out milli-dist.p12
+   ```
+   Keep the algorithm flags: macOS can refuse newer OpenSSL formats, and the build runs on macOS.
+4. In the browser: *Profiles* ▸ **+** ▸ under *Distribution*, **App Store Connect** ▸ *Continue*.
+   Choose your App ID, then your certificate. *Name*: `Milli App Store`. *Generate*, then
+   **download** the `.mobileprovision` file.
+5. Back up the whole folder somewhere private. `milli-dist.key` and `.p12` are as sensitive as the
+   Android keystore. `*.p8`, `*.p12` and `*.mobileprovision` are git-ignored, but keep them out of
+   the repo anyway.
+
+If you change the App ID's capabilities later, generate the profile again and upload the new one.
+Distribution certificates expire after about a year: repeat steps 1–4 when yours does.
+
+### 9.6 Create the app in App Store Connect
+
+At https://appstoreconnect.apple.com:
+
+1. *Apps* ▸ **+** ▸ *New App*:
+   - *Platforms*: iOS;
+   - *Name*: `Milli: Stack Tower Duel` (30 characters max, and it must be free on the store);
+   - *Primary language*: English (U.S.);
+   - *Bundle ID*: `<BUNDLE_ID>`;
+   - *SKU*: `milli-ios`, for your records only;
+   - *User access*: Full Access.
+2. Open *App Information* and note the **Apple ID**: digits only. This is `ASC_APP_ID` in 9.7.
+3. **Create the API key that uploads builds.** *Users and Access* ▸ *Integrations* ▸ *App Store
+   Connect API* ▸ *Team Keys* ▸ **+**. *Name*: `Milli uploads`. *Access*: **App Manager**.
+   *Generate*.
+4. **Download the `.p8` file (once only).** Note the **Key ID** and the **Issuer ID** at the top of
+   the page. This is a different key from the one in 9.3.
+5. Turn the key into one line for 9.7, in Git Bash:
+   ```sh
+   base64 -w0 AuthKey_XXXXXXXXXX.p8
+   ```
+6. **EU trader status** (*Business*, or the prompt on your first submission). [Everyone has to
+   declare it](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements/),
+   even if you don't sell in the EU. Without it, the app isn't shown there. Traders have their
+   address, phone and email **shown publicly** in the EU. An app that earns from ads may well count
+   as a trader, so read Apple's page before you answer. If you're an individual, use a contact
+   address you're happy to publish.
+7. **Agreements:** a free app needs only the standard agreement. You don't need the Paid Apps
+   Agreement or banking details here: ad income comes through AdMob, and Milli sells nothing for
+   real money.
+
+### 9.7 Set up Unity Build Automation
+
+**Push your work first.** Merge to `main` and push. Build Automation builds what's on GitHub.
+
+**Connect the project:**
+
+1. Go to https://cloud.unity.com and sign in with your Unity account. Create a project called
+   `Milli` if you don't have one.
+2. Open *DevOps* ▸ *Build Automation* and start the setup.
+3. *Source control*: choose **GitHub**, [create a token](https://docs.unity.com/en-us/build-automation/get-started-with-build-automation/connect-your-version-control-system)
+   (the `repo` scope for a private repository), and pick this repository.
+
+**Create the [build target](https://docs.unity.com/en-us/build-automation/basic-build-configuration/overview):**
+
+| Setting | Value | Why |
+|---|---|---|
+| **Platform** | iOS | |
+| **Target name** | `iOS App Store` | |
+| **Branch** | `main` | |
+| **Project subfolder** | `unity` | The Unity project isn't at the repo's root. |
+| **Unity version** | Auto-detect (reads `ProjectVersion.txt`) | If 6000.5.10f1 isn't offered, choose the closest 6000.5. |
+| **Builder OS** | macOS Tahoe | |
+| **Xcode version** | **26.5.0**, or the [newest 26.x listed](https://docs.unity.com/en-us/build-automation/reference/available-xcode-versions) | Required for iOS targets. Apple [needs Xcode 26 or later](https://developer.apple.com/news/upcoming-requirements/). Avoid 27 for now: [Google warns](https://developers.google.com/admob/ios/quick-start) that its builds fail with CocoaPods. |
+| **Bundle ID** | `<BUNDLE_ID>` | |
+| **Auto-build** | **Off** | Each build spends Mac minutes. |
+
+**Credentials:** upload `milli-dist.p12`, its password, and the `.mobileprovision` file (9.5).
+
+**Advanced settings**, on the build target:
+
+| Setting | Value | What it does |
+|---|---|---|
+| **Pre-Export Method** | `CloudBuildSetup.PreExport` | Makes the font atlases and string tables, sets iPhone-only, numbers the build. Without it, text is missing. |
+| **Post-Build Script** | `unity/Tools/upload-to-testflight.sh` | Uploads the build to Apple. |
+
+**Environment variables**, on the build target:
+
+| Variable | Value |
+|---|---|
+| `ASC_APP_ID` | The Apple ID from 9.6 |
+| `ASC_KEY_ID` | The upload key's Key ID |
+| `ASC_ISSUER_ID` | The Issuer ID |
+| `ASC_KEY_BASE64` | The one line from 9.6, step 5 |
+
+**You don't need a Team ID, version bump or build number by hand.** The credentials carry the team,
+and `CloudBuildSetup` gives each build Build Automation's own number, which only goes up. The
+**Version** the player sees comes from Player Settings, shared with Android.
+
+### 9.8 Run the first build
+
+1. Start a build of `iOS App Store` from the dashboard.
+2. Open its **log**. The steps run in this order, so the place it stops tells you what broke:
+
+   | Stage | If it fails here |
+   |---|---|
+   | Clone and Unity import | The repo or subfolder setting, or the Unity version |
+   | `CloudBuildSetup.PreExport` | Fonts or strings. Search the log for `Stack IT`. |
+   | Unity export, IL2CPP | C# that only compiles for iOS |
+   | CocoaPods, then Xcode | Native code or signing. See 9.14. |
+   | Post-build script | The upload. Search the log for `App Store Connect`. |
+
+3. **Compile errors in `StackItNative.mm` or `StackItSignIn.mm` are likely** on this first build,
+   because nothing has compiled them yet. Fix them in `Assets/Plugins/iOS/` on your PC, push, and
+   build again. The Xcode project is regenerated each time, so `BuildHooks.cs` and
+   `Assets/Plugins/iOS/` are the only places fixes last.
+4. A good build ends with `Uploaded to App Store Connect`. Apple then processes it: usually minutes,
+   sometimes longer. An email tells you if Apple's checks found a problem (9.14).
+
+### 9.9 Test on TestFlight
+
+1. App Store Connect ▸ your app ▸ *TestFlight*.
+2. **Internal testing:** create a group and add people from your team, up to 100. There's no review,
+   and they get the build as soon as it's processed. Add yourself.
+3. On the iPhone, open **TestFlight**, accept the invitation and install Milli.
+
+Go through this on the phone. Each item is something only a real iPhone can prove:
+
+- [ ] The game starts and plays smoothly, and Blocky looks right (`docs/TODO-PHONE-ONLINE.md`).
+- [ ] **Text** is everywhere, in English and Spanish, and never a raw key like `blocky.new_best.0`.
+- [ ] **Online:** coins and the leaderboard load. If not, the app is offline: check `apiBaseUrl` and
+      open `<BASE_URL>/health` in Safari.
+- [ ] **Consent:** on a fresh install the consent form appears if required, then the tracking
+      prompt, once.
+- [ ] **Test ads** load: rewarded continue, interstitial, banner.
+- [ ] **Sign in with Apple** and **Google**, including linking to a guest account.
+- [ ] **Sharing:** the challenge card opens the share sheet, and **Save Image** works.
+- [ ] **Challenge link:** paste `<BASE_URL>/c/<CODE>` into Notes and tap it. The app opens with that
+      challenge. Apple's CDN can delay this by hours after a change to `APPLE_TEAM_ID`.
+- [ ] **Haptics** on a perfect drop.
+- [ ] **Delete account** with Apple linked. On Railway, the logs must not show `Could not revoke`,
+      and Milli disappears from *Settings ▸ your name ▸ Sign-In & Security ▸ Sign in with Apple*.
+
+Without a live log, the backend's logs on Railway are your best view of what the app did.
+
+**External testing** (optional): friends who aren't on your team, up to 10,000, by email or a public
+link. The first build of each version needs a short **Beta App Review**. Fill in *Test Information*
+(feedback email, what to test). Builds expire after 90 days.
+
+### 9.10 What the project already handles
+
+So you don't have to redo these by hand. They're in the code, and 9.9 is where you prove them:
+
+| Requirement | Where |
+|---|---|
+| Associated Domains, Sign in with Apple, tracking text | `BuildHooks.cs` |
+| **Save Image** text (`NSPhotoLibraryAddUsageDescription`), so sharing doesn't crash | `BuildHooks.cs` |
+| Encryption answer (`ITSAppUsesNonExemptEncryption` = false), so builds don't wait on it | `BuildHooks.cs` |
+| iPhone only: no iPad screenshots or layout | `ProjectSetup.cs`, run by the pre-export method |
+| Apple's token revoked on account deletion | `backend/app/clients/apple_tokens.py` |
+| App Store screenshot size | `generate_store_art.py --app-store` (9.11) |
+
+**The encryption answer is your legal statement to Apple.** It says that Milli only encrypts through
+HTTPS, which [normally counts as exempt](https://developer.apple.com/forums/thread/765911). If you
+ever add your own encryption, change it in `BuildHooks.cs`.
+
+**What Sign in with Apple doesn't cover yet.** Tokens are revoked for players who signed in with a
+build containing this code, and only while the Railway key is set. Apple also suggests a
+server-to-server notification endpoint for changes on Apple's side, which isn't built.
+
+### 9.11 Listing, privacy and submission
+
+**Build the release version.** Add the real AdMob IDs to the build target's **Environment
+variables** (they never go in the repo), then start a build:
+
+| Variable | Value |
+|---|---|
+| `ADMOB_IOS_APP_ID` | The iOS App ID (`ca-app-pub-…~…`) |
+| `ADMOB_IOS_REWARDED` | The rewarded unit ID |
+| `ADMOB_IOS_INTERSTITIAL` | The interstitial unit ID |
+| `ADMOB_IOS_BANNER` | The banner unit ID |
+
+With `ADMOB_IOS_APP_ID` set, the build fails if any of the other three is missing, so a release
+can't ship with test ads. Remove the variables to go back to test builds. Don't tap your own real
+ads: add your iPhone as a test device in AdMob.
+
+**Version page** (your app ▸ *App Store* ▸ the version):
+
+| Field | Value |
+|---|---|
+| **Screenshots** | At least one set, see below |
+| **Promotional text** | ≤ 170 characters; you can change it without a new build |
+| **Description** | ≤ 4000 characters: the game, duels and challenge links, the two looks, free with ads |
+| **Keywords** | ≤ 100 characters, comma-separated: `stack,tower,blocks,duel,arcade,one tap` |
+| **Support URL** | `<BASE_URL>/privacy`, which shows the support email |
+| **Marketing URL** | Optional: `<BASE_URL>` |
+| **Copyright** | `2026 <your legal name>` |
+| **Build** | Choose the release build |
+
+**Screenshots.** [Apple needs exact sizes](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/),
+so the Play cards in `store/screenshots-*` won't upload. One iPhone set of 1 to 10 images is enough.
+Take them on any iPhone (side button + volume up), put them in a folder on your PC, then:
+
+```sh
+cd backend
+uv run python -m scripts.generate_store_art --screens "D:\path\to\iphone-screenshots" --app-store           # store/screenshots-ios-en/
+uv run python -m scripts.generate_store_art --screens "D:\path\to\iphone-screenshots" --app-store --lang es # store/screenshots-ios-es/
+```
+
+These cards are 1320 × 2868, the 6.9-inch size. Show the same moments as Google Play: a run, a near
+miss, a duel, the daily tower, the two looks. Add the Spanish listing too (*Add Language* at the top
+of the version page).
+
+**App Information:**
+
+| Field | Value |
+|---|---|
+| **Subtitle** | ≤ 30 characters, for example `One tap. Stack to the sky.` |
+| **Category** | Primary *Games* ▸ *Casual* |
+| **Content rights** | Answer honestly. Milli's art and music are your own, and its fonts are open-licensed. |
+| **Age rating** | Fill in the [questionnaire](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions), then accept the result (4+, 9+, 13+, 16+ or 18+). The facts: no violence, sexual content, gambling, drugs or bad language; **ads** are shown; players see each other's display names on leaderboards, friends and challenges; **no chat, voice or photo sharing**. It now includes questions about social features, so answer those with the same facts. |
+
+**Pricing and Availability:** *Free*. Under countries, **remove China mainland**: games there need a
+government licence.
+
+**App Privacy** ▸ *Privacy Policy URL*: `<BASE_URL>/privacy`. It must match the Android Data safety
+form (8.10). Check Google's list for the SDK's part:
+https://developers.google.com/admob/ios/privacy/data-disclosure.
+
+| Data type | Used for | Linked to the user | Tracking |
+|---|---|---|---|
+| Identifiers ▸ **Device ID** | Third-party advertising | Yes | **Yes** |
+| Identifiers ▸ **User ID** | App functionality | Yes | No |
+| Usage Data ▸ **Advertising Data** | Third-party advertising | Yes | **Yes** |
+| Usage Data ▸ **Product Interaction** | App functionality, analytics | Yes | No |
+| Location ▸ **Coarse Location** | Third-party advertising (AdMob, from the IP address) | No | **Yes** |
+| User Content ▸ **Gameplay Content** | App functionality, analytics | Yes | No |
+| Diagnostics ▸ **Performance Data** | Analytics, third-party advertising | No | No |
+| Contact Info ▸ **Name** | App functionality (the display name) | Yes | No |
+| Contact Info ▸ **Email Address** | App functionality, only if Apple or Google is linked | Yes | No |
+
+**App Review Information:**
+
+- *Sign-in required*: **no**.
+- *Contact*: your name, phone and email.
+- *Notes*, ready to paste:
+
+  > Milli needs no login: you play as a guest from the first launch. Sign in with Apple and Google
+  > are optional, to keep progress across devices (Settings). Account deletion is in Settings and
+  > at <BASE_URL>/delete-account. There are no real-money purchases: skins cost in-game coins. Ads
+  > are served by Google AdMob; the tracking prompt appears on first launch, after the consent form
+  > where one is required. To test a challenge, tap the challenge link on Home and enter a code
+  > from Share on the results screen.
+
+**Submit:**
+
+1. *Version Release*: choose **Manually release this version** for your first launch, so you pick
+   the moment.
+2. *Add for Review* ▸ *Submit*.
+3. Review usually takes a day or two. A rejection arrives with a reason in *App Review*. Fix it, run
+   a new build if the code changed, and resubmit.
+4. Once approved, press **Release**.
+
+### 9.12 After release
+
+1. Copy the app's address, for example `https://apps.apple.com/app/id1234567890`. The number is the
+   Apple ID from 9.6.
+2. Set Railway's `IOS_APP_STORE_URL`. Landing pages then offer the App Store, and iPhones without
+   the app go there.
+3. Put the same address in `AppConfig.asset` ▸ `iosAppStoreUrl`, and commit it for the next build.
+4. In AdMob, link the iOS app to its store listing, so `app-ads.txt` gets verified (section 5,
+   step 8).
+5. On an iPhone without the app, open a challenge link: the App Store should open. iOS has no
+   install referrer, so after installing, the player types the code (section 6).
+
+### 9.13 Every update after that
+
+1. Raise **Version** in *Player Settings* and push to `main`. Apple needs a new version number for
+   each release; TestFlight builds within a version can share it.
+2. Remove the `ADMOB_IOS_*` variables, build, and test on TestFlight.
+3. Add the variables back and build the release.
+4. Create the new version on the App Store page, choose the build, and submit.
+5. Once a year, Apple raises the required Xcode (usually in spring). Watch
+   [Upcoming Requirements](https://developer.apple.com/news/upcoming-requirements/), and choose a
+   newer Xcode on the build target. [Unity lists the versions it offers](https://docs.unity.com/en-us/build-automation/reference/available-xcode-versions),
+   and removes each after about 15 months.
+6. Renew the certificate and profile when they expire (9.5).
+
+CocoaPods' central repository [goes read-only on 2 December
+2026](https://blog.cocoapods.org/CocoaPods-Specs-Repo/). Existing builds keep working, but pods
+there get no new versions. Before updating the Ads SDK, check that the release you want is still
+installable this way.
+
+### 9.14 Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| Build can't find the project | *Project subfolder* must be `unity` (9.7). |
+| `Pre-Export Method` not found | The name must be `CloudBuildSetup.PreExport`, and `unity/Assets/Editor/CloudBuildSetup.cs` must be on the branch you build. |
+| Post-build script not found | Check that `unity/Tools/upload-to-testflight.sh` is on the branch. The path starts at the repo's root. |
+| Log says `ASC_… is not set: skipping the upload` | Set the variables on the build target (9.7). The build itself worked. |
+| Log says `No .ipa found` | The build made no `.ipa`, or Unity changed where it puts it. Read the Xcode stage above it. |
+| `The upload to App Store Connect failed.` | Read the `altool` lines above it. A bad key shows as an authentication error: check `ASC_KEY_ID`, `ASC_ISSUER_ID`, and that `ASC_KEY_BASE64` is one line. Apple needs the app to exist first (9.6), and `ASC_APP_ID` is digits only. |
+| `Provisioning profile … doesn't match the entitlements` or lacks a capability | Tick the capability on the App ID (9.3), generate the profile again (9.5), and upload the new one. It must be an **App Store Connect** profile for `<BUNDLE_ID>`. |
+| `.p12` password or certificate errors | Upload the `.p12`, not the `.cer`, and make it with the flags in 9.5. Its certificate must be the one chosen in the profile. |
+| CocoaPods fails | Read the `pod install` error in the log. The pods come from `StackItDependencies.xml` and the Ads plugin. |
+| `Undefined symbol` or a missing header for `GIDSignIn` | The pods didn't reach the Xcode build. Read the CocoaPods stage. |
+| Compile error in a `.mm` file | Fix it in `Assets/Plugins/iOS/` and push (9.8). |
+| Text is missing or shows raw keys like `blocky.new_best.0` | The string tables didn't reach the build. Check that the pre-export method ran, then turn on **Addressables** in the build target's advanced settings. |
+| App closes at launch | Without a live log, compare with the last good build. A common cause is a bad AdMob App ID: check `ADMOB_IOS_APP_ID`. |
+| The app stays offline | `apiBaseUrl` in `AppConfig.asset` must be `<BASE_URL>` on the branch you built. Open `<BASE_URL>/health` in the iPhone's Safari. |
+| Google sign-in fails or doesn't return to the app | `googleIosClientId` is empty or wrong in the build, or the ID isn't in `GOOGLE_CLIENT_IDS` (9.4). |
+| Sign in with Apple fails on the server | `APP_BUNDLE_ID` doesn't match the app, or `APPLE_CLIENT_IDS` is set wrongly (section 4). |
+| Railway logs show `Could not redeem` or `Could not revoke` | Sign-in and deletion still worked, but Apple refused. Check `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and that `APPLE_PRIVATE_KEY` is the key from 9.3, not the upload key from 9.6. |
+| Tracking prompt never appears | It only shows once per install. Delete the app and try again, and check *Settings ▸ Privacy & Security ▸ Tracking ▸ Allow Apps to Request to Track*. |
+| Challenge links open Safari | `APPLE_TEAM_ID` or the bundle ID is wrong in the association file, the build's `applinks:` host doesn't match, or Apple's CDN hasn't caught up (section 6). A link tapped inside a page on the same domain never opens the app. |
+| Upload refused: the SDK or Xcode is too old | Choose Xcode 26 or later on the build target (9.7). |
+| Upload refused about iPad multitasking or orientations | The pre-export method sets iPhone only. Check that it ran. |
+| Upload refused: the build number was already used | Build Automation's number only goes up per target, so a **new** target starts low. Keep using the same target. |
+| Email `ITMS-91061`, missing privacy manifest | An SDK in the app has none. Update that SDK, or ask its maker. |
+| Build stuck on *Missing Compliance* | Answer the question in TestFlight, and check that the build has `BuildHooks.cs`'s change (9.10). |
+| Screenshot size refused | Use the `--app-store` cards (9.11). |
+| Builds stopped | The free minutes ran out and there's no card on file (9.1). |
 
 ## 10. Moving to a custom domain later
 
@@ -767,8 +1220,8 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
 - [ ] `ENVIRONMENT=production`, strong `JWT_SECRET`, `SUPPORT_EMAIL` set; `/health` is green
 - [ ] Railway Postgres backups enabled
 - [ ] Legal texts (`backend/app/web/legal.py`) reviewed by someone qualified for your countries
-- [ ] Real AdMob unit IDs in `AdsConfig` for release; test IDs for internal builds;
-      `debugForceEeaConsent` off
+- [ ] Production bundle built with *Stack IT ▸ Build Android Release* (real ads, 8.7);
+      the project itself keeps the test IDs; `debugForceEeaConsent` off
 - [ ] GDPR message and IDFA explainer published in AdMob; `/app-ads.txt` served
 - [ ] `apple-app-site-association` and `assetlinks.json` validated; link opens the app on
       both platforms
@@ -784,4 +1237,11 @@ keys below are set, both fall back to the normal share sheet, which is safe to s
       `<BASE_URL>`, `mainTemplate.gradle` lists `play-services-ads` (8.2)
 - [ ] Google Play: closed test done (12+ testers, 14 days), production access granted, Dashboard
       tasks all green (8.10–8.11)
+- [ ] iOS: built with Xcode 26+, the 9.9 phone checks pass on a TestFlight build, and the release
+      build has the `ADMOB_IOS_*` variables set
+- [ ] iOS: `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` set on Railway; deleting an account with Apple
+      linked removes Milli from the iPhone's Sign in with Apple list
+- [ ] iOS: signing key, `.p12` and both `.p8` keys backed up outside the repo
+- [ ] App Store: EU trader status declared, App Privacy matches Google's Data safety form, age
+      rating done, `IOS_APP_STORE_URL` set after release
 - [ ] Store listings: screenshots, icon, data safety / privacy labels, content rating

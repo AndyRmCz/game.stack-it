@@ -3,10 +3,10 @@ scripts/art.py.
 
     uv run python -m scripts.generate_app_icons
 
-Writes unity/Assets/_Project/Art/Icons/AppIcon-Neon.png and AppIcon-Pop.png: Blocky, the
-mascot, balancing a gold slab that landed a hair off and looking up at it, on the daybreak
-sky (dusk with stars for Neon, morning for Pop). Kept inside the platforms' round and
-rounded-square masks.
+Writes unity/Assets/_Project/Art/Icons/AppIcon-Neon.png and AppIcon-Pop.png: Blocky, in glass,
+looking up at the gold slab that landed a hair off on its head, in the look's own background
+(Neon's night with stars, Pop's daybreak). Kept inside the platforms' round and rounded-square
+masks.
 """
 
 from pathlib import Path
@@ -17,20 +17,22 @@ from scripts import art
 
 SIZE = 1024
 OUT = Path(__file__).resolve().parents[2] / "unity" / "Assets" / "_Project" / "Art" / "Icons"
-CORAL = "#FF6B5B"  # Blocky in the Pop look (accent2): the warmest of its two colours
+BLOCK, FOOT = 0.55 * SIZE, 0.88 * SIZE  # Blocky's width, and where it stands
 
 
 def icon(look: str) -> Image.Image:
+    image = art.backdrop((SIZE, SIZE), look)
     night = look == "neon"
-    image = art.sky((SIZE, SIZE), art.DUSK if night else art.MORNING, stars=night)
-    ground = SIZE * 0.79
-    art.hill(image, ground, art.HILL if night else "#B9A9D9")
-    w = SIZE * 0.4
-    cx = SIZE / 2 - w * 0.04
-    art.blocky(
-        image, cx, ground + SIZE * 0.02, w, (cx + w * 0.1, ground - w * 1.9), CORAL, hat=True
+    # Neon: the glass lights the ground. Pop: a violet shade under it.
+    art.ground_light(
+        image,
+        (SIZE / 2, FOOT),
+        BLOCK * 1.4,
+        art.VIOLET if night else "#3A2A9C",
+        140 if night else 70,
     )
-    return art.grain(image).convert("RGB")
+    art.blocky(image, SIZE / 2, FOOT, BLOCK, "wonder", glow=night, hat=True)
+    return art.grain(image, 0.1).convert("RGB")
 
 
 if __name__ == "__main__":

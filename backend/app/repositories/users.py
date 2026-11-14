@@ -50,6 +50,13 @@ class IdentityRepository:
         )
         return list(rows)
 
+    async def provider_refresh_token(self, user_id: uuid.UUID, provider: str) -> str | None:
+        return await self._session.scalar(
+            select(AuthIdentity.provider_refresh_token).where(
+                AuthIdentity.user_id == user_id, AuthIdentity.provider == provider
+            )
+        )
+
     async def has_provider(self, user_id: uuid.UUID, provider: str) -> bool:
         return bool(
             await self._session.scalar(

@@ -1,6 +1,7 @@
 // Sign in with Apple (AuthenticationServices) and Google (GoogleSignIn pod, added through
 // Assets/_Project/Editor/StackItDependencies.xml). Results go back as JSON to
-// NativeCallbacks.OnSignInResult: {"id_token": "..."} or {"error": "cancelled" | "..."}.
+// NativeCallbacks.OnSignInResult: {"id_token": "...", "authorization_code": "..." (Apple only)}
+// or {"error": "cancelled" | "..."}.
 
 #import <AuthenticationServices/AuthenticationServices.h>
 #import <UIKit/UIKit.h>
@@ -29,13 +30,20 @@ static StackItAppleSignIn* sAppleDelegate = nil; // kept alive until the flow co
 
 - (void)authorizationController:(ASAuthorizationController*)controller didCompleteWithAuthorization:(ASAuthorization*)authorization
 {
-    NSString* token = nil;
+    NSMutableDictionary* payload = [NSMutableDictionary dictionaryWithObject:@"no_token" forKey:@"error"];
     if ([authorization.credential isKindOfClass:[ASAuthorizationAppleIDCredential class]])
     {
-        NSData* data = ((ASAuthorizationAppleIDCredential*)authorization.credential).identityToken;
-        if (data != nil) token = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        ASAuthorizationAppleIDCredential* credential = (ASAuthorizationAppleIDCredential*)authorization.credential;
+        if (credential.identityToken != nil)
+        {
+            [payload removeObjectForKey:@"error"];
+            payload[@"id_token"] = [[NSString alloc] initWithData:credential.identityToken encoding:NSUTF8StringEncoding];
+            // The server trades this for the token it revokes when the account is deleted.
+            if (credential.authorizationCode != nil)
+                payload[@"authorization_code"] = [[NSString alloc] initWithData:credential.authorizationCode encoding:NSUTF8StringEncoding];
+        }
     }
-    StackItSendSignIn(token != nil ? @{ @"id_token": token } : @{ @"error": @"no_token" });
+    StackItSendSignIn(payload);
     sAppleDelegate = nil;
 }
 

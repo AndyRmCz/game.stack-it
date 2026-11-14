@@ -26,6 +26,7 @@ namespace StackIt.Client.Api
     {
         public string IdToken;
         public string Nonce;
+        public string AuthorizationCode;
     }
 
     public sealed class RefreshRequest

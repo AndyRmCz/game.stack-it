@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api import auth, economy, health, me, missions, runs, social, telemetry
+from app.clients.apple_tokens import build_apple_tokens
 from app.clients.identity import build_verifiers
 from app.core.config import get_settings
 from app.core.db import get_engine
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     app.state.identity_verifiers = build_verifiers(
         settings.google_audiences, settings.apple_audiences
     )
+    app.state.apple_tokens = build_apple_tokens(settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

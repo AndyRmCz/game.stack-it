@@ -127,11 +127,13 @@ namespace StackIt.Services
     {
         public readonly string IdToken;
         public readonly string Nonce;
+        public readonly string AuthorizationCode; // Apple only
 
-        public ProviderToken(string idToken, string nonce)
+        public ProviderToken(string idToken, string nonce, string authorizationCode = null)
         {
             IdToken = idToken;
             Nonce = nonce;
+            AuthorizationCode = authorizationCode;
         }
     }
 

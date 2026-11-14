@@ -7,6 +7,7 @@ from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.apple_tokens import AppleTokenError, AppleTokens
 from app.clients.identity import IdentityTokenError, IdentityVerifier, VerifiedIdentity
 from app.core.config import Settings
 from app.core.errors import BadRequest, Conflict, ServiceUnavailable, Unauthorized
@@ -42,6 +43,7 @@ class AuthService:
         session: AsyncSession,
         settings: Settings,
         verifiers: Mapping[str, IdentityVerifier],
+        apple_tokens: AppleTokens,
         users: UserRepository,
         identities: IdentityRepository,
         tokens: RefreshTokenRepository,
@@ -51,6 +53,7 @@ class AuthService:
         self._session = session
         self._settings = settings
         self._verifiers = verifiers
+        self._apple_tokens = apple_tokens
         self._users = users
         self._identities = identities
         self._tokens = tokens
@@ -80,12 +83,20 @@ class AuthService:
             )
             return await self._issue(user.id, is_new=True)
 
-    async def login(self, provider: str, id_token: str, nonce: str | None) -> AuthResult:
+    async def login(
+        self,
+        provider: str,
+        id_token: str,
+        nonce: str | None,
+        authorization_code: str | None = None,
+    ) -> AuthResult:
         """Signs in with Google/Apple; creates a fresh account the first time."""
         verified = await self._verify(provider, id_token, nonce)
+        refresh_token = await self._redeem(provider, authorization_code)
         async with self._session.begin():
             identity = await self._identities.get(provider, verified.subject)
             if identity is not None:
+                identity.provider_refresh_token = refresh_token or identity.provider_refresh_token
                 return await self._issue(identity.user_id, is_new=False)
             user = await self._create_user()
             self._identities.add(
@@ -94,17 +105,29 @@ class AuthService:
                     provider=provider,
                     subject=verified.subject,
                     email=verified.email,
+                    provider_refresh_token=refresh_token,
                 )
             )
             return await self._issue(user.id, is_new=True)
 
-    async def link(self, user_id: uuid.UUID, provider: str, id_token: str, nonce: str | None):
+    async def link(
+        self,
+        user_id: uuid.UUID,
+        provider: str,
+        id_token: str,
+        nonce: str | None,
+        authorization_code: str | None = None,
+    ):
         """Attaches Google/Apple to the current (usually guest) account to keep its progress."""
         verified = await self._verify(provider, id_token, nonce)
+        refresh_token = await self._redeem(provider, authorization_code)
         async with self._session.begin():
             identity = await self._identities.get(provider, verified.subject)
             if identity is not None:
                 if identity.user_id == user_id:
+                    identity.provider_refresh_token = (
+                        refresh_token or identity.provider_refresh_token
+                    )
                     return
                 # The client offers "switch to that account" (login) instead.
                 raise Conflict("identity_in_use")
@@ -116,8 +139,19 @@ class AuthService:
                     provider=provider,
                     subject=verified.subject,
                     email=verified.email,
+                    provider_refresh_token=refresh_token,
                 )
             )
+
+    async def _redeem(self, provider: str, authorization_code: str | None) -> str | None:
+        """Apple's refresh token, for revoking later. Failing here must never block a sign-in."""
+        if provider != "apple" or not authorization_code:
+            return None
+        try:
+            return await self._apple_tokens.redeem(authorization_code)
+        except AppleTokenError as exc:
+            logger.warning("Could not redeem an Apple authorization code: %s", exc)
+            return None
 
     async def refresh(self, refresh_token: str) -> AuthResult:
         now = self._clock()

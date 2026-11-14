@@ -7,7 +7,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from jwt.algorithms import RSAAlgorithm
 
-from app.clients.identity import IdentityTokenError, OidcVerifier
+from app.clients.identity import IdentityTokenError, OidcVerifier, build_verifiers
 
 ISSUER = "https://appleid.apple.com"
 AUDIENCE = "com.stackit.game"
@@ -104,3 +104,9 @@ async def test_google_nonce_is_compared_raw() -> None:
     assert (await verifier.verify(token, nonce="n-123")).subject
     with pytest.raises(IdentityTokenError):
         await verifier.verify(_token(), nonce="n-123")  # nonce expected but absent
+
+
+def test_a_provider_without_client_ids_is_left_out() -> None:
+    """So signing in with it says the server isn't set up, rather than that the token is bad."""
+    assert set(build_verifiers([], ["game.milli.com"])) == {"apple"}
+    assert set(build_verifiers(["web.apps.googleusercontent.com"], ["x"])) == {"google", "apple"}

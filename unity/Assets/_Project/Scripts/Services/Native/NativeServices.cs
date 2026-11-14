@@ -130,7 +130,7 @@ namespace StackIt.Services.Native
                 string error = (string)json["error"] ?? "sign_in_failed";
                 throw new ApiException(0, error == "cancelled" ? "sign_in_cancelled" : "sign_in_failed", error);
             }
-            return new ProviderToken(token, nonce);
+            return new ProviderToken(token, nonce, (string)json["authorization_code"]);
         }
 
         private static string NewNonce()

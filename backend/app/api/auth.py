@@ -31,14 +31,14 @@ async def guest(body: GuestAuthRequest, auth: AuthServiceDep) -> TokenResponse:
 async def provider_login(
     provider: Provider, body: ProviderTokenRequest, auth: AuthServiceDep
 ) -> TokenResponse:
-    return _tokens(await auth.login(provider, body.id_token, body.nonce))
+    return _tokens(await auth.login(provider, body.id_token, body.nonce, body.authorization_code))
 
 
 @router.post("/{provider}/link", status_code=status.HTTP_204_NO_CONTENT)
 async def provider_link(
     provider: Provider, body: ProviderTokenRequest, user_id: UserIdDep, auth: AuthServiceDep
 ) -> None:
-    await auth.link(user_id, provider, body.id_token, body.nonce)
+    await auth.link(user_id, provider, body.id_token, body.nonce, body.authorization_code)
 
 
 @router.post("/refresh")

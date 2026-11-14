@@ -41,8 +41,9 @@ unity/*.pdb
 unity/*.mdb
 unity/*.opendb
 unity/*.VC.db
-unity/*.apk
-unity/*.aab
+# Builds go wherever they are saved; none belongs in git (Milli.aab was once committed).
+*.apk
+*.aab
 unity/*.unitypackage
 unity/crashlytics-build.properties
 unity/Assets/StreamingAssets/aa*

@@ -49,6 +49,9 @@ class AuthIdentity(Base):
     # a fast hash is sufficient; it is not a user-chosen password.
     secret_hash: Mapped[str | None] = mapped_column(String(64))
     email: Mapped[str | None] = mapped_column(String(320))
+    # Apple's refresh token, kept only to revoke it when the account is deleted. Useless without
+    # our private key.
+    provider_refresh_token: Mapped[str | None] = mapped_column(String(1024))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

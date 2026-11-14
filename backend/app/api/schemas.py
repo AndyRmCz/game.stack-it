@@ -26,6 +26,7 @@ class GuestAuthRequest(BaseModel):
 class ProviderTokenRequest(BaseModel):
     id_token: str = Field(min_length=20, max_length=8192)
     nonce: str | None = Field(default=None, max_length=256)
+    authorization_code: str | None = Field(default=None, max_length=1024)  # Apple only
 
 
 class RefreshRequest(BaseModel):

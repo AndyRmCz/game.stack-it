@@ -12,7 +12,7 @@ only colour, glow and lighting change. First launch uses Neon.
 |---|---|
 | Unity | `Resources/StackIt/themes.json`, a byte-for-byte copy made by `ThemesSync` (editor load, Setup Project, every build). `Look.Catalog` parses it with `MiniJson` into `ThemePalette`s. |
 | Web pages (`/c/{code}`, `/privacy`, `/terms`) | `backend/app/web/themes.json`, a copy (the Docker build context is `backend/`). `app/web/theme.py` turns tokens into CSS custom properties: Neon on `:root`, Pop inside `@media (prefers-color-scheme: light)`. |
-| Link previews and app icons | `app/web/og.py` (`/og/{code}.png`, Neon) and `backend/scripts/generate_app_icons.py` (both looks). |
+| Link previews and app icons | `app/web/og.py` (`/og/{code}.png`, Neon) and `backend/scripts/generate_app_icons.py` (both looks, with the glass Blocky from `backend/scripts/blocky/`). |
 
 Tests fail if either copy drifts (`ThemeTokenTests.TheUnityCopyMatchesTheSharedFile`,
 `test_backend_copy_of_the_tokens_matches_the_shared_file`).

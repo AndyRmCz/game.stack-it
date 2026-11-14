@@ -3,17 +3,21 @@
     uv run python -m scripts.generate_store_art                 # logo, icon, feature graphic
     uv run python -m scripts.generate_store_art --screens DIR   # also frame phone screenshots
     uv run python -m scripts.generate_store_art --screens DIR --lang es
+    uv run python -m scripts.generate_store_art --screens DIR --app-store   # Apple's exact size
 
 Writes to store/ at the repo root:
 - logo-neon.png / logo-pop.png: the "milli" wordmark on transparent, for dark / light grounds.
-  The i's are dotted with little blocks the size of a dot: one in the letters' colour, and a
-  gold one landed a hair off (the game's "0.4 mm from perfect" moment).
+  Blocky dots the first i, and the gold slab dots the second, landed a hair off (the game's
+  "0.4 mm from perfect" moment).
 - icon-512.png: the Play Store icon (the Neon app icon from scripts.generate_app_icons).
-- feature-graphic.png: Play's 1024 x 500 feature graphic (no alpha, as Play requires): the
-  tower at dusk, its gold slab landed a hair off, Blocky looking up at it.
+- feature-graphic.png: Play's 1024 x 500 feature graphic (no alpha, as Play requires): Blocky
+  in the Neon night, looking up at the gold slab on its head, beside the wordmark.
 - screenshots-<lang>/NN.png: with --screens, each phone screenshot in DIR (sorted by name) on a
-  1080 x 1920 card under a caption. Play refuses screenshots longer than 2:1, and most phones
-  now capture 20:9, so raw captures can't be uploaded as they are.
+  1080 x 1920 card under a caption, with Blocky sitting on the phone, reacting to it. Play
+  refuses screenshots longer than 2:1, and most phones now capture 20:9, so raw captures can't
+  be uploaded as they are.
+- screenshots-ios-<lang>/NN.png: with --app-store, the same cards at 1320 x 2868, the size App
+  Store Connect takes for iPhones (it accepts exact sizes only).
 """
 
 import argparse
@@ -24,10 +28,12 @@ from PIL import Image, ImageDraw, ImageFont
 from app.web import theme
 from app.web.og import _font
 from scripts import art
-from scripts.generate_app_icons import CORAL, icon
+from scripts.generate_app_icons import icon
 
 OUT = Path(__file__).resolve().parents[2] / "store"
 DOTLESS_I = chr(0x131)  # the display font's dotless i
+PLAY_CARD = (1080, 1920)
+APP_STORE_CARD = (1320, 2868)
 WORD = f"m{DOTLESS_I}ll{DOTLESS_I}"  # the dots are drawn as blocks
 CAPTIONS = {
     "en": [
@@ -45,6 +51,9 @@ CAPTIONS = {
         "Neon o Pop. Tu estilo.",
     ],
 }
+# Blocky's reaction to each caption, a pose baked in scripts/blocky.
+POSES = ("cheer-up", "nervous", "smug-right", "happy", "joy")
+LOOKS_RIGHT = {"nervous", "smug-right"}  # these sit on the left, looking at the phone
 
 
 def wordmark(look: str, size: int) -> Image.Image:
@@ -58,71 +67,80 @@ def wordmark(look: str, size: int) -> Image.Image:
     origin = (pad - x0, height - pad - y1)  # baseline position
     image = Image.new("RGBA", (width, height))
 
-    # A soft shadow below the letters, so the mark sits on any ground without a glow.
+    # A soft shadow below the letters, so the mark sits on any ground; violet light at night.
     shadow = Image.new("RGBA", image.size)
-    drop = (origin[0], origin[1] + size * 0.05)
-    ImageDraw.Draw(shadow).text(drop, WORD, font=font, fill=(30, 18, 60, 90), anchor="ls")
-    image.alpha_composite(art.soft(shadow, size * 0.04))
+    night = look == "neon"
+    drop = (origin[0], origin[1] + (0 if night else size * 0.05))
+    shade = art.rgba(art.VIOLET, 150) if night else (30, 18, 60, 90)
+    ImageDraw.Draw(shadow).text(drop, WORD, font=font, fill=shade, anchor="ls")
+    image.alpha_composite(art.soft(shadow, size * (0.06 if night else 0.04)))
     ImageDraw.Draw(image).text(origin, WORD, font=font, fill=art.rgba(ink), anchor="ls")
 
-    # A block over each dotless i, the size of the dot it replaces.
+    # Blocky dots the first i; the gold slab dots the second, landed a hair off.
     sx0, sy0, sx1, _ = probe.textbbox((0, 0), DOTLESS_I, font=font, anchor="ls")
     stem = sx1 - sx0
-    side = stem * 1.12 / (2 * art.C30)  # iso width = 2 * side * cos30
-    dots = ((1, art.faces(ink), 0.0), (4, art.gold(), 0.22))
-    for i, colors, nudge in dots:
-        left = probe.textlength(WORD[:i], font=font)
-        cx = origin[0] + left + (sx0 + sx1) / 2
-        bottom = origin[1] + sy0 - stem * 0.32  # the gap a dot leaves above the stem
-        c = art.along_x((cx, bottom - side / 2), side * nudge)
-        art.iso_box(image, c, side, side, side * 0.62, colors)
+    foot = origin[1] + sy0 - stem * 0.2  # the gap a dot leaves above the stem
+    for i in (1, 4):
+        cx = origin[0] + probe.textlength(WORD[:i], font=font) + (sx0 + sx1) / 2
+        if i == 1:
+            art.blocky(image, cx, foot, stem * 1.12, "happy", glow=night)
+        else:
+            art.slab(image, cx + stem * 0.2, foot, stem * 1.1, glow=False, tall=2.2)
     return image.crop(image.getbbox())
 
 
 def feature_graphic(lang: str = "en") -> Image.Image:
     width, height = 1024, 500
-    image = art.sky((width, height), art.DUSK, stars=True)
-    ground = 432
-    art.hill(image, ground)
-    ramp = theme.token("pop", "block.ramp")
-    top = art.tower(image, (265, ground + 22), 136, ramp)
-    art.blocky(image, 398, ground + 24, 62, top, CORAL)
+    image = art.backdrop((width, height))
+    cx, foot, block = 250, 452, 250
+    art.ground_light(image, (cx, foot), block * 1.5, art.VIOLET, 150)
+    art.blocky(image, cx, foot, block, "wonder", hat=True)
 
-    mark = wordmark("neon", 168)
-    image.alpha_composite(mark, (int(722 - mark.width / 2), int(205 - mark.height / 2)))
+    mark = wordmark("neon", 150)
+    image.alpha_composite(mark, (int(700 - mark.width / 2), int(215 - mark.height / 2)))
     ImageDraw.Draw(image).text(
-        (722, 352),
+        (700, 360),
         CAPTIONS[lang][1],
-        font=_font("LexendDeca-SemiBold.ttf", 38),
-        fill=art.rgba(art.PEACH),
+        font=_font("LexendDeca-SemiBold.ttf", 36),
+        fill=art.rgba(theme.token("neon", "text.secondary")),
         anchor="mm",
     )
-    return art.grain(image).convert("RGB")
+    return art.grain(image, 0.1).convert("RGB")
 
 
 def _wrap(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
-    lines: list[str] = []
-    for word in text.split():
-        if lines and font.getlength(lines[-1] + " " + word) <= max_width:
-            lines[-1] += " " + word
-        else:
-            lines.append(word)
-    return lines
+    """One line if it fits, else two of about the same length, so no word is left alone."""
+    words = text.split()
+    if font.getlength(text) <= max_width or len(words) < 2:
+        return [text]
+
+    def longer(cut: int) -> float:
+        return max(font.getlength(" ".join(words[:cut])), font.getlength(" ".join(words[cut:])))
+
+    cut = min(range(1, len(words)), key=longer)
+    return [" ".join(words[:cut]), " ".join(words[cut:])]
 
 
-def framed_screenshot(shot: Image.Image, caption: str) -> Image.Image:
-    """A phone screenshot under a caption on a 1080 x 1920 card (9:16, inside Play's 2:1)."""
-    width, height = 1080, 1920
-    image = art.grain(art.sky((width, height), art.DUSK, stars=True))
-    font = _font("Sora-Bold.ttf", 84)
-    y = 190
-    for line in _wrap(caption, font, width - 160):
+def framed_screenshot(
+    shot: Image.Image,
+    caption: str,
+    size: tuple[int, int] = PLAY_CARD,
+    pose: str | None = None,
+) -> Image.Image:
+    """A phone screenshot under a caption on a card: 9:16 by default, inside Play's 2:1. With
+    pose, Blocky sits on the phone's top edge, reacting to the caption."""
+    width, height = size
+    k = width / PLAY_CARD[0]  # the layout is drawn for Play's card
+    image = art.backdrop((width, height), seed=5)
+    font = _font("Sora-Bold.ttf", round(88 * k))
+    y = round(230 * k)
+    for line in _wrap(caption, font, width - round(200 * k)):
         ImageDraw.Draw(image).text(
             (width / 2, y), line, font=font, fill=art.rgba(art.CREAM), anchor="ms"
         )
-        y += 100
+        y += round(104 * k)
 
-    box_top, box_bottom, margin = y + 10, height - 70, 110
+    box_top, box_bottom, margin = y + round(120 * k), height - round(60 * k), round(150 * k)
     scale = min((width - 2 * margin) / shot.width, (box_bottom - box_top) / shot.height)
     w, h = round(shot.width * scale), round(shot.height * scale)
     x, top = (width - w) // 2, box_bottom - h
@@ -132,17 +150,24 @@ def framed_screenshot(shot: Image.Image, caption: str) -> Image.Image:
 
     halo = Image.new("RGBA", image.size)
     ImageDraw.Draw(halo).rounded_rectangle(
-        (x - 6, top - 6, x + w + 6, top + h + 6), radius + 6, fill=art.rgba(art.PEACH, 120)
+        (x - round(6 * k), top - round(6 * k), x + w + round(6 * k), top + h + round(6 * k)),
+        radius + round(6 * k),
+        fill=theme.rgba(theme.token("neon", "accent.glow")["color"]),
     )
-    image.alpha_composite(art.soft(halo, 18))
+    image.alpha_composite(art.soft(halo, round(22 * k)))
     image.paste(shot.convert("RGB").resize((w, h), Image.LANCZOS), (x, top), mask)
-    return image.convert("RGB")
+    if pose:
+        block = 190 * k
+        cx = x + block * 0.45 if pose in LOOKS_RIGHT else x + w - block * 0.45
+        art.blocky(image, cx, top + block * 0.04, block, pose)
+    return art.grain(image, 0.1).convert("RGB")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--screens", type=Path, help="folder of raw phone screenshots")
     parser.add_argument("--lang", choices=sorted(CAPTIONS), default="en")
+    parser.add_argument("--app-store", action="store_true", help="cards for App Store Connect")
     args = parser.parse_args()
 
     OUT.mkdir(exist_ok=True)
@@ -154,11 +179,13 @@ def main() -> None:
         shots = sorted(
             p for p in args.screens.iterdir() if p.suffix.lower() in (".png", ".jpg", ".jpeg")
         )
-        folder = OUT / f"screenshots-{args.lang}"
+        folder = OUT / f"screenshots-{'ios-' if args.app_store else ''}{args.lang}"
+        size = APP_STORE_CARD if args.app_store else PLAY_CARD
         folder.mkdir(exist_ok=True)
         captions = CAPTIONS[args.lang]
         for n, path in enumerate(shots):
-            framed = framed_screenshot(Image.open(path), captions[n % len(captions)])
+            i = n % len(captions)
+            framed = framed_screenshot(Image.open(path), captions[i], size, POSES[i])
             framed.save(folder / f"{n + 1:02d}.png", optimize=True)
     print(f"wrote {OUT}")
 

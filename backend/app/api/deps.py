@@ -75,6 +75,7 @@ def auth_service(request: Request, session: SessionDep, settings: SettingsDep) -
         session,
         settings,
         request.app.state.identity_verifiers,
+        request.app.state.apple_tokens,
         UserRepository(session),
         IdentityRepository(session),
         RefreshTokenRepository(session),
@@ -82,9 +83,10 @@ def auth_service(request: Request, session: SessionDep, settings: SettingsDep) -
     )
 
 
-def profile_service(session: SessionDep) -> ProfileService:
+def profile_service(request: Request, session: SessionDep) -> ProfileService:
     return ProfileService(
         session,
+        request.app.state.apple_tokens,
         UserRepository(session),
         IdentityRepository(session),
         RunRepository(session),
