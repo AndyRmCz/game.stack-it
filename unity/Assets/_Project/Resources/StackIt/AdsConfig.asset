@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: AdsConfig
   m_EditorClassIdentifier: StackIt.Runtime::StackIt.Bootstrap.AdsConfig
   adsEnabled: 1
-  androidRewarded: ca-app-pub-3940256099942544/5224354917
-  androidInterstitial: ca-app-pub-3940256099942544/1033173712
-  androidBanner: ca-app-pub-3940256099942544/6300978111
-  iosRewarded: ca-app-pub-3940256099942544/1712485313
-  iosInterstitial: ca-app-pub-3940256099942544/4411468910
-  iosBanner: ca-app-pub-3940256099942544/2934735716
+  androidRewarded: ca-app-pub-1305259028857953/1998903877
+  androidInterstitial: ca-app-pub-1305259028857953/1467586686
+  androidBanner: ca-app-pub-1305259028857953/9494250512
+  iosRewarded: ca-app-pub-1305259028857953/6868087178
+  iosInterstitial: ca-app-pub-1305259028857953/1996080627
+  iosBanner: ca-app-pub-1305259028857953/5555005507
   interstitialMinRuns: 3
   interstitialMinSeconds: 90
   debugForceEeaConsent: 0
