@@ -1,5 +1,6 @@
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from tests.factories import guest, verified_run
 
@@ -41,3 +42,24 @@ async def test_finished_missions_pay_once_and_unfinished_ones_cannot_be_claimed(
         assert refused.json()["error"]["code"] == "mission_incomplete"
     chest = await client.post("/v1/missions/claim", json={"slot": 3}, headers=player.headers)
     assert chest.status_code == (200 if not unfinished else 409)
+
+
+async def test_reading_missions_checks_every_claim_in_one_query(
+    client: AsyncClient, engine: AsyncEngine
+) -> None:
+    # Each query is a round trip to the database; one per claim made the screen slow to open.
+    player = await guest(client)
+    selects = []
+
+    def _count(conn, cursor, statement, *args) -> None:
+        if statement.lstrip().upper().startswith("SELECT"):
+            selects.append(statement)
+
+    event.listen(engine.sync_engine, "before_cursor_execute", _count)
+    try:
+        response = await client.get("/v1/missions", headers=player.headers)
+    finally:
+        event.remove(engine.sync_engine, "before_cursor_execute", _count)
+
+    assert response.status_code == 200
+    assert len(selects) == 3, "the token's user, the day's runs, and the claims"

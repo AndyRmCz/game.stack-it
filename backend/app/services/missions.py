@@ -91,13 +91,11 @@ class MissionService:
     async def _view(self, user_id: uuid.UUID, day: date) -> MissionsView:
         since = datetime.combine(day, time(), tzinfo=UTC)
         stats = await self._runs.day_stats(user_id, since, day)
+        missions = missions_for(user_id, day)
+        slots = [m.slot for m in missions] + [CHEST_SLOT]
+        claimed = await self._ledger.found_keys(user_id, [claim_key(day, s) for s in slots])
         states = [
-            MissionState(
-                m,
-                progress(m.kind, stats),
-                await self._ledger.find(user_id, claim_key(day, m.slot)) is not None,
-            )
-            for m in missions_for(user_id, day)
+            MissionState(m, progress(m.kind, stats), claim_key(day, m.slot) in claimed)
+            for m in missions
         ]
-        chest = await self._ledger.find(user_id, claim_key(day, CHEST_SLOT)) is not None
-        return MissionsView(day, states, chest)
+        return MissionsView(day, states, claim_key(day, CHEST_SLOT) in claimed)

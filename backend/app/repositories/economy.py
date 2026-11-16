@@ -33,6 +33,15 @@ class WalletRepository:
             )
         )
 
+    async def found_keys(self, user_id: uuid.UUID, keys: list[str]) -> set[str]:
+        """Which of `keys` the user already has a transaction for, in one query."""
+        rows = await self._session.scalars(
+            select(WalletTransaction.idempotency_key).where(
+                WalletTransaction.user_id == user_id, WalletTransaction.idempotency_key.in_(keys)
+            )
+        )
+        return set(rows)
+
     def add_transaction(self, tx: WalletTransaction) -> None:
         self._session.add(tx)
 

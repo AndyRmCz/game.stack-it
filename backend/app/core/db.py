@@ -12,10 +12,20 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import get_settings
 
+# Connections older than this are replaced when next taken from the pool, so none lives forever.
+POOL_RECYCLE_SECONDS = 1800
+
+
+def build_engine(url: str) -> AsyncEngine:
+    """No pool_pre_ping: with asyncpg it costs three round trips (BEGIN, ";", ROLLBACK) every time
+    a connection is taken, and a request takes two. A connection the server dropped fails the one
+    query that uses it instead; the pool then replaces it, and the app retries 5xx answers."""
+    return create_async_engine(url, pool_recycle=POOL_RECYCLE_SECONDS)
+
 
 @lru_cache
 def get_engine() -> AsyncEngine:
-    return create_async_engine(get_settings().database_url, pool_pre_ping=True)
+    return build_engine(get_settings().database_url)
 
 
 @lru_cache

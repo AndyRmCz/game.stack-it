@@ -34,6 +34,9 @@ class WalletLedger:
     async def find(self, user_id: uuid.UUID, key: str) -> WalletTransaction | None:
         return await self._wallets.find_transaction(user_id, key)
 
+    async def found_keys(self, user_id: uuid.UUID, keys: list[str]) -> set[str]:
+        return await self._wallets.found_keys(user_id, keys)
+
     async def apply(
         self, user_id: uuid.UUID, amount: int, *, kind: str, key: str, reference: str | None = None
     ) -> LedgerEntry:

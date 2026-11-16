@@ -215,3 +215,4 @@ judgment call is logged here. Supersedes the colour, font and UI-scale rows of t
 | Revenue from AdMob `OnAdPaid` (impression-level, estimated) | Revenue per player and per placement in our own data; AdMob's console stays the payout source of truth. |
 | Metric views in a separate `metrics` schema, applied by `scripts/metrics.py`, not by migrations | They are reports, not app schema: change them freely without a deploy or an Alembic revision. |
 | Removed `com.unity.purchasing` and `com.unity.analytics` | No real-money purchases ever (Monetization); Unity IAP added the Play `BILLING` permission and billing library to the APK. |
+| No `pool_pre_ping`; connections recycled after 30 min | With asyncpg a ping is three round trips (BEGIN, `;`, ROLLBACK) and a request took two: half of every screen's database time on Railway (~60 ms per trip). A connection the server dropped fails one request instead, the pool replaces it, and the app retries 5xx. |
