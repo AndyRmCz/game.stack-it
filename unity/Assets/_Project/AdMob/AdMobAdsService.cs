@@ -45,17 +45,38 @@ namespace StackIt.AdMob
             AdsServiceRegistry.Factory = () => new AdMobAdsService(AdsConfig.Load());
         }
 
+        // A step whose callback never comes must not keep ads off for the whole session: on Android
+        // the consent check answered and then nothing else ran, so no ad was ever requested.
+        private static readonly TimeSpan ConsentWait = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan SdkWait = TimeSpan.FromSeconds(15);
+
+        private string _consentError;
+
         /// <summary>Order required by Google and Apple: UMP consent → ATT prompt → SDK init.</summary>
         public async Task InitializeAsync()
         {
             MobileAds.RaiseAdEventsOnUnityMainThread = true;
-            await GatherConsentAsync();
+
+            var clock = Stopwatch.StartNew();
+            bool answered = await Deadline.Within(GatherConsentAsync(), ConsentWait);
+            Step("consent", !answered ? "timeout" : _consentError == null ? "ok" : "failed", clock, _consentError);
+
             await RequestTrackingAuthorizationAsync();
-            if (!ConsentInformation.CanRequestAds()) return;
+            // On a timeout this still holds what Google saved, from this launch or an earlier one.
+            if (!ConsentInformation.CanRequestAds())
+            {
+                Step("can_request", "no", clock, ConsentInformation.ConsentStatus.ToString());
+                return;
+            }
+            Step("can_request", "yes", clock);
 
             var done = new TaskCompletionSource<bool>();
+            clock.Restart();
             MobileAds.Initialize(_ => done.TrySetResult(true));
-            await done.Task;
+            // Ads may load before the SDK reports it has started: go on either way.
+            bool started = await Deadline.Within(done.Task, SdkWait);
+            Step("sdk", started ? "ok" : "timeout", clock);
+
             IsInitialized = true;
             LoadRewarded();
             LoadInterstitial();
@@ -74,17 +95,26 @@ namespace StackIt.AdMob
             {
                 if (updateError != null)
                 {
-                    Debug.LogWarning("UMP update failed: " + updateError.Message);
+                    _consentError = "update: " + updateError.Message;
                     done.TrySetResult(false);
                     return;
                 }
                 ConsentForm.LoadAndShowConsentFormIfRequired(formError =>
                 {
-                    if (formError != null) Debug.LogWarning("UMP form failed: " + formError.Message);
+                    if (formError != null) _consentError = "form: " + formError.Message;
                     done.TrySetResult(true);
                 });
             });
             return done.Task;
+        }
+
+        /// <summary>One startup step, in logcat and in telemetry (ad_init), so a stall shows where.</summary>
+        private void Step(string step, string result, Stopwatch clock, string message = null)
+        {
+            if (message != null && message.Length > 200) message = message.Substring(0, 200);
+            Debug.Log($"Ads startup: {step} {result} after {clock.ElapsedMilliseconds} ms{(message == null ? "" : ": " + message)}");
+            AdEvent?.Invoke(new AdEvent(TelemetryEvents.AdInit, null, latencyMs: clock.ElapsedMilliseconds,
+                step: step, result: result, message: message));
         }
 
         private static async Task RequestTrackingAuthorizationAsync()

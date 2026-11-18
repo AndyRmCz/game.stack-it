@@ -88,6 +88,9 @@ namespace StackIt.Services
                 case TelemetryEvents.AdShowFailed:
                     Track(e.Name, ("format", e.Format), ("placement", e.Placement), ("error_code", e.ErrorCode));
                     break;
+                case TelemetryEvents.AdInit:
+                    Track(e.Name, ("step", e.Step), ("result", e.Result), ("latency_ms", e.LatencyMs), ("message", e.Message));
+                    break;
                 case TelemetryEvents.AdPaid:
                     Track(e.Name, ("format", e.Format), ("placement", e.Placement), ("value_micros", e.ValueMicros),
                         ("currency", e.Currency), ("precision", e.Precision), ("ad_source", e.Source));

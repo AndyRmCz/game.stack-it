@@ -3,7 +3,7 @@
 from PIL import Image
 
 from app.web.og import _font
-from scripts.generate_app_icons import icon
+from scripts.generate_app_icons import SAFE, adaptive, icon
 from scripts.generate_store_art import (
     CAPTIONS,
     POSES,
@@ -24,6 +24,29 @@ def test_store_icon_is_a_square_that_scales_to_512() -> None:
     image = icon("neon")
     assert image.width == image.height
     assert image.resize((512, 512)).size == (512, 512)
+
+
+def test_the_adaptive_icon_keeps_blocky_inside_every_launchers_mask() -> None:
+    """Android 8+ crops an adaptive icon to its own shape (circle, squircle...): only the centre
+    circle, 66 of 108 dp across, is always shown. Blocky and its slab must sit inside it."""
+    background, foreground = adaptive("neon")
+    assert background.size == foreground.size
+    assert background.width == background.height
+    assert background.mode == "RGB"
+    assert foreground.mode == "RGBA"
+
+    size = foreground.width
+    r = SAFE * size / 2
+    alpha = foreground.getchannel("A")
+    solid = [
+        (x, y) for y in range(0, size, 4) for x in range(0, size, 4) if alpha.getpixel((x, y)) > 128
+    ]
+    outside = [(x, y) for x, y in solid if (x - size / 2) ** 2 + (y - size / 2) ** 2 > r * r]
+    assert solid, "the foreground has Blocky on it"
+    assert outside == []
+    # ...and fills it: a Blocky lost in the middle reads as a dot on the home screen.
+    ys = [y for _, y in solid]
+    assert max(ys) - min(ys) > 1.2 * r
 
 
 def test_wordmark_is_ink_on_transparent() -> None:

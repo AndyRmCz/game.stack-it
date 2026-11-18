@@ -39,10 +39,17 @@ namespace StackIt.Services
         public readonly string Currency;
         public readonly string Precision;
         public readonly string Source;
+        public readonly string Step;
+        public readonly string Result;
+        public readonly string Message;
 
         public AdEvent(string name, string format, string placement = null, int? errorCode = null, long? latencyMs = null,
-            long? valueMicros = null, string currency = null, string precision = null, string source = null)
+            long? valueMicros = null, string currency = null, string precision = null, string source = null,
+            string step = null, string result = null, string message = null)
         {
+            Step = step;
+            Result = result;
+            Message = message;
             Name = name;
             Format = format;
             Placement = placement;
@@ -174,6 +181,6 @@ namespace StackIt.Services
             Code = code;
         }
 
-        public bool IsOffline => Status == 0;
+        public bool IsOffline => Client.Offline.Is(Status, Code);
     }
 }

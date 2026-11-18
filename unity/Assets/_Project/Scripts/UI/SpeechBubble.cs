@@ -1,4 +1,5 @@
 using System;
+using StackIt.Client;
 using StackIt.Client.Theming;
 using StackIt.Game;
 using TMPro;
@@ -12,7 +13,8 @@ namespace StackIt.UI
     /// </summary>
     public sealed class SpeechBubble
     {
-        private const float MaxWidth = 216f, PadX = 14f, PadY = 9f, TailSize = 13f;
+        private const float MaxWidth = 216f, PadX = 14f, PadY = 9f, TailSize = 13f, FontSize = 14f;
+        private static readonly BubbleSize Size = new BubbleSize(MaxWidth, PadX, PadY, FontSize);
         private const float BaseSeconds = 2.2f, SecondsPerCharacter = 0.05f;
 
         private readonly RectTransform _root;
@@ -37,7 +39,7 @@ namespace StackIt.UI
             tail.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
             RectTransform face = UiKit.Stretch(UiKit.Surface(_root, "Face", SurfaceKind.Toast, 16f).rectTransform);
-            _text = UiKit.Text(face, "", TextRole.Body, T.ToastText, size: 14f);
+            _text = UiKit.Text(face, "", TextRole.Body, T.ToastText, size: FontSize);
             UiKit.Stretch(_text.rectTransform, (int)PadX, (int)PadY, (int)PadX, (int)PadY);
             _root.gameObject.SetActive(false);
         }
@@ -46,11 +48,13 @@ namespace StackIt.UI
         {
             Stop();
             _text.text = line;
-            Vector2 fit = _text.GetPreferredValues(line, MaxWidth - 2f * PadX, 0f);
-            _root.sizeDelta = new Vector2(Mathf.Min(fit.x + 1f, MaxWidth - 2f * PadX) + 2f * PadX, fit.y + 2f * PadY);
-            _root.localScale = Vector3.one;
-            _root.gameObject.SetActive(true);
+            // Shown (still invisible) before measuring: a text that has never been active measures 0.
             _group.alpha = 0f;
+            _root.gameObject.SetActive(true);
+            Vector2 fit = _text.GetPreferredValues(line, MaxWidth - 2f * PadX, 0f);
+            (float width, float height) = Size.Fit(line, fit.x, fit.y);
+            _root.sizeDelta = new Vector2(width, height);
+            _root.localScale = Vector3.one;
             Tween.Fade(_group, 1f, 0.16f);
             if (!Look.ReduceMotion) Tween.PopIn(_root, 0.26f);
             Tween.Run(_text, BaseSeconds + SecondsPerCharacter * line.Length, _ => { }, () => Leave(done));

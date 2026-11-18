@@ -889,6 +889,7 @@ it.
 | `ad_shown` (impression) / `ad_clicked` / `ad_rewarded` / `ad_closed` | `format`, `placement` (`continue`, `double`, `between_runs`, `menu`, `music_trial`) | AdMob adapter; the editor's fake ads too |
 | `ad_show_failed` | `format`, `placement`, `error_code` (`-1` = an ad was due but none was loaded) | AdMob adapter |
 | `ad_paid` | `format`, `placement`, `value_micros`, `currency`, `precision`, `ad_source` | AdMob `OnAdPaid` |
+| `ad_init` | `step` (`consent`, `can_request`, `sdk`), `result` (`ok`, `failed`, `timeout`, `yes`, `no`), `latency_ms`, `message` (Google's error, ≤ 200 chars) | AdMob adapter, once per startup step |
 | `shop_view` | `balance` | Shop |
 | `item_preview` | `item_id`, `price`, `balance`, `owned` (the buy confirmation opened) | Shop |
 | `item_unaffordable_tap` | `item_id`, `price`, `balance` | Shop |

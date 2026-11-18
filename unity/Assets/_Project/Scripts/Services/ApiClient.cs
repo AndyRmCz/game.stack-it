@@ -117,7 +117,7 @@ namespace StackIt.Services
 
         private static ApiException ToException(UnityWebRequest request, bool networkError)
         {
-            if (networkError) return new ApiException(0, "offline", request.error);
+            if (networkError) return new ApiException(0, Offline.Code, request.error);
             try
             {
                 var envelope = JsonConvert.DeserializeObject<ErrorEnvelope>(request.downloadHandler.text, Json);

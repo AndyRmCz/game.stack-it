@@ -25,6 +25,7 @@ namespace StackIt.Client
         public const string AdRewarded = "ad_rewarded";
         public const string AdClosed = "ad_closed";
         public const string AdPaid = "ad_paid";
+        public const string AdInit = "ad_init"; // one per startup step: consent, can_request, sdk
         public const string ShopView = "shop_view";
         public const string ItemPreview = "item_preview";
         public const string ItemUnaffordableTap = "item_unaffordable_tap";

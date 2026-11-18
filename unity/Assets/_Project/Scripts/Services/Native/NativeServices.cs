@@ -128,6 +128,8 @@ namespace StackIt.Services.Native
             if (string.IsNullOrEmpty(token))
             {
                 string error = (string)json["error"] ?? "sign_in_failed";
+                // In logcat: Credential Manager's own reason (no account, app not registered with Google...).
+                if (error != "cancelled") Debug.LogWarning($"{provider} sign-in failed: {error}");
                 throw new ApiException(0, error == "cancelled" ? "sign_in_cancelled" : "sign_in_failed", error);
             }
             return new ProviderToken(token, nonce, (string)json["authorization_code"]);

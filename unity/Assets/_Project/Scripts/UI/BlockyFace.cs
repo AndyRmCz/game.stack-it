@@ -45,6 +45,8 @@ namespace StackIt.UI
             RectTransform rt = UiKit.Rect("Glass", parent);
             var glass = rt.gameObject.AddComponent<RawImage>();
             glass.texture = Resources.Load<Texture2D>(BlockyGlass.Resource);
+            // Without it the RawImage draws a white square: say why instead of shipping one.
+            if (glass.texture == null) Debug.LogError($"Blocky's glass ({BlockyGlass.Resource}) didn't load as a 2D texture: check its import settings.");
             glass.raycastTarget = false;
             IgnoreTheming.Mark(glass, "Blocky's glass, the same in every look");
             return glass;
