@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using StackIt.Client;
+using StackIt.Client.Api;
 
 namespace StackIt.Tests
 {
@@ -99,6 +100,66 @@ namespace StackIt.Tests
         {
             Assert.AreEqual("5h 12m", WeeklyReset.Short(WeeklyReset.Remaining(Since, Since.AddDays(7).AddHours(-5).AddMinutes(-12))));
             Assert.AreEqual(TimeSpan.Zero, WeeklyReset.Remaining(Since, Since.AddDays(8)));
+        }
+    }
+    public class SeenResultsTests
+    {
+        private static readonly DateTime Monday = new DateTime(2026, 11, 16, 12, 0, 0, DateTimeKind.Utc);
+
+        private static ChallengeResult Result(string name, double hoursLater) =>
+            new ChallengeResult { Code = "K7QX9PA", DisplayName = name, Score = 52, MyScore = 48, Won = true, PlayedAt = Monday.AddHours(hoursLater) };
+
+        [Test]
+        public void ResultsAreNewUntilFriendsIsOpenedEvenAfterARestart()
+        {
+            var store = new MemoryKeyValueStore();
+            var seen = new SeenResults(store);
+            var results = new List<ChallengeResult> { Result("Nova", 2), Result("Ana", 1) };
+            Assert.IsTrue(seen.HasNew(results));
+
+            seen.MarkSeen(results);
+
+            var restored = new SeenResults(store);
+            Assert.IsFalse(restored.HasNew(results));
+            Assert.IsFalse(restored.IsNew(results[0]));
+            Assert.IsTrue(restored.IsNew(Result("Bo", 3)));
+        }
+
+        [Test]
+        public void NoResultsMeansNothingNew()
+        {
+            var seen = new SeenResults(new MemoryKeyValueStore());
+            Assert.IsFalse(seen.HasNew(null));
+            Assert.IsFalse(seen.HasNew(new List<ChallengeResult>()));
+            Assert.IsNull(seen.Announce(null));
+        }
+
+        [Test]
+        public void HomeAnnouncesOnlyTheNewestResultAndOnlyOnce()
+        {
+            var seen = new SeenResults(new MemoryKeyValueStore());
+            var results = new List<ChallengeResult> { Result("Ana", 1), Result("Nova", 2) };
+
+            Assert.AreEqual("Nova", seen.Announce(results).DisplayName);
+            Assert.IsNull(seen.Announce(results));
+            Assert.IsTrue(seen.HasNew(results), "announcing is not seeing: the dot stays until Friends opens");
+            Assert.AreEqual("Bo", seen.Announce(new List<ChallengeResult> { Result("Bo", 3), Result("Nova", 2) }).DisplayName);
+        }
+
+        [Test]
+        public void SeenResultsAreNotAnnouncedLater()
+        {
+            var seen = new SeenResults(new MemoryKeyValueStore());
+            var results = new List<ChallengeResult> { Result("Nova", 2) };
+            seen.MarkSeen(results);
+            Assert.IsNull(seen.Announce(results));
+        }
+
+        [Test]
+        public void TheLineSaysWhetherTheFriendBeatYou()
+        {
+            Assert.AreEqual("results.beat_you", SeenResults.LineKey(new ChallengeResult { Won = true }));
+            Assert.AreEqual("results.you_held", SeenResults.LineKey(new ChallengeResult { Won = false }));
         }
     }
 }

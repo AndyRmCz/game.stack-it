@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 // DTOs of the backend v1 API (backend/app/api/schemas.py). Field names are PascalCase here and
@@ -179,6 +180,19 @@ namespace StackIt.Client.Api
         public bool Expired;
         public bool IsOwn;
         public int? MyBest;
+    }
+
+    /// <summary>A friend's finished try at one of your challenges (GET /v1/challenges/results).</summary>
+    public sealed class ChallengeResult
+    {
+        public string Code;
+        public string UserId;
+        public string DisplayName;
+        public int Score;
+        public int Placed;
+        public int MyScore;
+        public bool Won;
+        public DateTime PlayedAt;
     }
 
     public sealed class Friend

@@ -10,11 +10,14 @@ from app.core.errors import BadRequest, Conflict, NotFound
 from app.domain.economy import week_start
 from app.models import Challenge, User
 from app.repositories.runs import RunRepository
-from app.repositories.social import ChallengeRepository, FriendRepository, ScoreRow
+from app.repositories.social import ChallengeRepository, FriendRepository, ResultRow, ScoreRow
 from app.repositories.users import UserRepository
 from app.services.common import Clock, normalize_code, unique_code, utcnow
 
 CHALLENGE_CODE_LENGTH = 7
+# How far back, and how many, results of the player's own challenges the Friends screen lists.
+RESULTS_DAYS = 30
+RESULTS_LIMIT = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +79,12 @@ class ChallengeService:
             if challenge is None:
                 raise NotFound("challenge_not_found")
             return await self._view(challenge, viewer_id)
+
+    async def results(self, creator_id: uuid.UUID) -> list[ResultRow]:
+        """How friends did on the player's challenges: the challenger's only feedback."""
+        since = self._clock() - timedelta(days=RESULTS_DAYS)
+        async with self._session.begin():
+            return await self._challenges.results_for_creator(creator_id, since, RESULTS_LIMIT)
 
     async def _view(self, challenge: Challenge, viewer_id: uuid.UUID | None) -> ChallengeView:
         creator: User | None = await self._users.get(challenge.creator_id)

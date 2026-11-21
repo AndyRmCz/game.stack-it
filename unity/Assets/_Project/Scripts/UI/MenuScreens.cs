@@ -35,6 +35,13 @@ namespace StackIt.UI
         private readonly TextMeshProUGUI _myCode;
         private readonly TMP_InputField _input;
         private readonly RectTransform _list;
+        private List<Friend> _shown;
+        private List<ChallengeResult> _results;
+        // Results that were new when this visit drew them: they keep their dot until Friends closes.
+        private readonly HashSet<string> _newResults = new HashSet<string>();
+
+        /// <summary>At most this many results; the server sends a month's worth.</summary>
+        private const int MaxResults = 5;
 
         public FriendsScreen(UiContext ctx, Transform parent) : base(ctx, parent, "Friends", ScreenBackground.Gradient)
         {
@@ -71,8 +78,40 @@ namespace StackIt.UI
         protected override void OnShow()
         {
             _myCode.text = Ctx.Api.Profile?.FriendCode ?? "—";
+            _newResults.Clear();
+            TakeResults(Ctx.Api.LastChallengeResults);
             Load();
+            LoadResults();
         }
+
+        /// <summary>Fresh results, drawn when they differ. Offline: the friends list says so.</summary>
+        private async void LoadResults()
+        {
+            List<ChallengeResult> last = _results;
+            List<ChallengeResult> fresh;
+            try
+            {
+                fresh = await Ctx.Api.ChallengeResultsAsync();
+            }
+            catch (ApiException)
+            {
+                return;
+            }
+            TakeResults(fresh);
+            if (fresh != last) Show(_shown);
+        }
+
+        /// <summary>Notes which results are new to the player, then counts them all as seen.</summary>
+        private void TakeResults(List<ChallengeResult> results)
+        {
+            _results = results;
+            if (results == null) return;
+            foreach (ChallengeResult r in results)
+                if (Ctx.SeenResults.IsNew(r)) _newResults.Add(Key(r));
+            Ctx.SeenResults.MarkSeen(results);
+        }
+
+        private static string Key(ChallengeResult r) => r.Code + "/" + r.UserId + "/" + r.PlayedAt.Ticks.ToString(CultureInfo.InvariantCulture);
 
         /// <summary>Draws the last friends list at once (signing in read it), then the fresh one if it differs.</summary>
         private async void Load()
@@ -95,8 +134,10 @@ namespace StackIt.UI
 
         private void Show(List<Friend> friends)
         {
+            _shown = friends;
             UiKit.Clear(_list);
             Pending();
+            Results();
             if (friends == null) return; // still on its way
             if (friends.Count == 0)
             {
@@ -121,6 +162,35 @@ namespace StackIt.UI
                     TextAlignmentOptions.Left), 12f));
                 string code = c.Code;
                 ChipButton(row, L.T("friends.play"), Icons.Play, () => Ctx.Flow.OpenChallenge(code, "friends"));
+            }
+        }
+
+        /// <summary>
+        /// How friends did on your challenges, newest first: their score against yours, a dot on the
+        /// ones you have not seen, and Rematch when they beat you.
+        /// </summary>
+        private void Results()
+        {
+            if (_results == null || _results.Count == 0) return;
+            TextMeshProUGUI heading = UiKit.Text(_list, L.T("results.title"), TextRole.Overline, T.TextSecondary, TextAlignmentOptions.Left);
+            UiKit.Size(heading.rectTransform, height: 20);
+            for (int i = 0; i < _results.Count && i < MaxResults; i++)
+            {
+                ChallengeResult r = _results[i];
+                RectTransform row = UiKit.ListRow(_list);
+                RoundedRect avatar = UiKit.Avatar(row, r.DisplayName, 40f);
+                if (_newResults.Contains(Key(r))) UiKit.ShowDot(UiKit.Dot(avatar.transform), true);
+                RectTransform text = UiKit.Rect("Text", row);
+                UiKit.Column(text, 0, null, TextAnchor.MiddleLeft);
+                UiKit.Size(text, flexibleWidth: 1);
+                UiKit.OneLine(UiKit.Text(text, L.T("results.row", r.DisplayName, r.Score), TextRole.Body, T.TextPrimary, TextAlignmentOptions.Left), 12f);
+                UiKit.Text(text, L.T(SeenResults.LineKey(r), r.MyScore), TextRole.Caption, r.Won ? T.TextPrimary : T.TextSecondary, TextAlignmentOptions.Left);
+                if (r.Won)
+                {
+                    string name = r.DisplayName;
+                    int score = r.Score, placed = r.Placed;
+                    ChipButton(row, L.T("results.rematch"), Icons.Challenge, () => Ctx.Flow.PlayAgainst(name, score, placed));
+                }
             }
         }
 

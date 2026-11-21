@@ -146,6 +146,17 @@ class ChallengeResponse(BaseModel):
     my_best: int | None
 
 
+class ChallengeResultBody(BaseModel):
+    code: str
+    user_id: uuid.UUID
+    display_name: str
+    score: int
+    placed: int
+    my_score: int
+    won: bool
+    played_at: datetime
+
+
 class FriendBody(BaseModel):
     user_id: uuid.UUID
     display_name: str
