@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: AdsConfig
   m_EditorClassIdentifier: StackIt.Runtime::StackIt.Bootstrap.AdsConfig
   adsEnabled: 1
-  androidRewarded: ca-app-pub-1305259028857953/1998903877
-  androidInterstitial: ca-app-pub-1305259028857953/1467586686
-  androidBanner: ca-app-pub-1305259028857953/9494250512
+  androidRewarded: ca-app-pub-1305259028857953/6142426341
+  androidInterstitial: ca-app-pub-1305259028857953/4512428714
+  androidBanner: ca-app-pub-1305259028857953/7675320666
   iosRewarded: ca-app-pub-1305259028857953/6868087178
   iosInterstitial: ca-app-pub-1305259028857953/1996080627
   iosBanner: ca-app-pub-1305259028857953/5555005507
