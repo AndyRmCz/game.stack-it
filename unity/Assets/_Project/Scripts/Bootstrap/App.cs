@@ -33,6 +33,7 @@ namespace StackIt.Bootstrap
         private ThemeService _theme;
         private PendingChallenges _pending;
         private SeenSkins _seen;
+        private SeenResults _seenResults;
         private AuthService _auth;
         private GameApi _api;
         private IAdsService _ads;
@@ -100,6 +101,7 @@ namespace StackIt.Bootstrap
             _theme.Changed += ApplyLook;
             _pending = new PendingChallenges(_store);
             _seen = new SeenSkins(_store);
+            _seenResults = new SeenResults(_store);
 
             _localizer = new UnityLocalizer();
             await _localizer.InitializeAsync(_save.Language);
@@ -265,6 +267,7 @@ namespace StackIt.Bootstrap
                 Theme = _theme,
                 Pending = _pending,
                 Seen = _seen,
+                SeenResults = _seenResults,
                 Game = _game,
                 Flow = this,
                 Router = _router,

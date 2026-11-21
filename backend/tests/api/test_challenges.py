@@ -109,3 +109,52 @@ async def test_continue_in_a_challenge_run_is_rejected(
     ).json()
 
     assert (result["status"], result["reason"]) == ("rejected", "continue_not_allowed")
+
+
+async def _play_challenge(client, db, player, code: str, perfect: int) -> int:
+    start = (
+        await client.post("/v1/runs", json={"challenge_code": code}, headers=player.headers)
+    ).json()
+    events, score = play(start["seed"], perfect=perfect, sliced=4)
+    await backdate_run(db, start["run_id"])
+    submitted = await client.post(
+        f"/v1/runs/{start['run_id']}/submit",
+        json={"events": events, "claimed_score": score},
+        headers=player.headers,
+    )
+    assert submitted.json()["status"] == "verified"
+    return score
+
+
+async def test_the_creator_sees_how_friends_did_on_their_challenge(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    creator, winner, loser = await guest(client), await guest(client), await guest(client)
+    run, challenge = await _create_challenge(client, db_session, creator)
+    high = await _play_challenge(client, db_session, winner, challenge["code"], perfect=12)
+    low = await _play_challenge(client, db_session, loser, challenge["code"], perfect=0)
+    # Started but never finished: no result yet, so it isn't listed.
+    await client.post(
+        "/v1/runs", json={"challenge_code": challenge["code"]}, headers=winner.headers
+    )
+
+    response = await client.get("/v1/challenges/results", headers=creator.headers)
+
+    assert response.status_code == 200, response.text
+    results = response.json()
+    assert [r["user_id"] for r in results] == [loser.user_id, winner.user_id]  # newest first
+    newest, oldest = results
+    assert newest["code"] == challenge["code"]
+    assert newest["my_score"] == run["score"]
+    assert (newest["score"], newest["won"]) == (low, low > run["score"])
+    assert (oldest["score"], oldest["won"]) == (high, high > run["score"])
+    assert oldest["placed"] > 0 and oldest["played_at"]
+    # The players see nothing of this list: these are the creator's results.
+    theirs = await client.get("/v1/challenges/results", headers=winner.headers)
+    assert theirs.json() == []
+
+
+async def test_challenge_results_need_a_signed_in_player(client: AsyncClient) -> None:
+    response = await client.get("/v1/challenges/results")
+
+    assert response.status_code == 401

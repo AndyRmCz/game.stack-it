@@ -41,6 +41,12 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "es": "Revisa el enlace o el código. Si se compartió hace tiempo, puede que ya no exista.",
     },
     "get_game": {"en": "Get Milli", "es": "Descargar Milli"},
+    "home_title": {"en": "Stack higher than your friends", "es": "Apila más alto que tus amigos"},
+    "home_lede": {
+        "en": "Get Milli, then add your friend with the code from their message.",
+        "es": "Descarga Milli y añade a tu amigo con el código de su mensaje.",
+    },
+    "play_now": {"en": "Play Milli", "es": "Jugar a Milli"},
     "privacy": {"en": "Privacy", "es": "Privacidad"},
     "terms": {"en": "Terms", "es": "Términos"},
 }

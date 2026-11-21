@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using StackIt.Client.Api;
 
 namespace StackIt.Client
 {
@@ -74,6 +75,75 @@ namespace StackIt.Client
         }
 
         private static string Clean(string name) => (name ?? "").Replace('\t', ' ').Replace('\n', ' ');
+    }
+
+    /// <summary>
+    /// How friends did on the player's challenges, as far as the player has looked: a result is new
+    /// until Friends is opened (the Friends dot and the row's dot), and Home toasts the newest one
+    /// once. Kept on the device as two UTC times.
+    /// </summary>
+    public sealed class SeenResults
+    {
+        public const string SeenKey = "stackit.results_seen";
+        public const string AnnouncedKey = "stackit.results_announced";
+
+        private readonly IKeyValueStore _store;
+        private long _seen;
+        private long _announced;
+
+        public SeenResults(IKeyValueStore store)
+        {
+            _store = store;
+            _seen = Read(SeenKey);
+            _announced = Math.Max(Read(AnnouncedKey), _seen);
+        }
+
+        public bool IsNew(ChallengeResult result) => Ticks(result) > _seen;
+
+        public bool HasNew(IEnumerable<ChallengeResult> results)
+        {
+            if (results == null) return false;
+            foreach (ChallengeResult r in results)
+                if (IsNew(r)) return true;
+            return false;
+        }
+
+        /// <summary>Friends showed these: none of them is new any more.</summary>
+        public void MarkSeen(IEnumerable<ChallengeResult> results)
+        {
+            long newest = _seen;
+            if (results != null)
+                foreach (ChallengeResult r in results) newest = Math.Max(newest, Ticks(r));
+            if (newest == _seen) return;
+            _seen = newest;
+            Write(SeenKey, _seen);
+            if (_announced >= _seen) return;
+            _announced = _seen;
+            Write(AnnouncedKey, _announced);
+        }
+
+        /// <summary>The newest result not announced yet, or null; each result is announced once.</summary>
+        public ChallengeResult Announce(IEnumerable<ChallengeResult> results)
+        {
+            if (results == null) return null;
+            ChallengeResult newest = null;
+            foreach (ChallengeResult r in results)
+                if (Ticks(r) > _announced && (newest == null || Ticks(r) > Ticks(newest))) newest = r;
+            if (newest == null) return null;
+            _announced = Ticks(newest);
+            Write(AnnouncedKey, _announced);
+            return newest;
+        }
+
+        /// <summary>The strings key for a result's line: they beat your score, or you held it.</summary>
+        public static string LineKey(ChallengeResult result) => result.Won ? "results.beat_you" : "results.you_held";
+
+        private static long Ticks(ChallengeResult r) => r.PlayedAt.ToUniversalTime().Ticks;
+
+        private long Read(string key) =>
+            long.TryParse(_store.GetString(key), NumberStyles.Integer, CultureInfo.InvariantCulture, out long ticks) ? ticks : 0;
+
+        private void Write(string key, long ticks) => _store.SetString(key, ticks.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>

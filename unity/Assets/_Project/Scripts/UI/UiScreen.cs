@@ -60,6 +60,7 @@ namespace StackIt.UI
         public IThemeService Theme;
         public PendingChallenges Pending;
         public SeenSkins Seen;
+        public SeenResults SeenResults;
         public GameController Game;
         public IGameFlow Flow;
         public UiRouter Router;

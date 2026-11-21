@@ -7,6 +7,7 @@ from app.api.deps import ChallengeServiceDep, FriendServiceDep, OptionalUserIdDe
 from app.api.schemas import (
     AddFriendRequest,
     ChallengeResponse,
+    ChallengeResultBody,
     CreateChallengeRequest,
     FriendBody,
     LeaderboardEntryBody,
@@ -38,6 +39,27 @@ async def create_challenge(
     body: CreateChallengeRequest, user_id: UserIdDep, challenges: ChallengeServiceDep
 ) -> ChallengeResponse:
     return _challenge(await challenges.create(user_id, body.run_id))
+
+
+# Before /challenges/{code}, which would take "results" for a code.
+@router.get("/challenges/results")
+async def challenge_results(
+    user_id: UserIdDep, challenges: ChallengeServiceDep
+) -> list[ChallengeResultBody]:
+    rows = await challenges.results(user_id)
+    return [
+        ChallengeResultBody(
+            code=r.code,
+            user_id=r.user_id,
+            display_name=r.display_name,
+            score=r.score,
+            placed=r.placed,
+            my_score=r.my_score,
+            won=r.won,
+            played_at=r.played_at,
+        )
+        for r in rows
+    ]
 
 
 @router.get("/challenges/{code}")

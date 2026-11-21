@@ -25,6 +25,7 @@ namespace StackIt.Services
         private readonly LastAnswer<DailyStatus> _daily = new LastAnswer<DailyStatus>();
         private readonly Dictionary<string, LastAnswer<Leaderboard>> _boards = new Dictionary<string, LastAnswer<Leaderboard>>();
         private readonly LastAnswer<List<Friend>> _friends = new LastAnswer<List<Friend>>();
+        private readonly LastAnswer<List<ChallengeResult>> _results = new LastAnswer<List<ChallengeResult>>();
 
         public Profile Profile { get; private set; }
         public event Action<Profile> ProfileChanged;
@@ -190,6 +191,9 @@ namespace StackIt.Services
         public Task<ChallengeInfo> GetChallengeAsync(string code) =>
             _api.Get<ChallengeInfo>("/v1/challenges/" + Uri.EscapeDataString(code));
 
+        /// <summary>How friends did on the player's challenges, newest first.</summary>
+        public Task<List<ChallengeResult>> ChallengeResultsAsync() => Read(_results, "/v1/challenges/results");
+
         // --- telemetry ---------------------------------------------------------------------------
 
         /// <summary>Sends events already serialized as JSON objects (TelemetryService builds them).</summary>
@@ -246,6 +250,7 @@ namespace StackIt.Services
         public DailyStatus LastDaily => _daily.Value;
         public Leaderboard LastLeaderboard(string period) => Board(period).Value;
         public List<Friend> LastFriends => _friends.Value;
+        public List<ChallengeResult> LastChallengeResults => _results.Value;
 
         private LastAnswer<Leaderboard> Board(string period)
         {
@@ -275,6 +280,7 @@ namespace StackIt.Services
             _daily.Clear();
             foreach (LastAnswer<Leaderboard> board in _boards.Values) board.Clear();
             _friends.Clear();
+            _results.Clear();
         }
 
         // --- economy -----------------------------------------------------------------------------

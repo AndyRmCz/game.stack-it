@@ -96,6 +96,13 @@ friends.play,Play,Jugar
 friends.challenge,Challenge,Retar
 friends.copied,Code copied,Código copiado
 friends.invite,Invite friends,Invita a tus amigos
+results.title,Your challenges,Tus retos
+results.row,@{0} scored {1},@{0} hizo {1}
+results.beat_you,Beat your {0},Superó tus {0}
+results.you_held,Your {0} held,Tus {0} resistieron
+results.rematch,Rematch,Revancha
+results.toast_beat,@{0} beat your {1}!,¡@{0} superó tus {1}!
+results.toast_held,@{0} played your challenge: your {1} held,@{0} jugó tu reto: tus {1} resistieron
 # Leaderboards
 ranks.title,Friends ranking,Ranking de amigos
 ranks.all_time,All time,Histórico

@@ -15,6 +15,20 @@ def ordered_pair(a: uuid.UUID, b: uuid.UUID) -> tuple[uuid.UUID, uuid.UUID]:
 
 
 @dataclass(frozen=True, slots=True)
+class ResultRow:
+    """A friend's finished attempt at one of the user's challenges."""
+
+    code: str
+    user_id: uuid.UUID
+    display_name: str
+    score: int
+    placed: int
+    my_score: int
+    won: bool
+    played_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class ScoreRow:
     user_id: uuid.UUID
     display_name: str
@@ -135,3 +149,44 @@ class ChallengeRepository:
                 ChallengeAttempt.challenge_id == challenge_id, ChallengeAttempt.user_id == user_id
             )
         )
+
+    async def results_for_creator(
+        self, creator_id: uuid.UUID, since: datetime, limit: int
+    ) -> list[ResultRow]:
+        """Finished attempts at the creator's challenges, newest first."""
+        rows = await self._session.execute(
+            select(
+                Challenge.code,
+                ChallengeAttempt.user_id,
+                User.display_name,
+                ChallengeAttempt.score,
+                Run.placed,
+                Challenge.score.label("my_score"),
+                ChallengeAttempt.won,
+                Run.finished_at,
+            )
+            .join(Challenge, Challenge.id == ChallengeAttempt.challenge_id)
+            .join(Run, Run.id == ChallengeAttempt.run_id)
+            .join(User, User.id == ChallengeAttempt.user_id)
+            .where(
+                Challenge.creator_id == creator_id,
+                ChallengeAttempt.user_id != creator_id,
+                ChallengeAttempt.score.is_not(None),
+                Run.finished_at >= since,
+            )
+            .order_by(Run.finished_at.desc(), ChallengeAttempt.id.desc())
+            .limit(limit)
+        )
+        return [
+            ResultRow(
+                r.code,
+                r.user_id,
+                r.display_name,
+                r.score,
+                r.placed or 0,
+                r.my_score,
+                bool(r.won),
+                r.finished_at,
+            )
+            for r in rows
+        ]

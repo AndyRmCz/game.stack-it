@@ -274,6 +274,57 @@ def challenge_page(
     return _shell(lang, title, body, head, base_url)
 
 
+def home_page(
+    *,
+    lang: Lang,
+    base_url: str,
+    app_scheme: str,
+    app_package: str,
+    ios_url: str,
+    play_url: str,
+    platform: Platform = "other",
+) -> str:
+    """Where friend invites land: the friends screen shares the root URL with the code in the text.
+    Same buttons as a challenge, without one to open."""
+    title = t(lang, "home_title")
+    description = t(lang, "og_description")
+    head = f"""<meta name="description" content="{e(description)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Milli">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(description)}">
+<meta property="og:url" content="{e(base_url)}/">"""
+
+    script = ""
+    if platform == "android":
+        intent = (
+            f"intent://#Intent;scheme={app_scheme};package={app_package};"
+            f"S.browser_fallback_url={quote(play_url, safe='')};end"
+        )
+        primary = f'<a class="btn btn-primary" href="{e(intent)}">{e(t(lang, "play_now"))}</a>'
+    elif platform == "ios" and ios_url:
+        primary = (
+            f'<a class="btn btn-primary" href="{e(app_scheme)}://" '
+            f'data-store="{e(ios_url)}">{e(t(lang, "play_now"))}</a>'
+        )
+        script = IOS_FALLBACK
+    else:
+        primary = f'<a class="btn btn-primary" href="{e(play_url)}">{e(t(lang, "get_game"))}</a>'
+    ios = (
+        f'<a class="pill" href="{e(ios_url)}">{e(t(lang, "app_store"))}</a>'
+        if ios_url and platform == "other"
+        else ""
+    )
+    body = f"""<p class="logo">milli</p>
+<h1>{e(title)}</h1>
+<p class="lede">{e(t(lang, "home_lede"))}</p>
+<div class="actions">
+{primary}
+{ios}
+</div>{script}"""
+    return _shell(lang, f"{title} · Milli", body, head, base_url)
+
+
 def not_found_page(lang: Lang, base_url: str, play_url: str) -> str:
     body = f"""<p class="logo">milli</p>
 <h1>{e(t(lang, "not_found_title"))}</h1>

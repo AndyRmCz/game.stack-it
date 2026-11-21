@@ -178,3 +178,36 @@ async def test_account_deletion_page_explains_in_app_and_email_paths(client: Asy
     assert en.status_code == 200
     assert "Delete account" in en.text and get_settings().support_email in en.text
     assert "Eliminar cuenta" in es.text
+
+
+async def test_home_page_is_where_friend_invites_land(client: AsyncClient) -> None:
+    # The friends screen shares the server's root URL with the friend code in the text.
+    en = await client.get("/", headers={"Accept-Language": "en", "User-Agent": ANDROID_INSTAGRAM})
+    es = await client.get("/", headers={"Accept-Language": "es"})
+
+    assert en.status_code == 200
+    assert "Stack higher than your friends" in en.text
+    assert (
+        'href="intent://#Intent;scheme=milli;package=game.milli.com;S.browser_fallback_url='
+        'https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dgame.milli.com;end"'
+        in en.text
+    )
+    assert "Vary" in en.headers and "User-Agent" in en.headers["Vary"]
+    assert es.status_code == 200
+    assert "Apila más alto que tus amigos" in es.text
+    assert "play.google.com" in es.text
+
+
+def test_home_page_on_iphone_tries_the_game_then_the_app_store() -> None:
+    html = pages.home_page(
+        lang="en",
+        base_url="https://milli.test",
+        app_scheme="milli",
+        app_package="game.milli.com",
+        ios_url="https://apps.apple.com/app/id123",
+        play_url="https://play.google.com/store/apps/details?id=game.milli.com",
+        platform="ios",
+    )
+
+    assert 'href="milli://" data-store="https://apps.apple.com/app/id123"' in html
+    assert "play.google.com" not in html

@@ -31,7 +31,7 @@ dotnet test ../unity/DotNetTests/Tests/StackIt.Tests.csproj   # C# simulation + 
 | Auth | `POST /v1/auth/guest`, `POST /v1/auth/{google,apple}/login`, `POST /v1/auth/{google,apple}/link`, `POST /v1/auth/refresh`, `POST /v1/auth/logout` |
 | Profile | `GET/PATCH/DELETE /v1/me` |
 | Runs | `POST /v1/runs` (seed), `POST /v1/runs/{id}/submit` (replay-verified), `POST /v1/runs/{id}/double-coins` |
-| Social | `POST /v1/challenges`, `GET /v1/challenges/{code}`, `GET/POST /v1/friends`, `DELETE /v1/friends/{id}`, `GET /v1/leaderboards/friends?period=all_time|weekly` |
+| Social | `POST /v1/challenges`, `GET /v1/challenges/{code}`, `GET /v1/challenges/results`, `GET/POST /v1/friends`, `DELETE /v1/friends/{id}`, `GET /v1/leaderboards/friends?period=all_time|weekly` |
 | Economy | `GET /v1/wallet`, `GET /v1/shop`, `POST /v1/shop/purchase`, `POST /v1/skins/equip`, `GET /v1/daily`, `POST /v1/daily/claim` |
 | Web | `/c/{code}`, `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json`, `/privacy`, `/terms`, `/delete-account`, `/app-ads.txt`, `/health` |
 

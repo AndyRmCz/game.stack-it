@@ -15,6 +15,26 @@ AcceptLanguage = Annotated[str | None, Header()]
 LangOverride = Annotated[str | None, Query(alias="lang")]
 
 
+@router.get("/", response_class=HTMLResponse)
+async def home(
+    settings: SettingsDep,
+    accept_language: AcceptLanguage = None,
+    user_agent: Annotated[str | None, Header()] = None,
+    lang: LangOverride = None,
+) -> HTMLResponse:
+    html = pages.home_page(
+        lang=pick_lang(accept_language, lang),
+        base_url=settings.public_base_url,
+        app_scheme=settings.app_url_scheme,
+        app_package=settings.app_bundle_id,
+        ios_url=settings.ios_app_store_url,
+        play_url=settings.play_store_url,
+        platform=pages.platform_of(user_agent),
+    )
+    headers = {"Cache-Control": "public, max-age=300", "Vary": "User-Agent, Accept-Language"}
+    return HTMLResponse(html, headers=headers)
+
+
 @router.get("/c/{code}", response_class=HTMLResponse)
 async def challenge_landing(
     code: str,

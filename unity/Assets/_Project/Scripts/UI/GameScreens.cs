@@ -127,7 +127,7 @@ namespace StackIt.UI
             UiKit.Primary(play, L.T("home.play"), Icons.Play, () => Ctx.Flow.PlayNormal(), breathe: true);
 
             Ctx.Api.ProfileChanged += Render;
-            Ctx.Pending.Changed += () => UiKit.ShowDot(_friendsDot, Ctx.Pending.Any);
+            Ctx.Pending.Changed += ShowFriendsDot;
         }
 
         /// <summary>The bar under the safe area's top: 48 tall, inside the side padding.</summary>
@@ -147,7 +147,8 @@ namespace StackIt.UI
         protected override void OnShow()
         {
             Render(Ctx.Api.Profile);
-            UiKit.ShowDot(_friendsDot, Ctx.Pending.Any);
+            ShowFriendsDot();
+            RefreshResults();
             RefreshDaily();
             RefreshShop();
             RefreshMissions();
@@ -162,6 +163,28 @@ namespace StackIt.UI
             BlockyMoment? moment = Ctx.NextHomeMoment ?? BlockyMoments.ForHome(daysAway);
             Ctx.NextHomeMoment = null;
             if (moment.HasValue) _blocky.React(moment.Value);
+        }
+
+        /// <summary>The Friends dot: a challenge waiting to be played, or a result not seen yet.</summary>
+        private void ShowFriendsDot() =>
+            UiKit.ShowDot(_friendsDot, Ctx.Pending.Any || Ctx.SeenResults.HasNew(Ctx.Api.LastChallengeResults));
+
+        /// <summary>A friend played one of your challenges: the dot, and a toast for the newest result.</summary>
+        private async void RefreshResults()
+        {
+            List<ChallengeResult> results;
+            try
+            {
+                results = await Ctx.Api.ChallengeResultsAsync();
+            }
+            catch (StackIt.Services.ApiException)
+            {
+                return; // offline: the dot keeps what it knew
+            }
+            ShowFriendsDot();
+            ChallengeResult newest = Ctx.SeenResults.Announce(results);
+            if (newest != null)
+                Ctx.Router.Toast(L.T(newest.Won ? "results.toast_beat" : "results.toast_held", newest.DisplayName, newest.MyScore), 3.2f);
         }
 
         /// <summary>The missions dot: a finished mission or the chest is waiting to be claimed.</summary>
