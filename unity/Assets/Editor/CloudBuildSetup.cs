@@ -27,19 +27,23 @@ public static class CloudBuildSetup
     {
         // Throws, failing the build, on a partial set or a test ID: that release would earn nothing.
         ReleaseAdIds ids = ReleaseAdIds.Read("IOS", Environment.GetEnvironmentVariable);
-        if (ids == null) return; // a test build keeps Google's test IDs
-
         var settings = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(GoogleAdsSettings));
-        settings.FindProperty("adMobIOSAppId").stringValue = ids.AppId;
-        settings.ApplyModifiedPropertiesWithoutUndo();
-
+        SerializedProperty appId = settings.FindProperty("adMobIOSAppId");
         AdsConfig ads = AdsConfig.Load();
-        ads.iosRewarded = ids.Rewarded;
-        ads.iosInterstitial = ids.Interstitial;
-        ads.iosBanner = ids.Banner;
-        ads.debugForceEeaConsent = false;
-        EditorUtility.SetDirty(ads);
-        AssetDatabase.SaveAssets();
+        if (ids != null)
+        {
+            appId.stringValue = ids.AppId;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            ads.iosRewarded = ids.Rewarded;
+            ads.iosInterstitial = ids.Interstitial;
+            ads.iosBanner = ids.Banner;
+            ads.debugForceEeaConsent = false;
+            EditorUtility.SetDirty(ads);
+            AssetDatabase.SaveAssets();
+        }
+        // Without the variables a test build keeps what the repo has, which must still be one
+        // account: real units beside Google's test App ID got no ads at all on TestFlight.
+        ReleaseAdIds.CheckSameAccount("IOS", appId.stringValue, ads.iosRewarded, ads.iosInterstitial, ads.iosBanner);
     }
 }
 #endif

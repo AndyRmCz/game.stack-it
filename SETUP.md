@@ -1179,6 +1179,7 @@ installable this way.
 | Build can't find the project | *Project subfolder* must be `unity` (9.7). |
 | `Pre-Export Method` not found | The name must be `CloudBuildSetup.PreExport`, and `unity/Assets/Editor/CloudBuildSetup.cs` must be on the branch you build. |
 | Post-build script not found | Check that `unity/Tools/upload-to-testflight.sh` is on the branch. The path starts at the repo's root. |
+| Build fails with `The ad unit … is from another AdMob account than the App ID …` | `AdsConfig` has real iOS units but the build would keep Google's test App ID, so no ad would ever load. Set all four `ADMOB_IOS_*` variables (9.11). |
 | Log says `ASC_… is not set: skipping the upload` | Set the variables on the build target (9.7). The build itself worked. |
 | Log says `No .ipa found` | The build made no `.ipa`, or Unity changed where it puts it. Read the Xcode stage above it. |
 | `The upload to App Store Connect failed.` | Read the `altool` lines above it. A bad key shows as an authentication error: check `ASC_KEY_ID`, `ASC_ISSUER_ID`, and that `ASC_KEY_BASE64` is one line. Apple needs the app to exist first (9.6), and `ASC_APP_ID` is digits only. |

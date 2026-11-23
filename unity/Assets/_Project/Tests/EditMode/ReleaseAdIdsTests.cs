@@ -84,5 +84,34 @@ namespace StackIt.Tests
         {
             Assert.IsNull(ReleaseAdIds.Read("IOS", Env(AllSet())));
         }
+
+        private const string TestApp = "ca-app-pub-3940256099942544~1458002511";
+        private const string TestUnit = "ca-app-pub-3940256099942544/1712485313";
+
+        [Test]
+        public void IdsFromOneAccountPass()
+        {
+            Assert.DoesNotThrow(() => ReleaseAdIds.CheckSameAccount("IOS", App, Unit + "1111111111", Unit + "2222222222"));
+            Assert.DoesNotThrow(() => ReleaseAdIds.CheckSameAccount("IOS", TestApp, TestUnit));
+        }
+
+        // A cloud build without the ADMOB_IOS_* variables kept Google's test App ID next to the
+        // real units already in AdsConfig: AdMob refused every request, and TestFlight showed no ads.
+        [Test]
+        public void RealUnitsWithGooglesTestAppIdFailAndSayWhatToSet()
+        {
+            var error = Assert.Throws<InvalidOperationException>(
+                () => ReleaseAdIds.CheckSameAccount("IOS", TestApp, TestUnit, Unit + "1111111111"));
+            StringAssert.Contains("ADMOB_IOS_", error.Message);
+            StringAssert.Contains(Unit + "1111111111", error.Message);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("pub-1305259028857953")]
+        public void AnAppIdWithoutAnAccountFails(string appId)
+        {
+            Assert.Throws<InvalidOperationException>(() => ReleaseAdIds.CheckSameAccount("IOS", appId, Unit + "1111111111"));
+        }
     }
 }

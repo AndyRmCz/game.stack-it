@@ -36,6 +36,34 @@ namespace StackIt.Client
             };
         }
 
+        /// <summary>
+        /// Fails unless the App ID and every ad unit come from one AdMob account: AdMob refuses every
+        /// request from a unit of another account, so that build shows no ads at all.
+        /// </summary>
+        /// <param name="platform">"ANDROID" or "IOS", for the variables the message names.</param>
+        public static void CheckSameAccount(string platform, string appId, params string[] units)
+        {
+            string account = Account(appId);
+            if (account == null) throw new InvalidOperationException("The " + platform + " AdMob App ID '" + appId + "' doesn't look like ca-app-pub-…~…");
+            foreach (string unit in units)
+            {
+                if (Account(unit) == account) continue;
+                throw new InvalidOperationException(
+                    "The ad unit " + unit + " is from another AdMob account than the App ID " + appId +
+                    ", so AdMob would refuse every ad. Set all four ADMOB_" + platform + "_* variables on the build, " +
+                    "or put Google's test IDs back in AdsConfig.");
+            }
+        }
+
+        /// <summary>The 16-digit publisher number in ca-app-pub-…~… or ca-app-pub-…/…, or null.</summary>
+        private static string Account(string id)
+        {
+            const string prefix = "ca-app-pub-";
+            if (id == null || !id.StartsWith(prefix, StringComparison.Ordinal)) return null;
+            int end = id.IndexOfAny(new[] { '~', '/' }, prefix.Length);
+            return end < 0 ? null : id.Substring(prefix.Length, end - prefix.Length);
+        }
+
         private static string Checked(string name, Func<string, string> env, Regex shape)
         {
             string value = env(name)?.Trim();
